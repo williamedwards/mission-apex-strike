@@ -2,7 +2,9 @@
     "name": "GravBoots.Editor",
     "rootNamespace": "GravBoots.Editor",
     "references": [
-        "GravBoots.Runtime"
+        "GravBoots.Runtime",
+        "Unity.Cinemachine",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [
         "Editor"

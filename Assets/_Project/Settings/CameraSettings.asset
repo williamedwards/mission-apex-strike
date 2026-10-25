@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17389cee025a957f798bc667d9ddcbfb, type: 3}
+  m_Name: CameraSettings
+  m_EditorClassIdentifier: GravBoots.Runtime::GravBoots.Cameras.CameraSettings
+  pivotHeight: 1.45
+  shoulderOffset: {x: 0.55, y: 0.15, z: 0}
+  verticalArmLength: 0.2
+  cameraDistance: 3.5
+  damping: {x: 0.1, y: 0.25, z: 0.3}
+  collisionRadius: 0.2
+  fieldOfView: 65
+  mouseDegreesPerPixel: 0.1
+  stickDegreesPerSecond: 200
+  invertY: 0
+  minPitch: -70
+  maxPitch: 80
+  upSharpness: 8
+  minUpDegreesPerSecond: 60
+  partialMaxRollDegrees: 90
+  settleTime: 0.3
