@@ -16,6 +16,7 @@ namespace GravBoots.Debugging
     {
         [SerializeField] PlayerInputReader input;
         [SerializeField] PlayerMotor motor;
+        [SerializeField] MagneticBoots boots;
         [SerializeField] CameraRig cameraRig;
         [SerializeField] DebugOverlay overlay;
         [SerializeField] float blendDegreesPerSecond = 180f;
@@ -78,6 +79,9 @@ namespace GravBoots.Debugging
 
         void SetUp(Vector3 up)
         {
+            // A debug override replaces whatever the boots were doing.
+            if (boots != null)
+                boots.ForceOff();
             if (Blend)
                 motor.Gravity.BlendUp(up, blendDegreesPerSecond);
             else
@@ -96,6 +100,8 @@ namespace GravBoots.Debugging
 
         void SendToSpawn(SpawnPoint spawn)
         {
+            if (boots != null)
+                boots.ForceOff();
             motor.Gravity.SetUp(spawn.transform.up);
             motor.Teleport(spawn.transform.position, spawn.transform.rotation);
             if (cameraRig != null)

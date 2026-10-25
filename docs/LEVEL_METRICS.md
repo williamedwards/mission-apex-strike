@@ -45,6 +45,20 @@ the landing marker exist.
 | Long | 4–8 m | Deliberate drops. Time to read the landing marker. |
 | Lethal (if fall damage is added) | > 8 m | Only as an explicit hazard. |
 
+## Curves (the only way to change orientation)
+The boots follow curved magnetic surfaces and nothing else: a sharp join between two magnetic
+surfaces is a hard boundary. Build every route between orientations from `CurvedRamp`.
+| Metric | Value | Why |
+|---|---|---|
+| Standard quarter-pipe radius (floor ↔ wall) | 2 m | Comfortable at walking speed; the camera has time to follow. |
+| Standard rounded-edge radius (over a top edge) | 1.5 m | |
+| Minimum radius | 1.5 m | At 6 m/s, Up turns at speed ÷ radius (about 230°/s at 1.5 m). That needs to stay under `BootsSettings.followDegreesPerSecond` (540°/s). |
+| Facet angle (90° ÷ segments) | ≤ 12° | Must stay well under `followMaxAngle` (30°). The builder uses 8 segments per metre of radius. |
+| Pipe sides | ≥ 16 | 22.5° per side, under `followMaxAngle`. |
+
+A sharp join reads as "you can't go this way" only if players learn it early, so the first
+boots chamber should show a magnetic wall without a curve next to one with.
+
 ## Ramps in the gym
 20°, 35° and 50° are walkable and finish at a landing. 60° and 70° are not walkable (dark
-material) and will be the "only with boots" slopes in Phase 1B.
+material). Steep magnetic ramps still need a curve at their foot for the boots to get onto them.

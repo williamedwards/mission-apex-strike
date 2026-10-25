@@ -1,3 +1,4 @@
+using System;
 using GravBoots.Gravity;
 using UnityEngine;
 
@@ -51,6 +52,11 @@ namespace GravBoots.Player
         public Collider GroundCollider { get; private set; }
         /// <summary>Touching something underfoot that is too steep to stand on.</summary>
         public bool OnSteepSurface { get; private set; }
+        /// <summary>A jump started during the last step.</summary>
+        public bool JumpedThisStep { get; private set; }
+
+        /// <summary>Raised at the end of every step with its delta time, after the pose is final.</summary>
+        public event Action<float> Stepped;
 
         void Awake()
         {
@@ -78,6 +84,8 @@ namespace GravBoots.Player
 
         public void RequestJump() => jumpBufferTimer = settings != null ? settings.jumpBufferTime : 0f;
 
+        public void AddVelocity(Vector3 change) => velocity += change;
+
         public void Teleport(Vector3 newPosition, Quaternion newRotation)
         {
             position = newPosition;
@@ -104,6 +112,7 @@ namespace GravBoots.Player
 
             bool wasGrounded = IsGrounded;
             bool jumped = UpdateVelocity(up, deltaTime);
+            JumpedThisStep = jumped;
             CollideAndSlide(velocity * deltaTime, up, wasGrounded && !jumped);
             UpdateGround(up, wasGrounded && !jumped);
             Depenetrate();
@@ -119,6 +128,8 @@ namespace GravBoots.Player
                 body.position = position;
                 body.rotation = rotation;
             }
+
+            Stepped?.Invoke(deltaTime);
         }
 
         void UpdateOrientation(Vector3 up, float deltaTime)

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using GravBoots.Cameras;
 using GravBoots.Debugging;
@@ -10,6 +11,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
+using Object = UnityEngine.Object;
 
 namespace GravBoots.Editor
 {
@@ -26,35 +28,39 @@ namespace GravBoots.Editor
         const string SandboxPath = Root + "/Scenes/Sandbox.unity";
         const string PlayerPrefabPath = Root + "/Prefabs/Player.prefab";
         const string GridTexturePath = Root + "/Art/GreyboxGrid.png";
+        const string PanelTexturePath = Root + "/Art/MagneticPanel.png";
         const string MaterialFolder = Root + "/Materials";
         const string SettingsFolder = Root + "/Settings";
         const string InputPath = SettingsFolder + "/GravBootsControls.inputactions";
 
-        const int PlayerLayer = 8;
+        const int PlayerLayer = Layers.Player;
         const float AreaSpacing = 70f;
 
         class Palette
         {
             public Material Floor, Wall, Ceiling, Dark, Orange, Blue, PlayerBody, Visor;
+            public Material Magnetic, BootsOff, BootsOn, Marker, Guide;
         }
 
         [MenuItem("GravBoots/Build Camera Test Bed")]
         public static void Build()
         {
-            Texture2D grid = EnsureGridTexture();
-            Palette palette = EnsureMaterials(grid);
+            EnsureTag(Layers.LethalTag);
+            Palette palette = EnsureMaterials();
             var motorSettings = EnsureAsset<MotorSettings>(SettingsFolder + "/MotorSettings.asset");
+            var bootsSettings = EnsureAsset<BootsSettings>(SettingsFolder + "/BootsSettings.asset");
             var cameraSettings = EnsureAsset<CameraSettings>(SettingsFolder + "/CameraSettings.asset");
             var inputAsset = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputPath);
             if (inputAsset == null)
                 throw new FileNotFoundException("Input actions asset not found", InputPath);
 
-            GameObject playerPrefab = BuildPlayerPrefab(motorSettings, inputAsset, palette);
+            GameObject playerPrefab = BuildPlayerPrefab(motorSettings, bootsSettings, inputAsset, palette);
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             // Opening a new scene unloads assets nothing references yet, which leaves earlier
             // handles dead (they then serialize as null), so load the camera settings again.
             cameraSettings = AssetDatabase.LoadAssetAtPath<CameraSettings>(SettingsFolder + "/CameraSettings.asset");
+            palette = EnsureMaterials();
             SetupLighting();
 
             var areas = new GameObject("Areas").transform;
@@ -64,10 +70,12 @@ namespace GravBoots.Editor
             BuildCrawlspace(Area(areas, "Crawlspace", 3), palette);
             BuildOutsideCorner(Area(areas, "Outside Corner", 4), palette);
             BuildPitRoom(Area(areas, "Pit Under Ceiling", 5), palette);
+            BuildBootsGym(Area(areas, "Boots Gym", 6), palette);
 
             var player = (GameObject)PrefabUtility.InstantiatePrefab(playerPrefab);
             player.transform.SetPositionAndRotation(new Vector3(0f, 0.05f, -2f), Quaternion.identity);
             BuildCameraAndDebug(player, cameraSettings);
+            BuildBootsFeedback(player, palette);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             EditorBuildSettings.scenes = new[]
@@ -81,9 +89,29 @@ namespace GravBoots.Editor
 
         // ---------------------------------------------------------------- assets
 
-        static Texture2D EnsureGridTexture()
+        static Texture2D EnsureGridTexture() => EnsureTexture(GridTexturePath, (x, y, size) =>
         {
-            if (!File.Exists(GridTexturePath))
+            int ex = Mathf.Min(x, size - 1 - x), ey = Mathf.Min(y, size - 1 - y);
+            int mx = Mathf.Abs(x - size / 2), my = Mathf.Abs(y - size / 2);
+            byte value = 235;
+            if (mx < 1 || my < 1) value = 210;         // faint half-metre line
+            if (ex < 3 || ey < 3) value = 140;         // metre line
+            return value;
+        });
+
+        /// <summary>Magnetic panels: a bright 1 m tile with a bevelled border, unlike the plain grid.</summary>
+        static Texture2D EnsurePanelTexture() => EnsureTexture(PanelTexturePath, (x, y, size) =>
+        {
+            int e = Mathf.Min(Mathf.Min(x, size - 1 - x), Mathf.Min(y, size - 1 - y));
+            if (e < 4) return 120;                     // seam between panels
+            if (e < 22) return 205;                    // bevel
+            if (e < 25) return 175;                    // inner line
+            return 250;
+        });
+
+        static Texture2D EnsureTexture(string path, Func<int, int, int, byte> shade)
+        {
+            if (!File.Exists(path))
             {
                 const int size = 512;
                 var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
@@ -91,31 +119,29 @@ namespace GravBoots.Editor
                 for (int y = 0; y < size; y++)
                 for (int x = 0; x < size; x++)
                 {
-                    int ex = Mathf.Min(x, size - 1 - x), ey = Mathf.Min(y, size - 1 - y);
-                    int mx = Mathf.Abs(x - size / 2), my = Mathf.Abs(y - size / 2);
-                    byte value = 235;
-                    if (mx < 1 || my < 1) value = 210;         // faint half-metre line
-                    if (ex < 3 || ey < 3) value = 140;         // metre line
+                    byte value = shade(x, y, size);
                     pixels[y * size + x] = new Color32(value, value, value, 255);
                 }
                 texture.SetPixels32(pixels);
-                Directory.CreateDirectory(Path.GetDirectoryName(GridTexturePath));
-                File.WriteAllBytes(GridTexturePath, texture.EncodeToPNG());
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+                File.WriteAllBytes(path, texture.EncodeToPNG());
                 Object.DestroyImmediate(texture);
-                AssetDatabase.ImportAsset(GridTexturePath);
-            }
+                AssetDatabase.ImportAsset(path);
 
-            var importer = (TextureImporter)AssetImporter.GetAtPath(GridTexturePath);
-            importer.wrapMode = TextureWrapMode.Repeat;
-            importer.anisoLevel = 8;
-            importer.filterMode = FilterMode.Trilinear;
-            importer.mipmapEnabled = true;
-            importer.SaveAndReimport();
-            return AssetDatabase.LoadAssetAtPath<Texture2D>(GridTexturePath);
+                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+                importer.wrapMode = TextureWrapMode.Repeat;
+                importer.anisoLevel = 8;
+                importer.filterMode = FilterMode.Trilinear;
+                importer.mipmapEnabled = true;
+                importer.SaveAndReimport();
+            }
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
 
-        static Palette EnsureMaterials(Texture2D grid)
+        static Palette EnsureMaterials()
         {
+            Texture2D grid = EnsureGridTexture();
+            Texture2D panel = EnsurePanelTexture();
             return new Palette
             {
                 Floor = EnsureMaterial("Greybox_Floor", new Color(0.62f, 0.64f, 0.68f), grid),
@@ -126,21 +152,31 @@ namespace GravBoots.Editor
                 Blue = EnsureMaterial("Accent_Blue", new Color(0.2f, 0.55f, 1f), grid),
                 PlayerBody = EnsureMaterial("Player_Body", new Color(0.88f, 0.88f, 0.92f), null),
                 Visor = EnsureMaterial("Player_Visor", new Color(1f, 0.55f, 0.15f), null, emissive: true),
+                Magnetic = EnsureMaterial("Magnetic_Panel", new Color(0.9f, 0.95f, 1f), panel, smoothness: 0.45f),
+                BootsOff = EnsureMaterial("Boots_Off", new Color(0.22f, 0.24f, 0.27f), null),
+                BootsOn = EnsureMaterial("Boots_On", new Color(0.35f, 0.8f, 1f), null, emissive: true),
+                Marker = EnsureMaterial("Landing_Marker", Color.white, null, shader: "Universal Render Pipeline/Unlit"),
+                // Sprites/Default honours LineRenderer vertex colours, which URP Unlit ignores.
+                Guide = EnsureMaterial("Landing_Guide", Color.white, null, shader: "Sprites/Default"),
             };
         }
 
-        static Material EnsureMaterial(string name, Color color, Texture texture, bool emissive = false)
+        static Material EnsureMaterial(string name, Color color, Texture texture, bool emissive = false,
+            float smoothness = 0.25f, string shader = "Universal Render Pipeline/Lit")
         {
             string path = $"{MaterialFolder}/{name}.mat";
             var material = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (material == null)
             {
-                material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                material = new Material(Shader.Find(shader));
                 AssetDatabase.CreateAsset(material, path);
             }
-            material.SetColor("_BaseColor", color);
-            material.SetTexture("_BaseMap", texture);
-            material.SetFloat("_Smoothness", 0.25f);
+            if (material.HasProperty("_BaseColor"))
+                material.SetColor("_BaseColor", color);
+            if (material.HasProperty("_BaseMap"))
+                material.SetTexture("_BaseMap", texture);
+            if (material.HasProperty("_Smoothness"))
+                material.SetFloat("_Smoothness", smoothness);
             if (emissive)
             {
                 material.EnableKeyword("_EMISSION");
@@ -149,6 +185,18 @@ namespace GravBoots.Editor
             }
             EditorUtility.SetDirty(material);
             return material;
+        }
+
+        static void EnsureTag(string tag)
+        {
+            var tagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
+            SerializedProperty tags = tagManager.FindProperty("tags");
+            for (int i = 0; i < tags.arraySize; i++)
+                if (tags.GetArrayElementAtIndex(i).stringValue == tag)
+                    return;
+            tags.InsertArrayElementAtIndex(tags.arraySize);
+            tags.GetArrayElementAtIndex(tags.arraySize - 1).stringValue = tag;
+            tagManager.ApplyModifiedPropertiesWithoutUndo();
         }
 
         static T EnsureAsset<T>(string path) where T : ScriptableObject
@@ -161,7 +209,8 @@ namespace GravBoots.Editor
             return asset;
         }
 
-        static GameObject BuildPlayerPrefab(MotorSettings motorSettings, InputActionAsset inputAsset, Palette palette)
+        static GameObject BuildPlayerPrefab(MotorSettings motorSettings, BootsSettings bootsSettings,
+            InputActionAsset inputAsset, Palette palette)
         {
             var root = new GameObject("Player");
             root.layer = PlayerLayer;
@@ -176,6 +225,9 @@ namespace GravBoots.Editor
             var motor = root.AddComponent<PlayerMotor>();
             var reader = root.AddComponent<PlayerInputReader>();
             root.AddComponent<PlayerController>();
+            var boots = root.AddComponent<MagneticBoots>();
+            Set(boots, "settings", bootsSettings);
+            Set(boots, "input", reader);
 
             Set(motor, "settings", motorSettings);
             SetInt(motor, "collisionMask", ~(1 << PlayerLayer));
@@ -185,8 +237,18 @@ namespace GravBoots.Editor
             visual.SetParent(root.transform, false);
             Primitive(visual, PrimitiveType.Capsule, "Body", new Vector3(0f, 0.9f, 0f), new Vector3(0.7f, 0.9f, 0.7f), palette.PlayerBody);
             Primitive(visual, PrimitiveType.Cube, "Visor", new Vector3(0f, 1.5f, 0.3f), new Vector3(0.45f, 0.14f, 0.18f), palette.Visor);
-            Primitive(visual, PrimitiveType.Cube, "Boot_L", new Vector3(-0.15f, 0.08f, 0.06f), new Vector3(0.2f, 0.16f, 0.36f), palette.Dark);
-            Primitive(visual, PrimitiveType.Cube, "Boot_R", new Vector3(0.15f, 0.08f, 0.06f), new Vector3(0.2f, 0.16f, 0.36f), palette.Dark);
+            var bootL = Primitive(visual, PrimitiveType.Cube, "Boot_L", new Vector3(-0.15f, 0.08f, 0.06f), new Vector3(0.2f, 0.16f, 0.36f), palette.BootsOff);
+            var bootR = Primitive(visual, PrimitiveType.Cube, "Boot_R", new Vector3(0.15f, 0.08f, 0.06f), new Vector3(0.2f, 0.16f, 0.36f), palette.BootsOff);
+            var bootsVisual = root.AddComponent<BootsVisual>();
+            Set(bootsVisual, "boots", boots);
+            Set(bootsVisual, "offMaterial", palette.BootsOff);
+            Set(bootsVisual, "onMaterial", palette.BootsOn);
+            var renderers = new SerializedObject(bootsVisual);
+            SerializedProperty list = renderers.FindProperty("bootRenderers");
+            list.arraySize = 2;
+            list.GetArrayElementAtIndex(0).objectReferenceValue = bootL.GetComponent<Renderer>();
+            list.GetArrayElementAtIndex(1).objectReferenceValue = bootR.GetComponent<Renderer>();
+            renderers.ApplyModifiedPropertiesWithoutUndo();
             foreach (Transform t in root.GetComponentsInChildren<Transform>())
                 t.gameObject.layer = PlayerLayer;
 
@@ -258,12 +320,41 @@ namespace GravBoots.Editor
             Set(overlay, "popProbe", popProbe);
             Set(keys, "input", reader);
             Set(keys, "motor", motor);
+            Set(keys, "boots", player.GetComponent<MagneticBoots>());
             Set(keys, "cameraRig", rig);
             Set(keys, "overlay", overlay);
             Set(overlay, "motor", motor);
             Set(overlay, "controller", controller);
             Set(overlay, "cameraRig", rig);
             Set(overlay, "keys", keys);
+            Set(overlay, "boots", player.GetComponent<MagneticBoots>());
+        }
+
+        static void BuildBootsFeedback(GameObject player, Palette palette)
+        {
+            var motor = player.GetComponent<PlayerMotor>();
+            var boots = player.GetComponent<MagneticBoots>();
+
+            var markerObject = new GameObject("LandingMarker");
+            var marker = markerObject.AddComponent<LandingMarker>();
+            var ring = Primitive(markerObject.transform, PrimitiveType.Cylinder, "Ring", Vector3.zero, new Vector3(0.9f, 0.01f, 0.9f), palette.Marker);
+            ring.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+            var guideObject = new GameObject("Guide");
+            guideObject.transform.SetParent(markerObject.transform, false);
+            var guide = guideObject.AddComponent<LineRenderer>();
+            guide.positionCount = 2;
+            guide.widthMultiplier = 0.04f;
+            guide.sharedMaterial = palette.Guide;
+            guide.shadowCastingMode = ShadowCastingMode.Off;
+            guide.useWorldSpace = true;
+            Set(marker, "motor", motor);
+            Set(marker, "boots", boots);
+            Set(marker, "ring", ring.GetComponent<Renderer>());
+            Set(marker, "guide", guide);
+
+            var hud = new GameObject("HUD").AddComponent<GravBoots.UI.BootsHud>();
+            Set(hud, "boots", boots);
+            Set(hud, "landingMarker", marker);
         }
 
         // ---------------------------------------------------------------- areas
@@ -298,21 +389,24 @@ namespace GravBoots.Editor
         }
 
         /// <summary>Six slabs enclosing an inner volume whose floor top is at <paramref name="floorCentre"/>.</summary>
-        static void Enclosure(Transform parent, Vector3 floorCentre, Vector3 inner, Palette palette, float t = 1f)
+        static void Enclosure(Transform parent, Vector3 floorCentre, Vector3 inner, Palette palette, float t = 1f, bool magnetic = false)
         {
+            Func<Transform, string, Vector3, Vector3, Material, GameObject> slab = magnetic
+                ? (tr, n, c0, size, _) => MagBox(tr, n, c0, size, palette)
+                : (tr, n, c0, size, m) => Box(tr, n, c0, size, m);
             Vector3 c = floorCentre + Vector3.up * (inner.y * 0.5f);
-            Box(parent, "Floor", floorCentre - Vector3.up * (t * 0.5f), new Vector3(inner.x + 2 * t, t, inner.z + 2 * t), palette.Floor);
-            Box(parent, "Ceiling", c + Vector3.up * (inner.y * 0.5f + t * 0.5f), new Vector3(inner.x + 2 * t, t, inner.z + 2 * t), palette.Ceiling);
-            Box(parent, "Wall +X", c + Vector3.right * (inner.x * 0.5f + t * 0.5f), new Vector3(t, inner.y, inner.z), palette.Wall);
-            Box(parent, "Wall -X", c - Vector3.right * (inner.x * 0.5f + t * 0.5f), new Vector3(t, inner.y, inner.z), palette.Wall);
-            Box(parent, "Wall +Z", c + Vector3.forward * (inner.z * 0.5f + t * 0.5f), new Vector3(inner.x, inner.y, t), palette.Wall);
-            Box(parent, "Wall -Z", c - Vector3.forward * (inner.z * 0.5f + t * 0.5f), new Vector3(inner.x, inner.y, t), palette.Wall);
+            slab(parent, "Floor", floorCentre - Vector3.up * (t * 0.5f), new Vector3(inner.x + 2 * t, t, inner.z + 2 * t), palette.Floor);
+            slab(parent, "Ceiling", c + Vector3.up * (inner.y * 0.5f + t * 0.5f), new Vector3(inner.x + 2 * t, t, inner.z + 2 * t), palette.Ceiling);
+            slab(parent, "Wall +X", c + Vector3.right * (inner.x * 0.5f + t * 0.5f), new Vector3(t, inner.y, inner.z), palette.Wall);
+            slab(parent, "Wall -X", c - Vector3.right * (inner.x * 0.5f + t * 0.5f), new Vector3(t, inner.y, inner.z), palette.Wall);
+            slab(parent, "Wall +Z", c + Vector3.forward * (inner.z * 0.5f + t * 0.5f), new Vector3(inner.x, inner.y, t), palette.Wall);
+            slab(parent, "Wall -Z", c - Vector3.forward * (inner.z * 0.5f + t * 0.5f), new Vector3(inner.x, inner.y, t), palette.Wall);
         }
 
         static void BuildCubeRoom(Transform area, Palette p)
         {
             const float s = 16f;
-            Enclosure(area, Vector3.zero, Vector3.one * s, p);
+            Enclosure(area, Vector3.zero, Vector3.one * s, p, magnetic: true);
             // One distinct landmark per face so you can always tell which way is which.
             Box(area, "Landmark Floor (orange pillar)", new Vector3(0f, 1.5f, 3f), new Vector3(1f, 3f, 1f), p.Orange);
             Box(area, "Landmark Ceiling (blue block)", new Vector3(0f, s - 1f, 0f), new Vector3(3f, 2f, 3f), p.Blue);
@@ -325,7 +419,7 @@ namespace GravBoots.Editor
             Box(area, "Step 0.35", new Vector3(-4f, 0.175f, 1f), new Vector3(2f, 0.35f, 2f), p.Dark);
             Box(area, "Crate", new Vector3(4f, 0.75f, -3f), new Vector3(1.5f, 1.5f, 1.5f), p.Dark);
             PointLight(area, new Vector3(0f, s * 0.5f, 0f), 30f, 3f);
-            Spawn(area, "Cube Room: all six faces are walkable (keys 1–6)", 0, new Vector3(0f, 0.05f, -2f));
+            Spawn(area, "Cube Room: magnetic but with sharp corners, so use keys 1–6 to change faces", 0, new Vector3(0f, 0.05f, -2f));
         }
 
         static void BuildMetricsGym(Transform area, Palette p)
@@ -460,6 +554,150 @@ namespace GravBoots.Editor
             Spawn(area, "Pit Under Ceiling: press 2, walk over the pit, look down", 5, new Vector3(0f, 0.05f, -7f));
         }
 
+        /// <summary>
+        /// Phase 1B: setups for the magnetic boots. Magnetic surfaces are the bright panels;
+        /// grey and dark surfaces are not magnetic. Each setup has its own spawn point.
+        /// </summary>
+        static void BuildBootsGym(Transform area, Palette p)
+        {
+            // Ground everywhere except the Pit Traverse's pit (x ±5, z ±6 around the origin), 5 cm
+            // below the setups' floors so the magnetic floors and pads are always what you stand on.
+            Box(area, "Ground West", new Vector3(-20f, -0.55f, 0f), new Vector3(30f, 1f, 60f), p.Floor);
+            Box(area, "Ground East", new Vector3(40.5f, -0.55f, 0f), new Vector3(71f, 1f, 60f), p.Floor);
+            Box(area, "Ground North", new Vector3(0f, -0.55f, 18f), new Vector3(10f, 1f, 24f), p.Floor);
+            Box(area, "Ground South", new Vector3(0f, -0.55f, -18f), new Vector3(10f, 1f, 24f), p.Floor);
+
+            BuildLoopRoom(Sub(area, "Loop Room", new Vector3(-20f, 0f, 0f)), p);
+            BuildPitTraverse(Sub(area, "Pit Traverse", new Vector3(0f, 0f, 0f)), p);
+            BuildBlockCorners(Sub(area, "Block Corners", new Vector3(20f, 0f, 0f)), p);
+            BuildPipe(Sub(area, "Pipe", new Vector3(40f, 0f, 0f)), p);
+            BuildSeams(Sub(area, "Seams", new Vector3(62f, 0f, 0f)), p);
+        }
+
+        static Transform Sub(Transform area, string name, Vector3 localPosition)
+        {
+            var sub = new GameObject(name).transform;
+            sub.SetParent(area, false);
+            sub.localPosition = localPosition;
+            return sub;
+        }
+
+        /// <summary>
+        /// Floor → end wall → ceiling → start wall → floor, joined by quarter-pipes. The room's
+        /// own corners are sharp, so the curves are the only way round.
+        /// </summary>
+        static void BuildLoopRoom(Transform room, Palette p)
+        {
+            Vector3 inner = new Vector3(6f, 6f, 18f);
+            const float r = 2f;
+            float halfZ = inner.z * 0.5f;
+            Enclosure(room, Vector3.zero, inner, p, 0.5f, magnetic: true);
+
+            Curve(room, "Curve Floor→End Wall", new Vector3(0f, 0f, halfZ - r), Vector3.forward, Vector3.up, CurvedRamp.Shape.Concave, r, inner.x, p);
+            Curve(room, "Curve End Wall→Ceiling", new Vector3(0f, inner.y - r, halfZ), Vector3.up, Vector3.back, CurvedRamp.Shape.Concave, r, inner.x, p);
+            Curve(room, "Curve Ceiling→Start Wall", new Vector3(0f, inner.y, -halfZ + r), Vector3.back, Vector3.down, CurvedRamp.Shape.Concave, r, inner.x, p);
+            Curve(room, "Curve Start Wall→Floor", new Vector3(0f, r, -halfZ), Vector3.down, Vector3.forward, CurvedRamp.Shape.Concave, r, inner.x, p);
+
+            PointLight(room, new Vector3(0f, 3f, -4f), 14f, 2f);
+            PointLight(room, new Vector3(0f, 3f, 4f), 14f, 2f);
+            Spawn(room, "Boots: Loop Room. E on, then just keep walking: the curves take you round", 10, new Vector3(0f, 0.05f, -4f));
+        }
+
+        /// <summary>A pit you can only cross by walls or ceiling; the bottom is marked lethal.</summary>
+        static void BuildPitTraverse(Transform room, Palette p)
+        {
+            const float w = 10f, h = 7f, len = 24f, pit = 12f, depth = 10f, t = 0.5f;
+            float floorLen = (len - pit) * 0.5f;
+            float floorZ = pit * 0.5f + floorLen * 0.5f;
+            MagBox(room, "Floor Start", new Vector3(0f, -t * 0.5f, -floorZ), new Vector3(w, t, floorLen), p);
+            MagBox(room, "Floor End", new Vector3(0f, -t * 0.5f, floorZ), new Vector3(w, t, floorLen), p);
+            MagBox(room, "Ceiling", new Vector3(0f, h + t * 0.5f, 0f), new Vector3(w + 2 * t, t, len + 2 * t), p);
+            MagBox(room, "Wall +X", new Vector3(w * 0.5f + t * 0.5f, h * 0.5f, 0f), new Vector3(t, h, len), p);
+            MagBox(room, "Wall -X", new Vector3(-w * 0.5f - t * 0.5f, h * 0.5f, 0f), new Vector3(t, h, len), p);
+            MagBox(room, "Wall Start", new Vector3(0f, h * 0.5f, -len * 0.5f - t * 0.5f), new Vector3(w + 2 * t, h, t), p);
+            MagBox(room, "Wall End", new Vector3(0f, h * 0.5f, len * 0.5f + t * 0.5f), new Vector3(w + 2 * t, h, t), p);
+
+            // The pit: dark (non-magnetic) shaft walls, lethal bottom (kills from Phase 2 on).
+            float sy = -depth * 0.5f;
+            Box(room, "Pit +X", new Vector3(w * 0.5f + t * 0.5f, sy, 0f), new Vector3(t, depth, pit), p.Dark);
+            Box(room, "Pit -X", new Vector3(-w * 0.5f - t * 0.5f, sy, 0f), new Vector3(t, depth, pit), p.Dark);
+            Box(room, "Pit Start", new Vector3(0f, sy - t * 0.5f, -pit * 0.5f - t * 0.5f), new Vector3(w, depth - t, t), p.Dark);
+            Box(room, "Pit End", new Vector3(0f, sy - t * 0.5f, pit * 0.5f + t * 0.5f), new Vector3(w, depth - t, t), p.Dark);
+            GameObject bottom = Box(room, "Pit Bottom (lethal)", new Vector3(0f, -depth - t * 0.5f, 0f), new Vector3(w, t, pit), p.Orange);
+            bottom.tag = Layers.LethalTag;
+
+            const float r = 2f;
+            float halfLen = len * 0.5f;
+            Curve(room, "Curve Floor→Start Wall", new Vector3(0f, 0f, -halfLen + r), Vector3.back, Vector3.up, CurvedRamp.Shape.Concave, r, w, p);
+            Curve(room, "Curve Start Wall→Ceiling", new Vector3(0f, h - r, -halfLen), Vector3.up, Vector3.forward, CurvedRamp.Shape.Concave, r, w, p);
+            Curve(room, "Curve Ceiling→End Wall", new Vector3(0f, h, halfLen - r), Vector3.forward, Vector3.down, CurvedRamp.Shape.Concave, r, w, p);
+            Curve(room, "Curve End Wall→Floor", new Vector3(0f, r, halfLen), Vector3.down, Vector3.back, CurvedRamp.Shape.Concave, r, w, p);
+
+            PointLight(room, new Vector3(0f, h - 1f, -8f), 14f, 2f);
+            PointLight(room, new Vector3(0f, h - 1f, 8f), 14f, 2f);
+            PointLight(room, new Vector3(0f, -depth * 0.5f, 0f), 12f, 1.5f);
+            Spawn(room, "Boots: Pit Traverse. Up the curve behind you and across the ceiling; drop over the pit to see the red marker", 11,
+                new Vector3(0f, 0.05f, -7f), 180f);
+        }
+
+        /// <summary>
+        /// Curves both ways: a quarter-pipe from the pad up the block's face, rounded edges over
+        /// its top and down the far side, and a quarter-pipe onto the far pad. The small block
+        /// beside it has sharp edges, which the boots can't take.
+        /// </summary>
+        static void BuildBlockCorners(Transform setup, Palette p)
+        {
+            const float width = 6f, edge = 1.5f, foot = 2f;
+            MagBox(setup, "Pad Front", new Vector3(0f, 0.05f, -3f), new Vector3(8f, 0.1f, 8f), p);
+            MagBox(setup, "Pad Back", new Vector3(0f, 0.05f, 11f), new Vector3(8f, 0.1f, 8f), p);
+            // A 6 m block (front face z = 1, back face z = 7) whose top edges are rounded.
+            MagBox(setup, "Block Lower", new Vector3(0f, (6f - edge) * 0.5f, 4f), new Vector3(width, 6f - edge, 6f), p);
+            MagBox(setup, "Block Top", new Vector3(0f, 6f - edge * 0.5f, 4f), new Vector3(width, edge, 6f - 2f * edge), p);
+            Curve(setup, "Edge Front", new Vector3(0f, 6f, 1f + edge), Vector3.back, Vector3.up, CurvedRamp.Shape.Convex, edge, width, p);
+            Curve(setup, "Edge Back", new Vector3(0f, 6f, 7f - edge), Vector3.forward, Vector3.up, CurvedRamp.Shape.Convex, edge, width, p);
+            Curve(setup, "Curve Pad→Front", new Vector3(0f, 0.1f, 1f - foot), Vector3.forward, Vector3.up, CurvedRamp.Shape.Concave, foot, width, p);
+            Curve(setup, "Curve Back→Pad", new Vector3(0f, 0.1f + foot, 7f), Vector3.down, Vector3.forward, CurvedRamp.Shape.Concave, foot, width, p);
+
+            MagBox(setup, "Sharp Block 2 m", new Vector3(-7f, 1f, 4f), new Vector3(2f, 2f, 2f), p);
+            Spawn(setup, "Boots: Block Corners. Curves up, over and down; the small sharp block can't be climbed", 12,
+                new Vector3(0f, 0.15f, -5f));
+        }
+
+        /// <summary>A 16-sided tube: walk sideways around the inside on continuous seams.</summary>
+        static void BuildPipe(Transform setup, Palette p)
+        {
+            const int sides = 16;
+            const float radius = 3.5f, thickness = 0.5f, length = 14f;
+            float centreY = radius + 0.25f;
+            float width = 2f * radius * Mathf.Tan(Mathf.PI / sides) + 0.08f;
+            for (int i = 0; i < sides; i++)
+            {
+                float theta = i * 360f / sides;
+                float rad = theta * Mathf.Deg2Rad;
+                float d = radius + thickness * 0.5f;
+                var centre = new Vector3(Mathf.Sin(rad) * d, centreY - Mathf.Cos(rad) * d, 0f);
+                MagBox(setup, $"Pipe {i:00}", centre, new Vector3(width, thickness, length), p, Quaternion.Euler(0f, 0f, theta));
+            }
+            MagBox(setup, "Pad", new Vector3(0f, 0.05f, -length * 0.5f - 3f), new Vector3(4f, 0.1f, 6f), p);
+            PointLight(setup, new Vector3(0f, centreY, 0f), 12f, 2f);
+            Spawn(setup, "Boots: Pipe. E on the pad, walk in, then strafe around the inside", 13,
+                new Vector3(0f, 0.15f, -length * 0.5f - 4f));
+        }
+
+        /// <summary>Magnetic walls with non-magnetic sections: walking onto one drops you.</summary>
+        static void BuildSeams(Transform setup, Palette p)
+        {
+            const float h = 6f, t = 0.5f, z = 4f;
+            MagBox(setup, "Pad", new Vector3(0f, 0.05f, 1f), new Vector3(14f, 0.1f, 5f), p);
+            Curve(setup, "Curve Pad→Wall", new Vector3(0f, 0.1f, z - t * 0.5f - 2f), Vector3.forward, Vector3.up, CurvedRamp.Shape.Concave, 2f, 14f, p);
+            MagBox(setup, "Wall Left (magnetic)", new Vector3(-4.5f, h * 0.5f, z), new Vector3(5f, h, t), p);
+            Box(setup, "Wall Gap (not magnetic)", new Vector3(0f, h * 0.5f, z), new Vector3(4f, h, t), p.Dark);
+            MagBox(setup, "Wall Right Lower (magnetic)", new Vector3(4.5f, 1.5f, z), new Vector3(5f, 3f, t), p);
+            Box(setup, "Wall Right Upper (not magnetic)", new Vector3(4.5f, 4.5f, z), new Vector3(5f, 3f, t), p.Dark);
+            Spawn(setup, "Boots: Seams. Up the curve, then onto the dark sections and you drop", 14,
+                new Vector3(-4.5f, 0.15f, 0f));
+        }
+
         // ---------------------------------------------------------------- helpers
 
         static GameObject Box(Transform parent, string name, Vector3 localCentre, Vector3 size, Material material,
@@ -476,7 +714,38 @@ namespace GravBoots.Editor
             return go;
         }
 
-        static void Primitive(Transform parent, PrimitiveType type, string name, Vector3 localPosition, Vector3 scale, Material material)
+        /// <summary>A box on the Magnetic layer with the magnetic panel material.</summary>
+        static GameObject MagBox(Transform parent, string name, Vector3 localCentre, Vector3 size, Palette palette,
+            Quaternion? localRotation = null)
+        {
+            GameObject go = Box(parent, name, localCentre, size, palette.Magnetic, localRotation);
+            go.layer = Layers.Magnetic;
+            return go;
+        }
+
+        /// <summary>
+        /// A magnetic 90° curve starting at <paramref name="start"/> on a surface facing
+        /// <paramref name="up"/>, heading along <paramref name="forward"/> (see <see cref="CurvedRamp"/>).
+        /// </summary>
+        static GameObject Curve(Transform parent, string name, Vector3 start, Vector3 forward, Vector3 up,
+            CurvedRamp.Shape shape, float radius, float width, Palette palette)
+        {
+            var go = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider), typeof(CurvedRamp));
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = start;
+            go.transform.localRotation = Quaternion.LookRotation(forward, up);
+            go.layer = Layers.Magnetic;
+            var ramp = go.GetComponent<CurvedRamp>();
+            ramp.shape = shape;
+            ramp.radius = radius;
+            ramp.width = width;
+            ramp.segments = Mathf.Max(8, Mathf.CeilToInt(radius * 8f));
+            ramp.Rebuild();
+            go.GetComponent<MeshRenderer>().sharedMaterial = palette.Magnetic;
+            return go;
+        }
+
+        static GameObject Primitive(Transform parent, PrimitiveType type, string name, Vector3 localPosition, Vector3 scale, Material material)
         {
             var go = GameObject.CreatePrimitive(type);
             go.name = name;
@@ -485,6 +754,7 @@ namespace GravBoots.Editor
             go.transform.localPosition = localPosition;
             go.transform.localScale = scale;
             go.GetComponent<MeshRenderer>().sharedMaterial = material;
+            return go;
         }
 
         static void Set(Object target, string field, Object value)

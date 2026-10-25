@@ -68,24 +68,31 @@ values for each surface.
                  toggle on (grounded on magnetic)                toggle off
   [Normal] ────────────────────────────────────▶ [Magnetized] ─────────────▶ [Dropping]
      ▲                                             │    ▲                        │
-     │     on the floor, toggle off (no fall)      │    │ walks across a         │
-     └─────────────────────────────────────────────┘    │ seam onto connected    │
+     │     on the floor, toggle off (no fall)      │    │ follows curves onto    │
+     └─────────────────────────────────────────────┘    │ walls and ceilings     │
      └──────────────────────────────── lands upright ───┴────────────────────────┘
 ```
 - **Normal**: `Up = Vector3.up`, standard platformer movement, can jump.
-- **Magnetized**: `Up` follows the face normal of the magnetic surface underfoot.
-  - *Same surface vs transition*: when the normal changes by less than about 25° per probe, it
-    is followed continuously (ramps, curved pipes). A larger change triggers a corner
-    transition.
-  - *Concave corner* (wall ahead, steep ramp): a forward capsule probe finds the new face. The
-    player pivots onto it over about 0.15 s.
-  - *Convex corner* (walking over an edge onto the far side): the ground probe finds nothing, so
-    probe down-and-back around the edge and wrap the player around it.
+- **Magnetized**: `Up` follows the normal of the magnetic face directly under the player's
+  centre.
+  - **Orientation only changes along explicit curves**: quarter-pipes (`CurvedRamp`, concave)
+    for inside corners and rounded edges (convex) for outside corners, plus pipes. Their facets
+    meet at a few degrees, well under `followMaxAngle` (30°), so `Up` follows them smoothly.
+  - **Sharp joins are impassable, even between magnetic surfaces.** Walking into a wall that
+    meets the floor at 90° just blocks you. Walking off a sharp edge loses contact and drops
+    you. This keeps every route visible in the level geometry: the curves *are* the routes.
+  - The face is sampled by a ray along −Up from the player's centre, not taken from the
+    motor's contact normal. Rolling over a sharp edge, the contact normal blends smoothly from
+    one face to the other and would let the boots creep round a right angle.
   - Walking off a magnetic surface onto a non-magnetic one, or into empty space: no
     attachment, so it behaves like a drop. This is intentional, and the landing marker shows
     where you'd land.
-  - Jumping while magnetized: undecided. Either not allowed or a small hop along `Up` that
-    re-attaches to the same face. Playtest both in Phase 1B.
+  - Jumping while magnetized: a small hop along `Up`. The boots hold on until you land again
+    (`BootsSettings.allowHop`, with a cut-off after `maxHopAirTime`). Still to playtest
+    against "no jumping".
+  - Losing magnetic contact (a non-magnetic section, or empty space with no face beyond the
+    edge) switches the boots **off** after a short grace period (`contactGrace`), so you have
+    to switch them on again once you land on a magnetic surface.
 - **Dropping** (boots switched off on a wall or ceiling): gravity becomes world-down on the
   very first frame. The body rights itself with `SurfaceAlignment.RotateUpToward` at about
   720°/s, so it is upright before landing. A small push away from the surface stops the player
@@ -170,7 +177,7 @@ Each phase has an **exit check** that you can play or that a test checks.
 URP project, packages, folder structure, assembly definitions, test assemblies, git.
 `SurfaceAlignment` math with EditMode tests, including the ceiling-drop roll.
 
-### Phase 1A: Movement with any up direction + camera test bed (start here)
+### Phase 1A: Movement with any up direction + camera test bed ✅
 The goal is to test the camera and the motor in every orientation **before** any boots logic
 exists.
 - Input actions: `Move`, `Look`, `Jump`, `ToggleBoots`, `Interact`, `Pause`, and debug keys
@@ -196,9 +203,16 @@ exists.
     orientation".
   - Decision made: custom motor or KCC. First pick of camera mode (it can still change).
 
-### Phase 1B: Magnetic boots (the core mechanic)
+### Phase 1B: Magnetic boots (the core mechanic) (built; playtest pending)
+Built: `MagneticBoots` (Off / Magnetized / Dropping), `BootsSettings`, the `Magnetic` layer and
+panel material, `CurvedRamp` (quarter-pipes and rounded edges), the landing marker (red over
+`Lethal`-tagged surfaces), boot glow, the HUD (boots state, plus a crosshair that turns blue over
+magnetic surfaces) and the Boots Gym area. `MagneticBootsTests` cover the exit checks (curves at
+all six orientations; sharp joins block or drop). Not done yet:
+audio (clank, hum, thud), and a playtest of how the camera feels through corners.
 - The boots states from §1.3, the `Magnetic` layer and its material.
-- Concave and convex corner transitions. Continuous normal following on curves.
+- Orientation changes only along curved surfaces (quarter-pipes, rounded edges, pipes);
+  sharp joins are impassable.
 - Dropping, righting yourself and landing. The **landing marker**. The movement-mapping hold
   during transitions.
 - Feedback: boot glow, a clank on attach, a hum while magnetized, an indicator that you're
@@ -206,7 +220,8 @@ exists.
 - Test bed additions: ramp → wall → ceiling loop, a ceiling over a pit, a wall corridor, outside
   corners, a pipe, and a magnetic → non-magnetic seam.
 - **Exit check:**
-  - Floor → 70° ramp → wall → ceiling → down the far wall with no pops or snagging.
+  - Floor → quarter-pipe → wall → ceiling → down the far wall with no pops or snagging, and
+    no way round a right-angle join.
   - Dropping from any orientation lands upright with your heading kept.
   - PlayMode tests: "toggle off on the ceiling → grounded and upright within N seconds",
     "walk into a magnetic wall → Up == wall normal".

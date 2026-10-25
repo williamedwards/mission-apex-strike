@@ -13,6 +13,7 @@ namespace GravBoots.Debugging
         [SerializeField] CameraRig cameraRig;
         [SerializeField] DebugGravityKeys keys;
         [SerializeField] CameraPopProbe popProbe;
+        [SerializeField] MagneticBoots boots;
         [SerializeField] bool showHelp = true;
 
         readonly StringBuilder text = new StringBuilder();
@@ -53,6 +54,8 @@ namespace GravBoots.Debugging
                 ? $"<b>Grounded</b>    slope {Vector3.Angle(motor.GroundNormal, up):0}°  on {motor.GroundCollider?.name}"
                 : $"<b>Airborne</b>{(motor.OnSteepSurface ? "    (on steep surface)" : "")}");
             text.AppendLine($"<b>Speed</b>       lateral {lateral:0.0}  vertical {vertical:0.0}");
+            if (boots != null)
+                text.AppendLine($"<b>Boots</b>       {boots.State}");
             if (cameraRig != null)
                 text.AppendLine($"<b>Camera</b>      {cameraRig.Mode}  up Δ {Vector3.Angle(cameraRig.Up, motor.BodyUp):0}°");
             if (popProbe != null)
@@ -64,17 +67,13 @@ namespace GravBoots.Debugging
             if (showHelp)
             {
                 text.AppendLine();
-                text.AppendLine("1 floor  2 ceiling  3/4 ±X wall  5/6 ±Z wall  G / MMB face under crosshair");
+                text.AppendLine("E / RMB boots   Space jump   1 floor  2 ceiling  3/4 ±X wall  5/6 ±Z wall  G / MMB face under crosshair");
                 text.AppendLine("B instant/blend  C camera mode  N next area  R reset  F3 overlay  Esc cursor");
             }
 
             var content = new GUIContent(text.ToString());
             Vector2 size = style.CalcSize(content);
             GUI.Box(new Rect(10, 10, size.x, size.y), content, style);
-
-            // Crosshair for the "face under crosshair" key.
-            float cx = Screen.width * 0.5f, cy = Screen.height * 0.5f;
-            GUI.Box(new Rect(cx - 2, cy - 2, 4, 4), GUIContent.none);
         }
 
         static string Fmt(Vector3 v) => $"({v.x,5:0.00}, {v.y,5:0.00}, {v.z,5:0.00})";
