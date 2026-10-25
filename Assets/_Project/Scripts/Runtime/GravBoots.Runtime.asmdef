@@ -1,0 +1,9 @@
+{
+    "name": "GravBoots.Runtime",
+    "rootNamespace": "GravBoots",
+    "references": [
+        "Unity.InputSystem",
+        "Unity.Cinemachine"
+    ],
+    "autoReferenced": true
+}

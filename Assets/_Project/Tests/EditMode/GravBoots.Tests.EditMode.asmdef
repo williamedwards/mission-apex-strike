@@ -1,0 +1,18 @@
+{
+    "name": "GravBoots.Tests.EditMode",
+    "rootNamespace": "GravBoots.Tests",
+    "references": [
+        "GravBoots.Runtime",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [ "Editor" ],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ]
+}

@@ -1,0 +1,10 @@
+{
+    "name": "GravBoots.Editor",
+    "rootNamespace": "GravBoots.Editor",
+    "references": [
+        "GravBoots.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}
