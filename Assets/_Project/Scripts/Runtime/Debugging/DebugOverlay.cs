@@ -12,6 +12,7 @@ namespace GravBoots.Debugging
         [SerializeField] PlayerController controller;
         [SerializeField] CameraRig cameraRig;
         [SerializeField] DebugGravityKeys keys;
+        [SerializeField] CameraPopProbe popProbe;
         [SerializeField] bool showHelp = true;
 
         readonly StringBuilder text = new StringBuilder();
@@ -54,6 +55,8 @@ namespace GravBoots.Debugging
             text.AppendLine($"<b>Speed</b>       lateral {lateral:0.0}  vertical {vertical:0.0}");
             if (cameraRig != null)
                 text.AppendLine($"<b>Camera</b>      {cameraRig.Mode}  up Δ {Vector3.Angle(cameraRig.Up, motor.BodyUp):0}°");
+            if (popProbe != null)
+                text.AppendLine($"<b>Camera pops</b> {popProbe.PopCount}  largest {popProbe.LargestPop:0.00} m  clipped frames {popProbe.ClippedFrames}  last: {popProbe.LastCause}");
             if (controller != null)
                 text.AppendLine($"<b>Move map</b>    {(controller.Mapper.IsHoldingMapping ? "held through transition" : "camera")}");
             if (keys != null)

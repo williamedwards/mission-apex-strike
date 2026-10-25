@@ -31,6 +31,8 @@ namespace GravBoots.Cameras
         [SerializeField] CameraSettings settings;
         [SerializeField] CinemachineCamera virtualCamera;
         [SerializeField] CameraUpMode mode;
+        [Tooltip("What the camera keeps clear of. Exclude the player.")]
+        [SerializeField] LayerMask obstacleMask = ~0;
 
         CinemachineThirdPersonFollow follow;
         Camera view;
@@ -40,12 +42,35 @@ namespace GravBoots.Cameras
         Vector3 settledUp = Vector3.up;
         float settleTimer;
         bool cursorLocked;
+        float shoulderScale = 1f;
+        float distance;
 
         public CameraUpMode Mode { get => mode; set => mode = value; }
         public CameraSettings Settings => settings;
         /// <summary>The camera's up, without pitch.</summary>
         public Vector3 Up => frame * Vector3.up;
         public Transform ViewTransform => view != null ? view.transform : pivot;
+        /// <summary>Pitch pivot and Cinemachine follow target.</summary>
+        public Transform Pivot => pivot;
+        /// <summary>Frame of the last deliberate cut (spawn, teleport); a jump then is expected.</summary>
+        public int LastSnapFrame { get; private set; } = -1;
+        /// <summary>Current camera distance after obstacle avoidance (debug readout).</summary>
+        public float CurrentDistance => distance;
+        /// <summary>Current shoulder offset scale after obstacle avoidance (debug readout).</summary>
+        public float ShoulderScale => shoulderScale;
+        /// <summary>Where the rig wants the end of the shoulder arm, before Cinemachine damping.</summary>
+        public Vector3 HandPosition => pivot.position + HandOffset(shoulderScale);
+        /// <summary>Where the rig wants the camera, before Cinemachine damping.</summary>
+        public Vector3 CameraPosition => HandPosition - pivot.rotation * Vector3.forward * distance;
+
+        /// <summary>Wires the rig up from code (tests, tools); scenes set these in the Inspector.</summary>
+        public void Configure(Transform target, Transform pivot, CameraSettings settings, LayerMask obstacleMask)
+        {
+            this.target = target;
+            this.pivot = pivot;
+            this.settings = settings;
+            this.obstacleMask = obstacleMask;
+        }
 
         void Start()
         {
@@ -67,21 +92,31 @@ namespace GravBoots.Cameras
             settleCandidate = settledUp = target.up;
             settleTimer = 0f;
             pitch = 10f;
+            LastSnapFrame = Time.frameCount;
             Place();
+            if (settings != null)
+            {
+                // Start from where obstacles allow, not from a stale value in another room.
+                shoulderScale = ClearFraction(pivot.position, HandOffset(1f), settings.collisionRadius + settings.shoulderMargin);
+                distance = ClearDistance(pivot.position + HandOffset(shoulderScale), settings.cameraDistance);
+            }
             if (virtualCamera != null)
                 virtualCamera.PreviousStateIsValid = false;
         }
 
-        void LateUpdate()
+        void LateUpdate() => Tick(Time.deltaTime);
+
+        /// <summary>Advances the rig by one frame. Called from LateUpdate; tests call it directly.</summary>
+        public void Tick(float deltaTime)
         {
             if (target == null || settings == null)
                 return;
-            float deltaTime = Time.deltaTime;
 
             UpdateCursor();
             FollowUp(DesiredUp(target.up, deltaTime), deltaTime);
             ApplyLook(deltaTime);
             Place();
+            AvoidObstacles(deltaTime);
             ApplySettings();
         }
 
@@ -145,14 +180,74 @@ namespace GravBoots.Cameras
                 pivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
         }
 
+        /// <summary>
+        /// Keeps the shoulder and camera out of walls without sudden jumps.
+        /// </summary>
+        /// <remarks>
+        /// Cinemachine's own avoidance snaps the camera in on the frame something gets in the
+        /// way, and never damps the shoulder at all. Here both still track slow, continuous
+        /// changes exactly (backing into a wall stays tight), but sudden changes (a pillar
+        /// passing behind, the lip of a protruding block) are limited to a maximum speed, and
+        /// moving back out is eased. The shoulder is probed with a margin, so it starts tucking
+        /// in before it touches a wall.
+        /// </remarks>
+        void AvoidObstacles(float deltaTime)
+        {
+            Vector3 root = pivot.position;
+
+            float shoulderTarget = ClearFraction(root, HandOffset(1f), settings.collisionRadius + settings.shoulderMargin);
+            shoulderScale = shoulderTarget < shoulderScale
+                ? Mathf.MoveTowards(shoulderScale, shoulderTarget, settings.shoulderRetractPerSecond * deltaTime)
+                : Ease(shoulderScale, shoulderTarget, settings.easeOutTime, deltaTime);
+
+            float distanceTarget = ClearDistance(root + HandOffset(shoulderScale), settings.cameraDistance);
+            distance = distanceTarget < distance
+                ? Mathf.MoveTowards(distance, distanceTarget, settings.pullInSpeed * deltaTime)
+                : Ease(distance, distanceTarget, settings.easeOutTime, deltaTime);
+        }
+
+        /// <summary>Hand (end of the shoulder arm) relative to the pivot, with the arm scaled.</summary>
+        Vector3 HandOffset(float scale)
+        {
+            return frame * (settings.shoulderOffset * scale) + pivot.rotation * new Vector3(0f, settings.verticalArmLength * scale, 0f);
+        }
+
+        /// <summary>Fraction (0..1) of <paramref name="offset"/> a sphere can travel from <paramref name="from"/>.</summary>
+        float ClearFraction(Vector3 from, Vector3 offset, float radius)
+        {
+            float length = offset.magnitude;
+            if (length < 1e-4f)
+                return 1f;
+            if (!Physics.SphereCast(from, radius, offset / length, out RaycastHit hit, length, obstacleMask, QueryTriggerInteraction.Ignore))
+                return 1f;
+            return Mathf.Clamp01(hit.distance / length);
+        }
+
+        /// <summary>How far behind <paramref name="hand"/> the camera can sit, up to <paramref name="wanted"/>.</summary>
+        float ClearDistance(Vector3 hand, float wanted)
+        {
+            Vector3 back = -(pivot.rotation * Vector3.forward);
+            return Physics.SphereCast(hand, settings.collisionRadius, back, out RaycastHit hit, wanted, obstacleMask, QueryTriggerInteraction.Ignore)
+                ? hit.distance
+                : wanted;
+        }
+
+        static float Ease(float current, float target, float time, float deltaTime)
+        {
+            return time <= 0f ? target : Mathf.Lerp(current, target, 1f - Mathf.Exp(-deltaTime / time));
+        }
+
         void ApplySettings()
         {
             if (follow != null)
             {
-                follow.ShoulderOffset = settings.shoulderOffset;
-                follow.VerticalArmLength = settings.verticalArmLength;
-                follow.CameraDistance = settings.cameraDistance;
+                bool smooth = settings.smoothObstacleAvoidance;
+                follow.ShoulderOffset = settings.shoulderOffset * (smooth ? shoulderScale : 1f);
+                follow.VerticalArmLength = settings.verticalArmLength * (smooth ? shoulderScale : 1f);
+                follow.CameraDistance = smooth ? distance : settings.cameraDistance;
                 follow.Damping = settings.damping;
+                follow.AvoidObstacles.Enabled = !smooth;
+                follow.AvoidObstacles.CollisionFilter = obstacleMask;
                 follow.AvoidObstacles.CameraRadius = settings.collisionRadius;
             }
             if (virtualCamera != null)

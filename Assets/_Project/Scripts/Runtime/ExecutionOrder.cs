@@ -11,5 +11,7 @@ namespace GravBoots
         public const int Input = -150;
         public const int Motor = -100;
         public const int CameraRig = -50;
+        /// <summary>After the Cinemachine brain (default order 0) has placed the camera.</summary>
+        public const int AfterCamera = 100;
     }
 }

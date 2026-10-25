@@ -13,8 +13,21 @@ namespace GravBoots.Cameras
         public float verticalArmLength = 0.2f;
         public float cameraDistance = 3.5f;
         public Vector3 damping = new Vector3(0.1f, 0.25f, 0.3f);
-        public float collisionRadius = 0.2f;
         public float fieldOfView = 65f;
+
+        [Header("Obstacles")]
+        [Tooltip("On: CameraRig's smoothed avoidance. Off: Cinemachine's built-in avoidance, which snaps in instantly (kept for comparison).")]
+        public bool smoothObstacleAvoidance = true;
+        [Tooltip("Radius of the sphere the camera keeps clear of geometry.")]
+        public float collisionRadius = 0.2f;
+        [Tooltip("Extra clearance for the shoulder probe, so the shoulder tucks in before it touches a wall.")]
+        public float shoulderMargin = 0.25f;
+        [Tooltip("Fastest the shoulder offset retracts, as a fraction of its length per second.")]
+        public float shoulderRetractPerSecond = 4f;
+        [Tooltip("Fastest the camera pulls in toward the player (m/s). Continuous approaches slower than this are tracked exactly; sudden obstructions are smoothed.")]
+        public float pullInSpeed = 12f;
+        [Tooltip("Time constant for easing the shoulder and camera back out once clear (seconds).")]
+        public float easeOutTime = 0.35f;
 
         [Header("Look")]
         public float mouseDegreesPerPixel = 0.1f;

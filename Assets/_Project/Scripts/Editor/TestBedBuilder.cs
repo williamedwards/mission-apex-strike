@@ -237,9 +237,8 @@ namespace GravBoots.Editor
             vcam.Lens.FieldOfView = cameraSettings.fieldOfView;
             vcam.Lens.NearClipPlane = 0.05f;
             var follow = vcamObject.AddComponent<CinemachineThirdPersonFollow>();
-            follow.AvoidObstacles.Enabled = true;
-            follow.AvoidObstacles.CollisionFilter = ~((1 << PlayerLayer) | (1 << 2));
-            follow.AvoidObstacles.CameraRadius = cameraSettings.collisionRadius;
+            // CameraRig handles obstacles itself (smoothly); see CameraRig.AvoidObstacles.
+            follow.AvoidObstacles.Enabled = false;
 
             var rig = rigObject.AddComponent<CameraRig>();
             Set(rig, "target", player.transform);
@@ -247,11 +246,16 @@ namespace GravBoots.Editor
             Set(rig, "input", reader);
             Set(rig, "settings", cameraSettings);
             Set(rig, "virtualCamera", vcam);
+            SetInt(rig, "obstacleMask", ~((1 << PlayerLayer) | (1 << 2)));
             Set(controller, "cameraRig", rig);
 
             var debugObject = new GameObject("Debug");
             var keys = debugObject.AddComponent<DebugGravityKeys>();
             var overlay = debugObject.AddComponent<DebugOverlay>();
+            var popProbe = debugObject.AddComponent<CameraPopProbe>();
+            Set(popProbe, "cameraRig", rig);
+            SetInt(popProbe, "solidMask", ~((1 << PlayerLayer) | (1 << 2)));
+            Set(overlay, "popProbe", popProbe);
             Set(keys, "input", reader);
             Set(keys, "motor", motor);
             Set(keys, "cameraRig", rig);
