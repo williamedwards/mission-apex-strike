@@ -299,8 +299,14 @@ namespace GravBoots.Tests
             Assert.That(motor.Position.y, Is.LessThan(0.1f));
         }
 
-        [Test]
-        public void HopOnWallStaysAttached()
+        /// <summary>A jump press as the game routes it: the boots get first say.</summary>
+        void PressJump()
+        {
+            if (!boots.HandleJump())
+                motor.RequestJump();
+        }
+
+        void StandOnWall()
         {
             BuildFrame(Vector3.up);
             Floor(magnetic: false);
@@ -308,13 +314,55 @@ namespace GravBoots.Tests
             // Standing on the wall at 4 m, up = wall normal.
             SpawnPlayer(new Vector3(0f, 4f, 2.98f), Quaternion.LookRotation(Vector3.up, Vector3.back), Vector3.back);
             Activate();
+        }
 
-            motor.RequestJump();
-            Run(1.5f);
+        [Test]
+        public void JumpIsBlockedWhileMagnetized()
+        {
+            StandOnWall();
+            Vector3 before = motor.Position;
+
+            PressJump();
+            Run(1f);
 
             Assert.That(boots.State, Is.EqualTo(BootsState.Magnetized));
             Assert.That(motor.IsGrounded, Is.True);
-            AssertDirection(Vector3.back, motor.Gravity.Up, 1f, "still on the wall");
+            Assert.That(Vector3.Distance(before, motor.Position), Is.LessThan(0.05f), "should not have left the wall");
+        }
+
+        [Test]
+        public void JumpLetsGoWhenConfigured()
+        {
+            StandOnWall();
+            boots.Settings.jumpWhileMagnetized = MagnetizedJump.LetsGo;
+
+            PressJump();
+            Run(Dt);
+            Assert.That(boots.State, Is.EqualTo(BootsState.Dropping), "jump should drop you");
+            AssertDirection(Vector3.up, motor.Gravity.Up, 0.1f, "world gravity");
+
+            Run(2f);
+            Assert.That(boots.State, Is.EqualTo(BootsState.Off));
+            AssertDirection(Vector3.up, motor.BodyUp, 1f, "landed upright");
+        }
+
+        [Test]
+        public void JumpWorksNormallyWithBootsOff()
+        {
+            BuildFrame(Vector3.up);
+            Floor(magnetic: true);
+            SpawnPlayer(Vector3.zero);
+            Run(0.3f);
+
+            PressJump();
+            float peak = 0f;
+            for (int i = 0; i < 30; i++)
+            {
+                Run(Dt);
+                peak = Mathf.Max(peak, motor.Position.y);
+            }
+
+            Assert.That(peak, Is.GreaterThan(1f));
         }
     }
 }

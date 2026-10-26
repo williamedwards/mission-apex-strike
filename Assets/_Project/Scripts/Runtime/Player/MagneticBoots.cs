@@ -38,8 +38,6 @@ namespace GravBoots.Player
         GravityBody gravity;
         bool toggleRequested;
         float lostContactTime;
-        bool hopping;
-        float hopAirTime;
 
         public BootsSettings Settings { get => settings; set => settings = value; }
         public BootsState State { get; private set; }
@@ -69,6 +67,19 @@ namespace GravBoots.Player
 
         /// <summary>Asks for the boots to switch on or off; applied after the next motor step.</summary>
         public void RequestToggle() => toggleRequested = true;
+
+        /// <summary>
+        /// Gives the boots first say over a jump press. Returns true when the boots handled it,
+        /// in which case the caller must not jump (see <see cref="BootsSettings.jumpWhileMagnetized"/>).
+        /// </summary>
+        public bool HandleJump()
+        {
+            if (State != BootsState.Magnetized || settings == null)
+                return false;
+            if (settings.jumpWhileMagnetized == MagnetizedJump.LetsGo)
+                RequestToggle();
+            return true;
+        }
 
         /// <summary>Switches the boots off without a drop (debug gravity keys, respawn).</summary>
         public void ForceOff()
@@ -115,22 +126,14 @@ namespace GravBoots.Player
                 return;
             }
             lostContactTime = 0f;
-            hopping = false;
             SetState(BootsState.Magnetized);
         }
 
         void UpdateAttachment(float deltaTime)
         {
             Vector3 up = gravity.Up;
-            if (motor.JumpedThisStep && settings.allowHop)
-            {
-                hopping = true;
-                hopAirTime = 0f;
-            }
-
             if (motor.IsGrounded)
             {
-                hopping = false;
                 if (TryGetSupport(up, out Vector3 normal))
                 {
                     lostContactTime = 0f;
@@ -141,14 +144,6 @@ namespace GravBoots.Player
                 }
                 // Over a sharp edge, or standing on something non-magnetic.
                 LoseContact(deltaTime);
-                return;
-            }
-
-            if (hopping)
-            {
-                hopAirTime += deltaTime;
-                if (hopAirTime > settings.maxHopAirTime)
-                    Drop();
                 return;
             }
 
@@ -208,7 +203,6 @@ namespace GravBoots.Player
                 return;
             BootsState previous = State;
             State = next;
-            hopping = false;
             StateChanged?.Invoke(previous, next);
         }
     }

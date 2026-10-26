@@ -104,6 +104,25 @@ namespace GravBoots.Tests
         }
 
         [Test]
+        public void ShoulderStaysOutOfWallWhenPressedRightUpAgainstIt()
+        {
+            // The player's side touching a wall on the shoulder side: the pivot is a capsule
+            // radius (0.35 m) from the wall, so the shoulder probe starts inside its own margin.
+            Box(new Vector3(1.6f, 2f, 0f), new Vector3(0.5f, 4f, 40f));
+            target.position = new Vector3(1.35f - 0.35f, 0f, -10f);
+            rig.SnapBehindTarget();
+
+            var frames = Walk(Vector3.forward, 1.5f);
+
+            for (int i = 0; i < frames.Count; i++)
+            {
+                Assert.That(Inside(frames[i].hand), Is.False, $"shoulder inside wall at frame {i}");
+                Assert.That(Inside(frames[i].camera), Is.False, $"camera inside wall at frame {i}");
+            }
+            Assert.That(frames[frames.Count - 1].shoulder, Is.LessThan(0.5f), "shoulder should be tucked in");
+        }
+
+        [Test]
         public void ShoulderTucksInWithoutJumpingWhenHuggingWall()
         {
             // Wall on the shoulder side; the player drifts toward it while walking forward.

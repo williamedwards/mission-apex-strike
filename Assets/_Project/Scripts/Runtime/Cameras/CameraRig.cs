@@ -218,18 +218,37 @@ namespace GravBoots.Cameras
             float length = offset.magnitude;
             if (length < 1e-4f)
                 return 1f;
-            if (!Physics.SphereCast(from, radius, offset / length, out RaycastHit hit, length, obstacleMask, QueryTriggerInteraction.Ignore))
-                return 1f;
-            return Mathf.Clamp01(hit.distance / length);
+            return Mathf.Clamp01(ClearTravel(from, offset / length, length, radius) / length);
         }
 
         /// <summary>How far behind <paramref name="hand"/> the camera can sit, up to <paramref name="wanted"/>.</summary>
         float ClearDistance(Vector3 hand, float wanted)
         {
             Vector3 back = -(pivot.rotation * Vector3.forward);
-            return Physics.SphereCast(hand, settings.collisionRadius, back, out RaycastHit hit, wanted, obstacleMask, QueryTriggerInteraction.Ignore)
+            return ClearTravel(hand, back, wanted, settings.collisionRadius);
+        }
+
+        /// <summary>
+        /// How far a sphere of <paramref name="radius"/> can move from <paramref name="from"/>
+        /// along <paramref name="direction"/>, up to <paramref name="length"/>.
+        /// </summary>
+        /// <remarks>
+        /// A sphere cast ignores colliders it already overlaps at the start, which is the normal
+        /// case when the player hugs a wall: the probe would see nothing and put the shoulder
+        /// inside the wall. When the start overlaps, fall back to a ray and keep the radius
+        /// clear of whatever it hits.
+        /// </remarks>
+        float ClearTravel(Vector3 from, Vector3 direction, float length, float radius)
+        {
+            if (Physics.CheckSphere(from, radius, obstacleMask, QueryTriggerInteraction.Ignore))
+            {
+                return Physics.Raycast(from, direction, out RaycastHit rayHit, length + radius, obstacleMask, QueryTriggerInteraction.Ignore)
+                    ? Mathf.Max(0f, rayHit.distance - radius)
+                    : length;
+            }
+            return Physics.SphereCast(from, radius, direction, out RaycastHit hit, length, obstacleMask, QueryTriggerInteraction.Ignore)
                 ? hit.distance
-                : wanted;
+                : length;
         }
 
         static float Ease(float current, float target, float time, float deltaTime)

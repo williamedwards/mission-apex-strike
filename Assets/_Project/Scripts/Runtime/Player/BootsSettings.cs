@@ -2,6 +2,15 @@ using UnityEngine;
 
 namespace GravBoots.Player
 {
+    /// <summary>What the jump button does while the boots are magnetized.</summary>
+    public enum MagnetizedJump
+    {
+        /// <summary>Nothing: the boots are too heavy to jump in.</summary>
+        Blocked,
+        /// <summary>Lets go, exactly like switching the boots off.</summary>
+        LetsGo,
+    }
+
     /// <summary>Tuning values for <see cref="MagneticBoots"/>; editable while playing.</summary>
     [CreateAssetMenu(menuName = "GravBoots/Boots Settings", fileName = "BootsSettings")]
     public class BootsSettings : ScriptableObject
@@ -15,10 +24,8 @@ namespace GravBoots.Player
         [Header("Losing contact")]
         [Tooltip("How long the boots tolerate no magnetic contact (seams, small bumps) before letting go.")]
         public float contactGrace = 0.12f;
-        [Tooltip("Allow a small jump while magnetized; the boots hold on until you land again.")]
-        public bool allowHop = true;
-        [Tooltip("A hop longer than this lets go, as if you'd walked off.")]
-        public float maxHopAirTime = 1.2f;
+        [Tooltip("What jump does while magnetized. Blocked: nothing. Lets Go: drops you, like switching the boots off.")]
+        public MagnetizedJump jumpWhileMagnetized = MagnetizedJump.Blocked;
 
         [Header("Dropping")]
         [Tooltip("Speed away from the surface when the boots switch off, so you don't scrape down a wall.")]

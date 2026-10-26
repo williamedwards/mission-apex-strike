@@ -50,10 +50,11 @@ The boots follow curved magnetic surfaces and nothing else: a sharp join between
 surfaces is a hard boundary. Build every route between orientations from `CurvedRamp`.
 | Metric | Value | Why |
 |---|---|---|
-| Standard quarter-pipe radius (floor ↔ wall) | 2 m | Comfortable at walking speed; the camera has time to follow. |
-| Standard rounded-edge radius (over a top edge) | 1.5 m | |
+| Standard quarter-pipe radius (floor ↔ wall) | **2.5 m** | Chosen in playtesting from 1.5, 2, 2.5 and 3 m. Walls need at least 2 × 2.5 m of height to curve on at both ends. |
+| Standard rounded-edge radius (over a top edge) | 1.5 m | Not yet playtested against alternatives. |
 | Minimum radius | 1.5 m | At 6 m/s, Up turns at speed ÷ radius (about 230°/s at 1.5 m). That needs to stay under `BootsSettings.followDegreesPerSecond` (540°/s). |
-| Facet angle (90° ÷ segments) | ≤ 12° | Must stay well under `followMaxAngle` (30°). The builder uses 8 segments per metre of radius. |
+| Facet angle (90° ÷ segments) | ≤ 12° | Must stay well under `followMaxAngle` (30°). The builder uses 8 segments per metre of radius (20 for a 2.5 m quarter-pipe). |
+| Quarter-pipe outcrop width | 3 m | A discrete ramp up a wall, as in the Cube Room. |
 | Pipe sides | ≥ 16 | 22.5° per side, under `followMaxAngle`. |
 
 A sharp join reads as "you can't go this way" only if players learn it early, so the first

@@ -52,8 +52,6 @@ namespace GravBoots.Player
         public Collider GroundCollider { get; private set; }
         /// <summary>Touching something underfoot that is too steep to stand on.</summary>
         public bool OnSteepSurface { get; private set; }
-        /// <summary>A jump started during the last step.</summary>
-        public bool JumpedThisStep { get; private set; }
 
         /// <summary>Raised at the end of every step with its delta time, after the pose is final.</summary>
         public event Action<float> Stepped;
@@ -112,7 +110,6 @@ namespace GravBoots.Player
 
             bool wasGrounded = IsGrounded;
             bool jumped = UpdateVelocity(up, deltaTime);
-            JumpedThisStep = jumped;
             CollideAndSlide(velocity * deltaTime, up, wasGrounded && !jumped);
             UpdateGround(up, wasGrounded && !jumped);
             Depenetrate();

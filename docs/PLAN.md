@@ -87,9 +87,9 @@ values for each surface.
   - Walking off a magnetic surface onto a non-magnetic one, or into empty space: no
     attachment, so it behaves like a drop. This is intentional, and the landing marker shows
     where you'd land.
-  - Jumping while magnetized: a small hop along `Up`. The boots hold on until you land again
-    (`BootsSettings.allowHop`, with a cut-off after `maxHopAirTime`). Still to playtest
-    against "no jumping".
+  - Jumping while magnetized: **blocked** (the boots are too heavy). Decided in playtesting
+    instead of a hop. `BootsSettings.jumpWhileMagnetized` can be set to `LetsGo`, which makes
+    jump drop you like switching the boots off, if puzzles want that later.
   - Losing magnetic contact (a non-magnetic section, or empty space with no face beyond the
     edge) switches the boots **off** after a short grace period (`contactGrace`), so you have
     to switch them on again once you land on a magnetic surface.

@@ -12,6 +12,7 @@ namespace GravBoots.Player
 
         readonly MoveInputMapper mapper = new MoveInputMapper();
         PlayerMotor motor;
+        MagneticBoots boots;
 
         public MoveInputMapper Mapper => mapper;
         public CameraRig CameraRig => cameraRig;
@@ -19,6 +20,7 @@ namespace GravBoots.Player
         void Awake()
         {
             motor = GetComponent<PlayerMotor>();
+            boots = GetComponent<MagneticBoots>();
             if (input == null)
                 input = GetComponent<PlayerInputReader>();
         }
@@ -32,7 +34,7 @@ namespace GravBoots.Player
             Vector3 cameraUp = cameraRig != null ? cameraRig.Up : view.up;
             motor.SetMoveInput(mapper.Map(input.Move, view.forward, cameraUp, motor.Gravity.Up));
 
-            if (input.JumpPressed)
+            if (input.JumpPressed && (boots == null || !boots.HandleJump()))
                 motor.RequestJump();
         }
     }

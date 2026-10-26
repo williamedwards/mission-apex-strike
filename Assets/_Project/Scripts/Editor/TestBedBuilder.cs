@@ -35,6 +35,8 @@ namespace GravBoots.Editor
 
         const int PlayerLayer = Layers.Player;
         const float AreaSpacing = 70f;
+        /// <summary>Standard quarter-pipe radius (docs/LEVEL_METRICS.md), chosen in playtesting.</summary>
+        const float QuarterPipeRadius = 2.5f;
 
         class Palette
         {
@@ -418,8 +420,16 @@ namespace GravBoots.Editor
             Box(area, "Step 0.2", new Vector3(-4f, 0.1f, -2f), new Vector3(2f, 0.2f, 2f), p.Dark);
             Box(area, "Step 0.35", new Vector3(-4f, 0.175f, 1f), new Vector3(2f, 0.35f, 2f), p.Dark);
             Box(area, "Crate", new Vector3(4f, 0.75f, -3f), new Vector3(1.5f, 1.5f, 1.5f), p.Dark);
+            // Discrete quarter-pipe outcrops up onto each wall, 3 m wide. Their open sides are
+            // sharp edges: step off and you drop.
+            const float h = s * 0.5f, r = QuarterPipeRadius, rampWidth = 3f;
+            Curve(area, "Wall Ramp (-X)", new Vector3(-h + r, 0f, 4f), Vector3.left, Vector3.up, CurvedRamp.Shape.Concave, r, rampWidth, p);
+            Curve(area, "Wall Ramp (+Z)", new Vector3(-3f, 0f, h - r), Vector3.forward, Vector3.up, CurvedRamp.Shape.Concave, r, rampWidth, p);
+            Curve(area, "Wall Ramp (-Z)", new Vector3(4f, 0f, -h + r), Vector3.back, Vector3.up, CurvedRamp.Shape.Concave, r, rampWidth, p);
+            Curve(area, "Wall Ramp (+X)", new Vector3(h - r, 0f, 4f), Vector3.right, Vector3.up, CurvedRamp.Shape.Concave, r, rampWidth, p);
             PointLight(area, new Vector3(0f, s * 0.5f, 0f), 30f, 3f);
-            Spawn(area, "Cube Room: magnetic but with sharp corners, so use keys 1–6 to change faces", 0, new Vector3(0f, 0.05f, -2f));
+            Spawn(area, "Cube Room: E for boots, then up any wall ramp; the room's corners stay sharp", 0,
+                new Vector3(0f, 0.05f, -2f));
         }
 
         static void BuildMetricsGym(Transform area, Palette p)
@@ -589,7 +599,7 @@ namespace GravBoots.Editor
         static void BuildLoopRoom(Transform room, Palette p)
         {
             Vector3 inner = new Vector3(6f, 6f, 18f);
-            const float r = 2f;
+            const float r = QuarterPipeRadius;
             float halfZ = inner.z * 0.5f;
             Enclosure(room, Vector3.zero, inner, p, 0.5f, magnetic: true);
 
@@ -626,7 +636,7 @@ namespace GravBoots.Editor
             GameObject bottom = Box(room, "Pit Bottom (lethal)", new Vector3(0f, -depth - t * 0.5f, 0f), new Vector3(w, t, pit), p.Orange);
             bottom.tag = Layers.LethalTag;
 
-            const float r = 2f;
+            const float r = QuarterPipeRadius;
             float halfLen = len * 0.5f;
             Curve(room, "Curve Floor→Start Wall", new Vector3(0f, 0f, -halfLen + r), Vector3.back, Vector3.up, CurvedRamp.Shape.Concave, r, w, p);
             Curve(room, "Curve Start Wall→Ceiling", new Vector3(0f, h - r, -halfLen), Vector3.up, Vector3.forward, CurvedRamp.Shape.Concave, r, w, p);
@@ -647,7 +657,7 @@ namespace GravBoots.Editor
         /// </summary>
         static void BuildBlockCorners(Transform setup, Palette p)
         {
-            const float width = 6f, edge = 1.5f, foot = 2f;
+            const float width = 6f, edge = 1.5f, foot = QuarterPipeRadius;
             MagBox(setup, "Pad Front", new Vector3(0f, 0.05f, -3f), new Vector3(8f, 0.1f, 8f), p);
             MagBox(setup, "Pad Back", new Vector3(0f, 0.05f, 11f), new Vector3(8f, 0.1f, 8f), p);
             // A 6 m block (front face z = 1, back face z = 7) whose top edges are rounded.
@@ -689,7 +699,8 @@ namespace GravBoots.Editor
         {
             const float h = 6f, t = 0.5f, z = 4f;
             MagBox(setup, "Pad", new Vector3(0f, 0.05f, 1f), new Vector3(14f, 0.1f, 5f), p);
-            Curve(setup, "Curve Pad→Wall", new Vector3(0f, 0.1f, z - t * 0.5f - 2f), Vector3.forward, Vector3.up, CurvedRamp.Shape.Concave, 2f, 14f, p);
+            Curve(setup, "Curve Pad→Wall", new Vector3(0f, 0.1f, z - t * 0.5f - QuarterPipeRadius), Vector3.forward, Vector3.up,
+                CurvedRamp.Shape.Concave, QuarterPipeRadius, 14f, p);
             MagBox(setup, "Wall Left (magnetic)", new Vector3(-4.5f, h * 0.5f, z), new Vector3(5f, h, t), p);
             Box(setup, "Wall Gap (not magnetic)", new Vector3(0f, h * 0.5f, z), new Vector3(4f, h, t), p.Dark);
             MagBox(setup, "Wall Right Lower (magnetic)", new Vector3(4.5f, 1.5f, z), new Vector3(5f, 3f, t), p);
