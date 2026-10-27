@@ -8,9 +8,11 @@ namespace GravBoots.Level
     /// </summary>
     [ExecuteAlways]
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(BoxCollider))]
-    public class GreyboxBox : MonoBehaviour
+    public class GreyboxBox : MonoBehaviour, ISizedBox
     {
         public Vector3 size = Vector3.one;
+
+        public Vector3 Size { get => size; set => size = value; }
 
         Mesh mesh;
         bool dirty;

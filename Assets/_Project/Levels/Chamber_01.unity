@@ -393,6 +393,73 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 424749404}
   m_Mesh: {fileID: 0}
+--- !u!1 &476044563
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 476044566}
+  - component: {fileID: 476044565}
+  - component: {fileID: 476044564}
+  m_Layer: 0
+  m_Name: Session
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &476044564
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 476044563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a55ca666111d71701b9e4ea2072ee795, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GravBoots.Runtime::GravBoots.UI.SessionHud
+  session: {fileID: 476044565}
+  health: {fileID: 1654661592}
+  noticeSeconds: 1.5
+  fadeInSeconds: 0.25
+  accent: {r: 0.3, g: 1, b: 0.6, a: 1}
+--- !u!114 &476044565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 476044563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f587f74a535231ee85e0a576233e3fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GravBoots.Runtime::GravBoots.Level.LevelSession
+  player: {fileID: 1514300830}
+  cameraRig: {fileID: 584486995}
+  input: {fileID: 1514300831}
+  respawnDelay: 0.6
+  boundsMargin: 25
+--- !u!4 &476044566
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 476044563}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &477141359
 GameObject:
   m_ObjectHideFlags: 0
@@ -1297,6 +1364,7 @@ MonoBehaviour:
   boots: {fileID: 1514300833}
   cameraRig: {fileID: 584486995}
   overlay: {fileID: 961852561}
+  session: {fileID: 476044565}
   blendDegreesPerSecond: 180
   crosshairRange: 200
 --- !u!4 &961852563
@@ -2533,6 +2601,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a89b26e7139b5fa4094a4492a7490087, type: 3}
   m_Name: 
   m_EditorClassIdentifier: GravBoots.Runtime::GravBoots.Player.PlayerController
+--- !u!114 &1654661592 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 879640345912950286, guid: 4cb37b04db6bd9d23a2bf625748ce16f, type: 3}
+  m_PrefabInstance: {fileID: 1514300829}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0dcd142152e6c752b3fa35207353bb0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GravBoots.Runtime::GravBoots.Player.Health
 --- !u!1 &1762621279
 GameObject:
   m_ObjectHideFlags: 0
@@ -2901,3 +2980,4 @@ SceneRoots:
   - {fileID: 961852563}
   - {fileID: 327141719}
   - {fileID: 1836353915}
+  - {fileID: 476044566}

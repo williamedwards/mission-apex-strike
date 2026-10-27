@@ -68,7 +68,7 @@ namespace GravBoots.Debugging
             {
                 text.AppendLine();
                 text.AppendLine("E / RMB boots   Space jump   1 floor  2 ceiling  3/4 ±X wall  5/6 ±Z wall  G / MMB face under crosshair");
-                text.AppendLine("B instant/blend  C camera mode  N next area  R reset  F3 overlay  Esc cursor");
+                text.AppendLine("B instant/blend  C camera mode  N next area  R checkpoint  Backspace restart  F3 overlay  Esc cursor");
             }
 
             var content = new GUIContent(text.ToString());

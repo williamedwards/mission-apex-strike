@@ -68,6 +68,24 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Restart",
+                    "type": "Button",
+                    "id": "dac9fa32-782c-4ddc-8cae-cb13e7fd1b14",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "RestartChamber",
+                    "type": "Button",
+                    "id": "ae35f9d5-af7a-4c14-aae4-d4f48cdc5bc6",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -257,6 +275,39 @@
                     "action": "Pause",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "95f95df0-dd0a-4f80-aae0-e7b4e4e67833",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Restart",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4298487f-dc4b-47eb-b339-9dc66d00ce77",
+                    "path": "<Gamepad>/select",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Restart",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b26f9f8c-b4ae-4493-81ab-067c3fa38533",
+                    "path": "<Keyboard>/backspace",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RestartChamber",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
@@ -358,15 +409,6 @@
                     "name": "NextSpawn",
                     "type": "Button",
                     "id": "8980c14c-3628-42c9-8cae-82e31d3cab89",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "ResetPlayer",
-                    "type": "Button",
-                    "id": "40d082c1-4d58-453e-a4b0-6f27eced5e40",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -492,17 +534,6 @@
                     "processors": "",
                     "groups": "",
                     "action": "NextSpawn",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "2a5ac775-fd79-477e-ba14-c8f90d97415a",
-                    "path": "<Keyboard>/r",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "ResetPlayer",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

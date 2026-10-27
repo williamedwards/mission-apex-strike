@@ -72,9 +72,23 @@ radius away from where the curve starts.
 The **Spawn Point** button adds a numbered spawn. The player starts at **Start**, and **N** cycles
 through the spawns in order while playing. That's handy for testing the far end of a chamber.
 
+### Death, checkpoints and the exit
+- **Kill Volume:** an invisible box (red outline in the Scene view) that kills on entry. Fill
+  the bottom of pits with one so falls end quickly. Resize it with its face dots like a block.
+  Orange **Lethal** surfaces kill on touch too. Falling far outside the chamber kills anyway,
+  but slowly.
+- **Checkpoint:** a pad that lights up when walked through. Dying puts you back on the most
+  recent one. Turn it onto a wall or ceiling with the 90° buttons and you respawn there with
+  the boots on (it must sit on a magnetic surface). The green box is its trigger; resize it in
+  the Inspector (Box Collider → Size) to cover the whole route past it.
+- **Exit:** the gold pad that finishes the chamber.
+- A chamber made before these existed needs **Add Game Loop to This Chamber** (top of the kit)
+  once.
+
 ## 4. Testing
 1. Press **Play**, then press **E** on a magnetic surface to switch the boots on, and walk.
-2. Use **F3** to show the debug overlay, and **R** to go back to the current spawn.
+2. **R** goes back to the last checkpoint, **Backspace** restarts the chamber, and **N** jumps
+   to the next spawn or checkpoint. **F3** shows the debug overlay.
 3. If something blocks or drops you unexpectedly, check whether a join is sharp (no curve)
    or a surface isn't magnetic.
 

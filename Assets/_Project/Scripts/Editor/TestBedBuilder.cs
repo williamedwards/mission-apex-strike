@@ -42,6 +42,7 @@ namespace GravBoots.Editor
         {
             public Material Floor, Wall, Ceiling, Dark, Orange, Blue, PlayerBody, Visor;
             public Material Magnetic, BootsOff, BootsOn, Marker, Guide;
+            public Material CheckpointIdle, CheckpointLit, Exit;
         }
 
         [MenuItem("GravBoots/Build Camera Test Bed")]
@@ -73,11 +74,15 @@ namespace GravBoots.Editor
             BuildOutsideCorner(Area(areas, "Outside Corner", 4), palette);
             BuildPitRoom(Area(areas, "Pit Under Ceiling", 5), palette);
             BuildBootsGym(Area(areas, "Boots Gym", 6), palette);
+            // The Boots Gym is wide enough to fill slot 7 as well.
+            SpawnPoint newest = BuildCheckpointRun(Area(areas, "Checkpoint Run", 8), palette);
 
             var player = (GameObject)PrefabUtility.InstantiatePrefab(playerPrefab);
             player.transform.SetPositionAndRotation(new Vector3(0f, 0.05f, -2f), Quaternion.identity);
             BuildCameraAndDebug(player, cameraSettings);
             BuildBootsFeedback(player, palette);
+            // Start in the newest area; N still cycles through all of them.
+            Set(BuildSession(player), "startSpawn", newest);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             EditorBuildSettings.scenes = new[]
@@ -160,6 +165,9 @@ namespace GravBoots.Editor
                 Marker = EnsureMaterial("Landing_Marker", Color.white, null, shader: "Universal Render Pipeline/Unlit"),
                 // Sprites/Default honours LineRenderer vertex colours, which URP Unlit ignores.
                 Guide = EnsureMaterial("Landing_Guide", Color.white, null, shader: "Sprites/Default"),
+                CheckpointIdle = EnsureMaterial("Checkpoint_Idle", new Color(0.3f, 0.45f, 0.4f), null),
+                CheckpointLit = EnsureMaterial("Checkpoint_Lit", new Color(0.3f, 1f, 0.6f), null, emissive: true),
+                Exit = EnsureMaterial("Exit_Pad", new Color(1f, 0.85f, 0.2f), null, emissive: true),
             };
         }
 
@@ -227,6 +235,8 @@ namespace GravBoots.Editor
             var motor = root.AddComponent<PlayerMotor>();
             var reader = root.AddComponent<PlayerInputReader>();
             root.AddComponent<PlayerController>();
+            root.AddComponent<Health>();
+            root.AddComponent<PlayerSensor>();
             var boots = root.AddComponent<MagneticBoots>();
             Set(boots, "settings", bootsSettings);
             Set(boots, "input", reader);
@@ -359,6 +369,26 @@ namespace GravBoots.Editor
             Set(hud, "landingMarker", marker);
         }
 
+        /// <summary>
+        /// The run: a <see cref="LevelSession"/> (start, checkpoints, death and respawn, exit)
+        /// and its HUD. Needs the camera rig and debug keys from <see cref="BuildCameraAndDebug"/>.
+        /// </summary>
+        internal static LevelSession BuildSession(GameObject player)
+        {
+            var sessionObject = new GameObject("Session");
+            var session = sessionObject.AddComponent<LevelSession>();
+            Set(session, "player", player.GetComponent<PlayerMotor>());
+            Set(session, "cameraRig", Object.FindAnyObjectByType<CameraRig>());
+            Set(session, "input", player.GetComponent<PlayerInputReader>());
+            var hud = sessionObject.AddComponent<GravBoots.UI.SessionHud>();
+            Set(hud, "session", session);
+            Set(hud, "health", player.GetComponent<Health>());
+            var keys = Object.FindAnyObjectByType<DebugGravityKeys>();
+            if (keys != null)
+                Set(keys, "session", session);
+            return session;
+        }
+
         // ---------------------------------------------------------------- areas
 
         static Transform Area(Transform parent, string name, int index)
@@ -369,7 +399,7 @@ namespace GravBoots.Editor
             return area;
         }
 
-        static void Spawn(Transform area, string label, int order, Vector3 localPosition, float yaw = 0f)
+        static SpawnPoint Spawn(Transform area, string label, int order, Vector3 localPosition, float yaw = 0f)
         {
             var spawn = new GameObject("Spawn").AddComponent<SpawnPoint>();
             spawn.transform.SetParent(area, false);
@@ -377,6 +407,7 @@ namespace GravBoots.Editor
             spawn.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
             spawn.label = label;
             spawn.order = order;
+            return spawn;
         }
 
         internal static void PointLight(Transform area, Vector3 localPosition, float range, float intensity = 2.5f)
@@ -551,13 +582,15 @@ namespace GravBoots.Editor
             Box(area, "Wall -Z", new Vector3(0f, h * 0.5f, -w * 0.5f - t * 0.5f), new Vector3(w + 2 * t, h, t), p.Wall);
             Box(area, "Ceiling Target", new Vector3(0f, h - 0.05f, 0f), new Vector3(hole, 0.1f, hole), p.Orange);
 
-            // The shaft below; it has a floor so a fall is survivable until kill volumes exist.
+            // The shaft below; its lower part is a death pit.
             float sy = -t - depth * 0.5f;
             Box(area, "Shaft +X", new Vector3(hole * 0.5f + 0.25f, sy, 0f), new Vector3(0.5f, depth, hole), p.Dark);
             Box(area, "Shaft -X", new Vector3(-hole * 0.5f - 0.25f, sy, 0f), new Vector3(0.5f, depth, hole), p.Dark);
             Box(area, "Shaft +Z", new Vector3(0f, sy, hole * 0.5f + 0.25f), new Vector3(hole + 1f, depth, 0.5f), p.Dark);
             Box(area, "Shaft -Z", new Vector3(0f, sy, -hole * 0.5f - 0.25f), new Vector3(hole + 1f, depth, 0.5f), p.Dark);
-            Box(area, "Shaft Bottom", new Vector3(0f, -t - depth - 0.25f, 0f), new Vector3(hole + 1f, 0.5f, hole + 1f), p.Orange);
+            Box(area, "Shaft Bottom", new Vector3(0f, -t - depth - 0.25f, 0f), new Vector3(hole + 1f, 0.5f, hole + 1f), p.Orange)
+                .tag = Layers.LethalTag;
+            KillZone(area, "Shaft Kill Volume", new Vector3(0f, -t - depth + 4f, 0f), new Vector3(hole, 8f, hole));
 
             PointLight(area, new Vector3(0f, h * 0.6f, 0f), 25f, 3f);
             PointLight(area, new Vector3(0f, -t - depth * 0.5f, 0f), 10f, 1.5f);
@@ -635,6 +668,7 @@ namespace GravBoots.Editor
             Box(room, "Pit End", new Vector3(0f, sy - t * 0.5f, pit * 0.5f + t * 0.5f), new Vector3(w, depth - t, t), p.Dark);
             GameObject bottom = Box(room, "Pit Bottom (lethal)", new Vector3(0f, -depth - t * 0.5f, 0f), new Vector3(w, t, pit), p.Orange);
             bottom.tag = Layers.LethalTag;
+            KillZone(room, "Pit Kill Volume", new Vector3(0f, -depth + 4f, 0f), new Vector3(w, 8f, pit));
 
             const float r = QuarterPipeRadius;
             float halfLen = len * 0.5f;
@@ -709,7 +743,93 @@ namespace GravBoots.Editor
                 new Vector3(-4.5f, 0.15f, 0f));
         }
 
+        /// <summary>
+        /// Phase 2: a short run with a checkpoint on a wall over a death pit. Fall in on purpose
+        /// to see the respawn put you back on the wall, magnetized; the exit pad is past the pit.
+        /// </summary>
+        static SpawnPoint BuildCheckpointRun(Transform area, Palette p)
+        {
+            const float r = QuarterPipeRadius;
+            MagBox(area, "Floor Start", new Vector3(0f, -0.25f, -7f), new Vector3(10f, 0.5f, 10f), p);
+            MagBox(area, "Floor End", new Vector3(0f, -0.25f, 10f), new Vector3(10f, 0.5f, 8f), p);
+            MagBox(area, "Wall", new Vector3(5.25f, -1f, 1f), new Vector3(0.5f, 14f, 26f), p);
+            Curve(area, "Curve Floor→Wall", new Vector3(5f - r, 0f, -7f), Vector3.right, Vector3.up, CurvedRamp.Shape.Concave, r, 6f, p);
+            Curve(area, "Curve Wall→Floor", new Vector3(5f, r, 10f), Vector3.down, Vector3.left, CurvedRamp.Shape.Concave, r, 6f, p);
+
+            // The pit: dark sides, lethal bottom, and a kill volume in its lower part.
+            Box(area, "Pit -X", new Vector3(-5.25f, -4f, 2f), new Vector3(0.5f, 8f, 8f), p.Dark);
+            Box(area, "Pit Start", new Vector3(0f, -4.25f, -2.25f), new Vector3(10f, 7.5f, 0.5f), p.Dark);
+            Box(area, "Pit End", new Vector3(0f, -4.25f, 6.25f), new Vector3(10f, 7.5f, 0.5f), p.Dark);
+            Box(area, "Pit Bottom (lethal)", new Vector3(0f, -8.25f, 2f), new Vector3(10f, 0.5f, 8f), p.Orange).tag = Layers.LethalTag;
+            KillZone(area, "Pit Kill Volume", new Vector3(0f, -5f, 2f), new Vector3(10f, 6f, 8f));
+
+            CheckpointPad(area, "Checkpoint (wall)", new Vector3(5f, 3f, 2f), Vector3.forward, Vector3.left, p, 16,
+                new Vector3(6f, 2f, 4f));
+            ExitPad(area, "Exit", new Vector3(-2f, 0f, 11f), Vector3.forward, Vector3.up, p);
+
+            PointLight(area, new Vector3(0f, 4f, -6f), 16f, 2f);
+            PointLight(area, new Vector3(0f, 4f, 8f), 16f, 2f);
+            PointLight(area, new Vector3(0f, -4f, 2f), 10f, 1.5f);
+            return Spawn(area, "Checkpoint Run: up the wall curve, cross the wall checkpoint, then drop into the pit to respawn on the wall", 15,
+                new Vector3(0f, 0.05f, -10f));
+        }
+
         // ---------------------------------------------------------------- helpers
+
+        /// <summary>A checkpoint standing on a surface facing <paramref name="up"/>, with a pad that lights when active.</summary>
+        internal static Checkpoint CheckpointPad(Transform parent, string name, Vector3 localPosition, Vector3 forward, Vector3 up,
+            Palette palette, int order, Vector3? triggerSize = null)
+        {
+            var go = new GameObject(name, typeof(BoxCollider));
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPosition;
+            go.transform.localRotation = Quaternion.LookRotation(forward, up);
+            // Added first: its Reset sets a default trigger, which the size below replaces.
+            var checkpoint = go.AddComponent<Checkpoint>();
+            var trigger = go.GetComponent<BoxCollider>();
+            trigger.isTrigger = true;
+            Vector3 size = triggerSize ?? new Vector3(3f, 2f, 3f);
+            trigger.size = size;
+            trigger.center = new Vector3(0f, size.y * 0.5f, 0f);
+            checkpoint.label = name;
+            checkpoint.order = order;
+            var pad = Primitive(go.transform, PrimitiveType.Cylinder, "Pad", new Vector3(0f, 0.01f, 0f), new Vector3(1.6f, 0.01f, 1.6f), palette.CheckpointIdle);
+            pad.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+            Set(checkpoint, "pad", pad.GetComponent<Renderer>());
+            Set(checkpoint, "idleMaterial", palette.CheckpointIdle);
+            Set(checkpoint, "litMaterial", palette.CheckpointLit);
+            return checkpoint;
+        }
+
+        /// <summary>The chamber's exit: a glowing pad with a trigger above it.</summary>
+        internal static LevelExit ExitPad(Transform parent, string name, Vector3 localPosition, Vector3 forward, Vector3 up, Palette palette)
+        {
+            var go = new GameObject(name, typeof(BoxCollider));
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPosition;
+            go.transform.localRotation = Quaternion.LookRotation(forward, up);
+            var exit = go.AddComponent<LevelExit>();
+            var trigger = go.GetComponent<BoxCollider>();
+            trigger.isTrigger = true;
+            trigger.size = new Vector3(3f, 2f, 3f);
+            trigger.center = new Vector3(0f, 1f, 0f);
+            var pad = Primitive(go.transform, PrimitiveType.Cylinder, "Pad", new Vector3(0f, 0.01f, 0f), new Vector3(2.4f, 0.01f, 2.4f), palette.Exit);
+            pad.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+            return exit;
+        }
+
+        /// <summary>An invisible box that kills on entry (inside death pits).</summary>
+        internal static KillVolume KillZone(Transform parent, string name, Vector3 localCentre, Vector3 size)
+        {
+            var go = new GameObject(name, typeof(BoxCollider));
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localCentre;
+            var volume = go.AddComponent<KillVolume>();
+            volume.size = size;
+            volume.Rebuild();
+            return volume;
+        }
+
 
         internal static GameObject Box(Transform parent, string name, Vector3 localCentre, Vector3 size, Material material,
             Quaternion? localRotation = null)

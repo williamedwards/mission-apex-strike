@@ -1,3 +1,4 @@
+using GravBoots.Level;
 using UnityEngine;
 
 namespace GravBoots.Player
@@ -5,7 +6,8 @@ namespace GravBoots.Player
     /// <summary>
     /// Shows where a drop would land: a ring projected straight down (world gravity) from the
     /// player, plus a guide line, whenever the player is on a wall or ceiling or already
-    /// falling. Red over lethal surfaces (<see cref="Layers.LethalTag"/>). Core to the drop
+    /// falling. Red over lethal surfaces (<see cref="Layers.LethalTag"/>) and when the drop
+    /// passes through a <see cref="KillVolume"/> (a death pit). Core to the drop
     /// puzzles, not polish (docs/PLAN.md §1.3).
     /// </summary>
     [DefaultExecutionOrder(ExecutionOrder.AfterCamera)]
@@ -21,6 +23,7 @@ namespace GravBoots.Player
         [SerializeField] float minimumTilt = 20f;
         [SerializeField] float maxDistance = 200f;
 
+        readonly RaycastHit[] triggerHits = new RaycastHit[8];
         MaterialPropertyBlock block;
         static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
 
@@ -39,7 +42,7 @@ namespace GravBoots.Player
             if (!IsShowing)
                 return;
 
-            IsLethal = hit.collider.CompareTag(Layers.LethalTag);
+            IsLethal = hit.collider.CompareTag(Layers.LethalTag) || CrossesKillVolume(hit.distance);
             LandingPoint = hit.point;
             Color color = IsLethal ? lethalColor : safeColor;
 
@@ -73,6 +76,18 @@ namespace GravBoots.Player
                 default:
                     return false;
             }
+        }
+
+        bool CrossesKillVolume(float distance)
+        {
+            int count = Physics.SphereCastNonAlloc(Centre(), 0.3f, Vector3.down, triggerHits, distance,
+                motor.CollisionMask, QueryTriggerInteraction.Collide);
+            for (int i = 0; i < count; i++)
+            {
+                if (triggerHits[i].collider.isTrigger && triggerHits[i].collider.TryGetComponent(out KillVolume _))
+                    return true;
+            }
+            return false;
         }
 
         Vector3 Centre() => motor.transform.position + motor.transform.up * 0.9f;

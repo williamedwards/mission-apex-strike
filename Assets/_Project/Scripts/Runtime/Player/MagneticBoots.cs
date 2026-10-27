@@ -88,6 +88,17 @@ namespace GravBoots.Player
             SetState(BootsState.Off);
         }
 
+        /// <summary>
+        /// Switches the boots on at once, without the grounded check (respawning onto a
+        /// checkpoint on a magnetic surface). Contact is checked from the next step as usual.
+        /// </summary>
+        public void Attach()
+        {
+            toggleRequested = false;
+            lostContactTime = 0f;
+            SetState(BootsState.Magnetized);
+        }
+
         void OnStepped(float deltaTime)
         {
             if (settings == null)

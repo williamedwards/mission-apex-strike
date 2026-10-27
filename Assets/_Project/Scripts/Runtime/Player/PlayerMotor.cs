@@ -350,6 +350,27 @@ namespace GravBoots.Player
             return hit.collider.Raycast(ray, out RaycastHit faceHit, 0.25f) ? faceHit.normal : hit.normal;
         }
 
+        /// <summary>
+        /// Fills <paramref name="results"/> with the colliders within <paramref name="margin"/> of
+        /// the capsule, triggers included (our own collider left out), and returns how many.
+        /// The motor rests a skin width off surfaces, so a margin of a few centimetres finds what
+        /// the player is standing on or leaning against.
+        /// </summary>
+        public int Touching(float margin, Collider[] results)
+        {
+            GetCapsule(position, out Vector3 top, out Vector3 bottom, out float radius);
+            int count = Physics.OverlapCapsuleNonAlloc(top, bottom, radius + margin, results, collisionMask,
+                QueryTriggerInteraction.Collide);
+            for (int i = 0; i < count; i++)
+            {
+                if (results[i] != capsule)
+                    continue;
+                results[i] = results[--count];
+                break;
+            }
+            return count;
+        }
+
         void Depenetrate()
         {
             for (int iteration = 0; iteration < 3; iteration++)

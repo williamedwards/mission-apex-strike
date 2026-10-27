@@ -1,4 +1,3 @@
-using System.Linq;
 using GravBoots.Cameras;
 using GravBoots.Level;
 using GravBoots.Player;
@@ -10,7 +9,8 @@ namespace GravBoots.Debugging
     /// <summary>
     /// Stand-in for the boots while testing the motor and camera (Phase 1A): keys set the
     /// player's up to any axis or to the face under the crosshair, cycle test areas and switch
-    /// camera modes. Bindings live in the "Debug" map of the input actions asset.
+    /// camera modes. Bindings live in the "Debug" map of the input actions asset. N sends the
+    /// player to the next spawn point by making it the session's checkpoint.
     /// </summary>
     public class DebugGravityKeys : MonoBehaviour
     {
@@ -19,16 +19,15 @@ namespace GravBoots.Debugging
         [SerializeField] MagneticBoots boots;
         [SerializeField] CameraRig cameraRig;
         [SerializeField] DebugOverlay overlay;
+        [SerializeField] LevelSession session;
         [SerializeField] float blendDegreesPerSecond = 180f;
         [SerializeField] float crosshairRange = 200f;
 
         InputAction floor, ceiling, wallPosX, wallNegX, wallPosZ, wallNegZ;
-        InputAction toCrosshair, toggleBlend, cycleCamera, toggleOverlay, nextSpawn, resetPlayer;
-        SpawnPoint[] spawns;
-        int spawnIndex;
+        InputAction toCrosshair, toggleBlend, cycleCamera, toggleOverlay, nextSpawn;
 
         public bool Blend { get; private set; }
-        public SpawnPoint CurrentSpawn => spawns != null && spawns.Length > 0 ? spawns[spawnIndex] : null;
+        public SpawnPoint CurrentSpawn => session != null ? session.Checkpoint : null;
 
         void Start()
         {
@@ -43,12 +42,6 @@ namespace GravBoots.Debugging
             cycleCamera = input.Find("Debug/CycleCameraMode");
             toggleOverlay = input.Find("Debug/ToggleOverlay");
             nextSpawn = input.Find("Debug/NextSpawn");
-            resetPlayer = input.Find("Debug/ResetPlayer");
-
-            spawns = FindObjectsByType<SpawnPoint>()
-                .OrderBy(s => s.order).ThenBy(s => s.name).ToArray();
-            if (CurrentSpawn != null)
-                SendToSpawn(CurrentSpawn);
         }
 
         void Update()
@@ -68,13 +61,12 @@ namespace GravBoots.Debugging
             if (input.ConsumePress(toggleOverlay) && overlay != null)
                 overlay.enabled = !overlay.enabled;
 
-            if (input.ConsumePress(nextSpawn) && spawns.Length > 0)
+            if (input.ConsumePress(nextSpawn) && session != null && session.Spawns.Length > 0)
             {
-                spawnIndex = (spawnIndex + 1) % spawns.Length;
-                SendToSpawn(CurrentSpawn);
+                int next = (System.Array.IndexOf(session.Spawns, session.Checkpoint) + 1) % session.Spawns.Length;
+                session.SetCheckpoint(session.Spawns[next], false);
+                session.RespawnAtCheckpoint();
             }
-            if (input.ConsumePress(resetPlayer) && CurrentSpawn != null)
-                SendToSpawn(CurrentSpawn);
         }
 
         void SetUp(Vector3 up)
@@ -96,16 +88,6 @@ namespace GravBoots.Debugging
             Ray ray = view.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
             if (Physics.Raycast(ray, out RaycastHit hit, crosshairRange, motor.CollisionMask, QueryTriggerInteraction.Ignore))
                 SetUp(hit.normal);
-        }
-
-        void SendToSpawn(SpawnPoint spawn)
-        {
-            if (boots != null)
-                boots.ForceOff();
-            motor.Gravity.SetUp(spawn.transform.up);
-            motor.Teleport(spawn.transform.position, spawn.transform.rotation);
-            if (cameraRig != null)
-                cameraRig.SnapBehindTarget();
         }
     }
 }

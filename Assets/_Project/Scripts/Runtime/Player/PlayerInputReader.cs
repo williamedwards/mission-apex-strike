@@ -20,7 +20,7 @@ namespace GravBoots.Player
     {
         [SerializeField] InputActionAsset actions;
 
-        InputAction move, look, lookStick, jump, toggleBoots, interact, pause;
+        InputAction move, look, lookStick, jump, toggleBoots, interact, pause, restart, restartChamber;
         readonly Dictionary<InputAction, bool> latched = new Dictionary<InputAction, bool>();
         readonly List<(InputAction action, Action<InputAction.CallbackContext> handler)> subscriptions =
             new List<(InputAction, Action<InputAction.CallbackContext>)>();
@@ -34,6 +34,10 @@ namespace GravBoots.Player
         public bool ToggleBootsPressed => ConsumePress(toggleBoots);
         public bool InteractPressed => ConsumePress(interact);
         public bool PausePressed => ConsumePress(pause);
+        /// <summary>Back to the last checkpoint.</summary>
+        public bool RestartPressed => ConsumePress(restart);
+        /// <summary>Start the chamber over from the beginning.</summary>
+        public bool RestartChamberPressed => ConsumePress(restartChamber);
 
         public InputActionAsset Actions
         {
@@ -90,6 +94,8 @@ namespace GravBoots.Player
             toggleBoots = Find("Player/ToggleBoots");
             interact = Find("Player/Interact");
             pause = Find("Player/Pause");
+            restart = Find("Player/Restart");
+            restartChamber = Find("Player/RestartChamber");
             actions.Enable();
         }
     }

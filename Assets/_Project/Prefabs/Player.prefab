@@ -15,6 +15,8 @@ GameObject:
   - component: {fileID: 6908118646038307660}
   - component: {fileID: 6459054987302516480}
   - component: {fileID: 4403957982144992095}
+  - component: {fileID: 879640345912950286}
+  - component: {fileID: 6279303287983708075}
   - component: {fileID: 6311790723800866785}
   - component: {fileID: 3853079980076575221}
   m_Layer: 8
@@ -147,6 +149,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: GravBoots.Runtime::GravBoots.Player.PlayerController
   input: {fileID: 0}
   cameraRig: {fileID: 0}
+--- !u!114 &879640345912950286
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 782262407918552297}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0dcd142152e6c752b3fa35207353bb0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GravBoots.Runtime::GravBoots.Player.Health
+  maxHealth: 100
+--- !u!114 &6279303287983708075
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 782262407918552297}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 892bc01c28418b1a4a6cfe35af73652c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GravBoots.Runtime::GravBoots.Player.PlayerSensor
+  contactMargin: 0.06
 --- !u!114 &6311790723800866785
 MonoBehaviour:
   m_ObjectHideFlags: 0

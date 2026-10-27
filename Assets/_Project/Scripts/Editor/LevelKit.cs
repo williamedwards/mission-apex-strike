@@ -18,7 +18,7 @@ namespace GravBoots.Editor
         const string RootName = "Level";
         const string GridStepKey = "GravBoots.LevelKit.GridStep";
 
-        public enum Piece { PlainBlock, MagneticBlock, LethalFloor, QuarterPipe, RoundedEdge, Spawn }
+        public enum Piece { PlainBlock, MagneticBlock, LethalFloor, QuarterPipe, RoundedEdge, Spawn, Checkpoint, KillVolume, Exit }
 
         /// <summary>Grid size for snapping and resizing (metres), remembered per user.</summary>
         public static float GridStep
@@ -79,6 +79,7 @@ namespace GravBoots.Editor
             player.transform.SetPositionAndRotation(new Vector3(0f, 0.05f, -3f), Quaternion.identity);
             TestBedBuilder.BuildCameraAndDebug(player, cameraSettings);
             TestBedBuilder.BuildBootsFeedback(player, palette);
+            TestBedBuilder.BuildSession(player);
 
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             EditorSceneManager.SaveScene(scene, path);
@@ -123,9 +124,19 @@ namespace GravBoots.Editor
                     go = TestBedBuilder.Curve(root, "Rounded Edge", Vector3.zero, Vector3.forward, Vector3.up,
                         CurvedRamp.Shape.Convex, 1.5f, 3f, palette);
                     break;
+                case Piece.Checkpoint:
+                    go = TestBedBuilder.CheckpointPad(root, $"Checkpoint {NextSpawnOrder()}", Vector3.zero, Vector3.forward, Vector3.up,
+                        palette, NextSpawnOrder()).gameObject;
+                    break;
+                case Piece.KillVolume:
+                    go = TestBedBuilder.KillZone(root, "Kill Volume", Vector3.zero, new Vector3(4f, 2f, 4f)).gameObject;
+                    at.y -= 1f;
+                    break;
+                case Piece.Exit:
+                    go = TestBedBuilder.ExitPad(root, "Exit", Vector3.zero, Vector3.forward, Vector3.up, palette).gameObject;
+                    break;
                 default:
-                    // Numbered after the existing ones, so "Start" stays first and N cycles in order.
-                    int order = Object.FindObjectsByType<SpawnPoint>().Length;
+                    int order = NextSpawnOrder();
                     go = AddSpawn(root, at + Vector3.up * 0.05f, $"Spawn {order}", order).gameObject;
                     at = go.transform.position;
                     break;
@@ -135,6 +146,9 @@ namespace GravBoots.Editor
             Selection.activeGameObject = go;
             return go;
         }
+
+        // Numbered after the existing spawns and checkpoints, so "Start" stays first and N cycles in order.
+        static int NextSpawnOrder() => Object.FindObjectsByType<SpawnPoint>().Length;
 
         static SpawnPoint AddSpawn(Transform root, Vector3 position, string label, int order = 0)
         {
@@ -167,6 +181,29 @@ namespace GravBoots.Editor
         {
             float step = GridStep;
             return new Vector3(Mathf.Round(p.x / step) * step, Mathf.Round(p.y / step) * step, Mathf.Round(p.z / step) * step);
+        }
+
+        /// <summary>
+        /// Gives a chamber made before Phase 2 its game loop (session and HUD), so it gets
+        /// death, checkpoints and the exit. Does nothing if it already has one.
+        /// </summary>
+        [MenuItem("GravBoots/Add Game Loop to Open Chamber")]
+        public static void AddGameLoop()
+        {
+            if (Object.FindAnyObjectByType<LevelSession>() != null)
+            {
+                Debug.Log("[Level Kit] This chamber already has a game loop.");
+                return;
+            }
+            var player = Object.FindAnyObjectByType<GravBoots.Player.PlayerMotor>();
+            if (player == null)
+            {
+                Debug.LogWarning("[Level Kit] No player in the open scene.");
+                return;
+            }
+            LevelSession session = TestBedBuilder.BuildSession(player.gameObject);
+            Undo.RegisterCreatedObjectUndo(session.gameObject, "Add Game Loop");
+            EditorSceneManager.MarkSceneDirty(session.gameObject.scene);
         }
 
         // ------------------------------------------------------------ editing the selection
