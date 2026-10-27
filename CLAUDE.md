@@ -10,6 +10,7 @@ Magnetic-boots 3D puzzle and obstacle course. Design and roadmap: `docs/PLAN.md`
 - Design rule: the boots change orientation only along curves (`Level/CurvedRamp.cs`, the builder's `Curve`); sharp joins between magnetic surfaces are impassable by design. Don't add corner-transition logic.
 - PlayMode tests step `PlayerMotor.Tick` by hand (`AutoSimulate = false`) at all 6 orientations. Add a case there for every movement promise.
 - Run tests headless (Editor closed): `unity test . --mode EditMode --output Logs/test-EditMode.xml` (also `--mode PlayMode`).
+- Real levels ("chambers") are hand-edited scenes in `Assets/_Project/Levels/`, built with the Level Kit (`Editor/LevelKit.cs`, window under GravBoots → Level Kit; guide in `docs/LEVEL_EDITING.md`). Never regenerate or overwrite them; edit them through the live Editor.
 - The test bed scene and Player prefab are generated: menu **GravBoots → Build Camera Test Bed**, or headless with `unity run . -- -executeMethod GravBoots.Editor.TestBedBuilder.Build` (no `-quit`; the CLI adds it). Change the builder rather than hand-editing the generated scene.
 
 ## Driving the open Editor (Pipeline package)

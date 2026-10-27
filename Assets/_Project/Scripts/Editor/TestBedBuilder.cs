@@ -23,22 +23,22 @@ namespace GravBoots.Editor
     /// </summary>
     public static class TestBedBuilder
     {
-        const string Root = "Assets/_Project";
+        internal const string Root = "Assets/_Project";
         const string ScenePath = Root + "/Scenes/CameraTestBed.unity";
         const string SandboxPath = Root + "/Scenes/Sandbox.unity";
-        const string PlayerPrefabPath = Root + "/Prefabs/Player.prefab";
+        internal const string PlayerPrefabPath = Root + "/Prefabs/Player.prefab";
         const string GridTexturePath = Root + "/Art/GreyboxGrid.png";
         const string PanelTexturePath = Root + "/Art/MagneticPanel.png";
         const string MaterialFolder = Root + "/Materials";
-        const string SettingsFolder = Root + "/Settings";
+        internal const string SettingsFolder = Root + "/Settings";
         const string InputPath = SettingsFolder + "/GravBootsControls.inputactions";
 
         const int PlayerLayer = Layers.Player;
         const float AreaSpacing = 70f;
         /// <summary>Standard quarter-pipe radius (docs/LEVEL_METRICS.md), chosen in playtesting.</summary>
-        const float QuarterPipeRadius = 2.5f;
+        internal const float QuarterPipeRadius = 2.5f;
 
-        class Palette
+        internal class Palette
         {
             public Material Floor, Wall, Ceiling, Dark, Orange, Blue, PlayerBody, Visor;
             public Material Magnetic, BootsOff, BootsOn, Marker, Guide;
@@ -140,7 +140,7 @@ namespace GravBoots.Editor
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
 
-        static Palette EnsureMaterials()
+        internal static Palette EnsureMaterials()
         {
             Texture2D grid = EnsureGridTexture();
             Texture2D panel = EnsurePanelTexture();
@@ -262,7 +262,7 @@ namespace GravBoots.Editor
 
         // ---------------------------------------------------------------- scene setup
 
-        static void SetupLighting()
+        internal static void SetupLighting()
         {
             RenderSettings.ambientMode = AmbientMode.Flat;
             RenderSettings.ambientLight = new Color(0.42f, 0.44f, 0.48f);
@@ -275,7 +275,7 @@ namespace GravBoots.Editor
             sun.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
         }
 
-        static void BuildCameraAndDebug(GameObject player, CameraSettings cameraSettings)
+        internal static void BuildCameraAndDebug(GameObject player, CameraSettings cameraSettings)
         {
             var motor = player.GetComponent<PlayerMotor>();
             var reader = player.GetComponent<PlayerInputReader>();
@@ -332,7 +332,7 @@ namespace GravBoots.Editor
             Set(overlay, "boots", player.GetComponent<MagneticBoots>());
         }
 
-        static void BuildBootsFeedback(GameObject player, Palette palette)
+        internal static void BuildBootsFeedback(GameObject player, Palette palette)
         {
             var motor = player.GetComponent<PlayerMotor>();
             var boots = player.GetComponent<MagneticBoots>();
@@ -379,7 +379,7 @@ namespace GravBoots.Editor
             spawn.order = order;
         }
 
-        static void PointLight(Transform area, Vector3 localPosition, float range, float intensity = 2.5f)
+        internal static void PointLight(Transform area, Vector3 localPosition, float range, float intensity = 2.5f)
         {
             var light = new GameObject("Light").AddComponent<Light>();
             light.transform.SetParent(area, false);
@@ -711,7 +711,7 @@ namespace GravBoots.Editor
 
         // ---------------------------------------------------------------- helpers
 
-        static GameObject Box(Transform parent, string name, Vector3 localCentre, Vector3 size, Material material,
+        internal static GameObject Box(Transform parent, string name, Vector3 localCentre, Vector3 size, Material material,
             Quaternion? localRotation = null)
         {
             var go = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer), typeof(BoxCollider), typeof(GreyboxBox));
@@ -726,7 +726,7 @@ namespace GravBoots.Editor
         }
 
         /// <summary>A box on the Magnetic layer with the magnetic panel material.</summary>
-        static GameObject MagBox(Transform parent, string name, Vector3 localCentre, Vector3 size, Palette palette,
+        internal static GameObject MagBox(Transform parent, string name, Vector3 localCentre, Vector3 size, Palette palette,
             Quaternion? localRotation = null)
         {
             GameObject go = Box(parent, name, localCentre, size, palette.Magnetic, localRotation);
@@ -738,7 +738,7 @@ namespace GravBoots.Editor
         /// A magnetic 90° curve starting at <paramref name="start"/> on a surface facing
         /// <paramref name="up"/>, heading along <paramref name="forward"/> (see <see cref="CurvedRamp"/>).
         /// </summary>
-        static GameObject Curve(Transform parent, string name, Vector3 start, Vector3 forward, Vector3 up,
+        internal static GameObject Curve(Transform parent, string name, Vector3 start, Vector3 forward, Vector3 up,
             CurvedRamp.Shape shape, float radius, float width, Palette palette)
         {
             var go = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider), typeof(CurvedRamp));

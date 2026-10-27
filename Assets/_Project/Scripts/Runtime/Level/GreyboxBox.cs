@@ -21,6 +21,16 @@ namespace GravBoots.Level
 
         void Update()
         {
+            // Scaling a box with the Scale tool would stretch its 1 m grid, so in the editor
+            // fold any scale into the box's size instead, once the drag is released (folding
+            // mid-drag would compound, as the tool scales relative to the drag's start).
+            if (!Application.isPlaying && GUIUtility.hotControl == 0 && transform.localScale != Vector3.one)
+            {
+                Vector3 s = transform.localScale;
+                size = Vector3.Scale(size, new Vector3(Mathf.Abs(s.x), Mathf.Abs(s.y), Mathf.Abs(s.z)));
+                transform.localScale = Vector3.one;
+                dirty = true;
+            }
             if (dirty)
                 Rebuild();
         }
