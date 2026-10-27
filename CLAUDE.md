@@ -6,7 +6,7 @@ Magnetic-boots 3D puzzle and obstacle course. Design and roadmap: `docs/PLAN.md`
 - Game code: `Assets/_Project/Scripts/Runtime` (namespaces `GravBoots.*`, asmdef `GravBoots.Runtime`).
 - The player motor works for any up direction: no `Vector3.up` in `Player/` except where world gravity is defined. Keep orientation math in pure static helpers (see `Gravity/SurfaceAlignment.cs`) with EditMode tests.
 - Physics layers and tags live in `Layers.cs` (Player 8, Magnetic 9, tag `Lethal`). Magnetic surfaces = `Magnetic` layer + `Magnetic_Panel` material; the builder's `MagBox` makes them.
-- `MagneticBoots` runs on `PlayerMotor.Stepped`, so stepping the motor drives the boots too. So does `PlayerSensor` (deaths, checkpoints, exit: an overlap check, not trigger messages); `LevelSession` owns start, respawn and the exit, and tests drive it with `Begin`/`Tick`.
+- `MagneticBoots` runs on `PlayerMotor.Stepped`, so stepping the motor drives the boots too. So does `PlayerSensor` (deaths, checkpoints, exit: an overlap check, not trigger messages); `LevelSession` owns start, respawn and the exit, and tests drive it with `Begin`/`Tick`. `Hazards/Turret` likewise exposes `Tick` (`AutoSimulate = false` in tests); its hit test is geometric (`BeamMath`), not a physics query on the player.
 - Design rule: the boots change orientation only along curves (`Level/CurvedRamp.cs`, the builder's `Curve`); sharp joins between magnetic surfaces are impassable by design. Don't add corner-transition logic.
 - PlayMode tests step `PlayerMotor.Tick` by hand (`AutoSimulate = false`) at all 6 orientations. Add a case there for every movement promise.
 - Run tests headless (Editor closed): `unity test . --mode EditMode --output Logs/test-EditMode.xml` (also `--mode PlayMode`).

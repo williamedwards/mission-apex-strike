@@ -241,12 +241,32 @@ both pits, and the Checkpoint Run area. `GameLoopTests` cover it at all six orie
 - Level start and exit, a fast restart key, death → respawn in under 1 second.
 - A minimal HUD: boots state, health, checkpoint reached.
 
-### 🚦 Gate: "Is it fun?"
+### 🚦 Gate: "Is it fun?" (chamber blocked out; first-time playtest pending)
 Build **one** rough greybox chamber that combines a hidden magnetic route, a deliberate drop
 onto a platform you can't reach otherwise, a death pit, and one simple turret placeholder.
 Watch someone play it for the first time.
 **Don't start the content phases until this chamber is fun.** If it isn't, iterate on the camera,
 the boots and readability here.
+
+**Built:** `Levels/Chamber_02.unity`, a 20 × 32 m hall with a ceiling at 13 m.
+1. **Start:** a magnetic floor. The east wall has a quarter-pipe; the west wall panel meets the
+   floor at a sharp join, which teaches that curves are routes.
+2. **Hidden route:** up the east wall onto the ceiling, behind a soffit that hides it from the
+   floor, then out over the pit. The ceiling checkpoint is here.
+3. **The drop:** from the ceiling strip, about 7.5 m onto a magnetic island in the death pit.
+   Nothing else connects to it.
+4. **Turret and exit:** a placeholder turret (15 m range) on the west wall covers the island
+   and the climb. A cover block on the island and a hood that hides the ceiling from it give
+   counterplay. A curved climb leads to the exit ledge.
+
+Supporting pieces:
+- `Hazards/Turret.cs`: Idle → Track → Charge, with the aim locking for the last 0.25 s → Fire
+  (hitscan, 50 damage) → Cooldown. It works on any surface.
+- `Debugging/PlaytestLog.cs`: writes each run's record.
+- **GravBoots → Playtests**: draws the records in the Scene view.
+
+**To run the gate:** a first-time player plays without help; watch where they hesitate, then
+review the records in the Scene view.
 
 ### Phase 3: Moving elements and timing hazards
 - A generic `KinematicMover` (waypoints or curves; ping-pong, loop or trigger modes) driven by

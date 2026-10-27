@@ -23,7 +23,11 @@ namespace GravBoots.Editor
             Header("Chamber");
             if (GUILayout.Button("New Chamber…"))
                 EditorApplication.delayCall += () => EditorApplication.ExecuteMenuItem("GravBoots/New Chamber…");
-            if (Object.FindAnyObjectByType<GravBoots.Level.LevelSession>() == null && GUILayout.Button("Add Game Loop to This Chamber"))
+            var session = Object.FindAnyObjectByType<GravBoots.Level.LevelSession>();
+            if (session == null && GUILayout.Button("Add Game Loop to This Chamber"))
+                LevelKit.AddGameLoop();
+            else if (session != null && session.GetComponent<GravBoots.Debugging.PlaytestLog>() == null
+                     && GUILayout.Button("Add Playtest Log to This Chamber"))
                 LevelKit.AddGameLoop();
             float step = EditorGUILayout.FloatField(new GUIContent("Grid step (m)", "Snapping for moving, resizing and new pieces."), LevelKit.GridStep);
             if (!Mathf.Approximately(step, LevelKit.GridStep))
@@ -34,8 +38,7 @@ namespace GravBoots.Editor
             Row(("Quarter-Pipe", LevelKit.Piece.QuarterPipe), ("Rounded Edge", LevelKit.Piece.RoundedEdge));
             Row(("Lethal Floor", LevelKit.Piece.LethalFloor), ("Kill Volume", LevelKit.Piece.KillVolume));
             Row(("Checkpoint", LevelKit.Piece.Checkpoint), ("Exit", LevelKit.Piece.Exit));
-            if (GUILayout.Button("Spawn Point"))
-                LevelKit.Place(LevelKit.Piece.Spawn);
+            Row(("Turret", LevelKit.Piece.Turret), ("Spawn Point", LevelKit.Piece.Spawn));
 
             Header("Selected");
             GameObject[] selection = Selection.gameObjects;
@@ -66,6 +69,7 @@ namespace GravBoots.Editor
                     "Curves: set Radius and Width in the Inspector; they start on a surface and curve toward its forward (blue arrow).\n" +
                     "Kill Volumes are invisible boxes (red outline) that kill on entry: fill the bottom of pits with them.\n" +
                     "Checkpoints and the Exit trigger when walked through; rotate a checkpoint onto a wall to respawn there magnetized.\n" +
+                    "Turrets see the side their base faces (rotate onto any surface); walls break their line of sight.\n" +
                     "Ctrl+D duplicates, Ctrl+Z undoes. Ctrl+S saves the chamber. Press Play to test.\n" +
                     "Full guide: docs/LEVEL_EDITING.md",
                     MessageType.None);

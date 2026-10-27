@@ -3,6 +3,7 @@ using System.IO;
 using GravBoots.Cameras;
 using GravBoots.Debugging;
 using GravBoots.Gravity;
+using GravBoots.Hazards;
 using GravBoots.Level;
 using GravBoots.Player;
 using Unity.Cinemachine;
@@ -42,7 +43,7 @@ namespace GravBoots.Editor
         {
             public Material Floor, Wall, Ceiling, Dark, Orange, Blue, PlayerBody, Visor;
             public Material Magnetic, BootsOff, BootsOn, Marker, Guide;
-            public Material CheckpointIdle, CheckpointLit, Exit;
+            public Material CheckpointIdle, CheckpointLit, Exit, TurretEye;
         }
 
         [MenuItem("GravBoots/Build Camera Test Bed")]
@@ -168,6 +169,7 @@ namespace GravBoots.Editor
                 CheckpointIdle = EnsureMaterial("Checkpoint_Idle", new Color(0.3f, 0.45f, 0.4f), null),
                 CheckpointLit = EnsureMaterial("Checkpoint_Lit", new Color(0.3f, 1f, 0.6f), null, emissive: true),
                 Exit = EnsureMaterial("Exit_Pad", new Color(1f, 0.85f, 0.2f), null, emissive: true),
+                TurretEye = EnsureMaterial("Turret_Eye", new Color(1f, 0.15f, 0.1f), null, emissive: true),
             };
         }
 
@@ -383,6 +385,7 @@ namespace GravBoots.Editor
             var hud = sessionObject.AddComponent<GravBoots.UI.SessionHud>();
             Set(hud, "session", session);
             Set(hud, "health", player.GetComponent<Health>());
+            Set(sessionObject.AddComponent<PlaytestLog>(), "session", session);
             var keys = Object.FindAnyObjectByType<DebugGravityKeys>();
             if (keys != null)
                 Set(keys, "session", session);
@@ -816,6 +819,41 @@ namespace GravBoots.Editor
             var pad = Primitive(go.transform, PrimitiveType.Cylinder, "Pad", new Vector3(0f, 0.01f, 0f), new Vector3(2.4f, 0.01f, 2.4f), palette.Exit);
             pad.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
             return exit;
+        }
+
+        /// <summary>
+        /// A placeholder laser turret standing on a surface facing <paramref name="up"/>, resting
+        /// aim along <paramref name="forward"/>: a dark base (solid), a head that turns, and the
+        /// laser line.
+        /// </summary>
+        internal static Turret TurretMount(Transform parent, string name, Vector3 localPosition, Vector3 forward, Vector3 up, Palette palette)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPosition;
+            go.transform.localRotation = Quaternion.LookRotation(forward, up);
+            var turret = go.AddComponent<Turret>();
+
+            Box(go.transform, "Base", new Vector3(0f, 0.2f, 0f), new Vector3(0.8f, 0.4f, 0.8f), palette.Dark);
+            var head = new GameObject("Head").transform;
+            head.SetParent(go.transform, false);
+            head.localPosition = new Vector3(0f, 0.6f, 0f);
+            Primitive(head, PrimitiveType.Sphere, "Dome", Vector3.zero, Vector3.one * 0.55f, palette.Dark);
+            Primitive(head, PrimitiveType.Cube, "Barrel", new Vector3(0f, 0f, 0.35f), new Vector3(0.12f, 0.12f, 0.45f), palette.Dark);
+            Primitive(head, PrimitiveType.Sphere, "Eye", new Vector3(0f, 0.05f, 0.24f), Vector3.one * 0.14f, palette.TurretEye);
+
+            var line = new GameObject("Laser").AddComponent<LineRenderer>();
+            line.transform.SetParent(go.transform, false);
+            line.useWorldSpace = true;
+            line.positionCount = 2;
+            line.sharedMaterial = palette.Guide;
+            line.shadowCastingMode = ShadowCastingMode.Off;
+            line.receiveShadows = false;
+            line.enabled = false;
+
+            Set(turret, "head", head);
+            Set(turret, "beam", line);
+            return turret;
         }
 
         /// <summary>An invisible box that kills on entry (inside death pits).</summary>

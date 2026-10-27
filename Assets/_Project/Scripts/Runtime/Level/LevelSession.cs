@@ -45,6 +45,7 @@ namespace GravBoots.Level
         LevelExit exitReached;
 
         public SessionState State { get; private set; }
+        public PlayerMotor Player => player;
         public SpawnPoint Checkpoint { get; private set; }
         /// <summary>Spawn points in order (checkpoints included); debug cycling walks this list.</summary>
         public SpawnPoint[] Spawns => spawns;

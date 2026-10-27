@@ -14,10 +14,11 @@ namespace GravBoots.UI
         [SerializeField] Health health;
         [SerializeField] float noticeSeconds = 1.5f;
         [SerializeField] float fadeInSeconds = 0.25f;
+        [SerializeField] float damageFlashSeconds = 0.3f;
         [SerializeField] Color accent = new Color(0.3f, 1f, 0.6f);
 
         GUIStyle small, big;
-        float noticeTime;
+        float noticeTime, damageFlash;
         float sinceRespawn = float.MaxValue;
         bool started;
 
@@ -27,6 +28,8 @@ namespace GravBoots.UI
                 return;
             session.CheckpointChanged += OnCheckpoint;
             session.Respawned += OnRespawned;
+            if (health != null)
+                health.Damaged += OnDamaged;
         }
 
         void OnDisable()
@@ -35,7 +38,11 @@ namespace GravBoots.UI
                 return;
             session.CheckpointChanged -= OnCheckpoint;
             session.Respawned -= OnRespawned;
+            if (health != null)
+                health.Damaged -= OnDamaged;
         }
+
+        void OnDamaged(float amount) => damageFlash = damageFlashSeconds;
 
         // The first checkpoint is the start, which needs no notice.
         void OnCheckpoint(SpawnPoint spawn) => noticeTime = spawn is Checkpoint ? noticeSeconds : 0f;
@@ -50,6 +57,7 @@ namespace GravBoots.UI
         void Update()
         {
             noticeTime = Mathf.Max(0f, noticeTime - Time.deltaTime);
+            damageFlash = Mathf.Max(0f, damageFlash - Time.deltaTime);
             if (sinceRespawn < float.MaxValue)
                 sinceRespawn += Time.deltaTime;
         }
@@ -80,6 +88,12 @@ namespace GravBoots.UI
             {
                 GUI.color = new Color(accent.r, accent.g, accent.b, Mathf.Clamp01(noticeTime / 0.4f));
                 GUI.Label(new Rect(0f, h * 0.3f, w, 40f), "CHECKPOINT", big);
+            }
+
+            if (damageFlash > 0f)
+            {
+                GUI.color = new Color(1f, 0.1f, 0.05f, 0.35f * damageFlash / damageFlashSeconds);
+                GUI.DrawTexture(new Rect(0f, 0f, w, h), Texture2D.whiteTexture);
             }
 
             float fade = session.State == SessionState.Dying

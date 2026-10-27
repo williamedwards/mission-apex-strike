@@ -83,7 +83,29 @@ through the spawns in order while playing. That's handy for testing the far end 
   the Inspector (Box Collider → Size) to cover the whole route past it.
 - **Exit:** the gold pad that finishes the chamber.
 - A chamber made before these existed needs **Add Game Loop to This Chamber** (top of the kit)
-  once.
+  once. One made before the playtest log shows **Add Playtest Log to This Chamber** instead.
+
+### Turrets (placeholder)
+- **Turret:** a laser turret that sees the side its base faces. Rotate it onto a wall or ceiling
+  with the 90° buttons. Solid geometry blocks its line of sight.
+- It tracks with a thin red laser, then charges: the laser thickens and flickers. In the last
+  quarter-second it turns white and stops aiming, which is the moment to step aside. Each hit
+  takes half your health.
+- In the Inspector, **Range** (30 m by default) sets how far it can see. Keep it short enough
+  that it covers only the part of the route you mean it to, and test from the start of the
+  chamber.
+
+### Playtests
+- Every run in Play mode writes a record to `Logs/Playtests/` (not committed). It holds the
+  deaths with where and why, the checkpoints, boots switches, damage, completion, and a coarse
+  path.
+- **GravBoots → Playtests → Show in Scene View** draws them over the open chamber:
+  - a coloured line per run,
+  - red dots labelled with the cause where people died,
+  - green dots at the checkpoints they reached,
+  - a count in the corner.
+- **Open Folder** opens the records folder. Delete old records there when you change the chamber
+  a lot.
 
 ## 4. Testing
 1. Press **Play**, then press **E** on a magnetic surface to switch the boots on, and walk.

@@ -18,7 +18,7 @@ namespace GravBoots.Editor
         const string RootName = "Level";
         const string GridStepKey = "GravBoots.LevelKit.GridStep";
 
-        public enum Piece { PlainBlock, MagneticBlock, LethalFloor, QuarterPipe, RoundedEdge, Spawn, Checkpoint, KillVolume, Exit }
+        public enum Piece { PlainBlock, MagneticBlock, LethalFloor, QuarterPipe, RoundedEdge, Spawn, Checkpoint, KillVolume, Exit, Turret }
 
         /// <summary>Grid size for snapping and resizing (metres), remembered per user.</summary>
         public static float GridStep
@@ -135,6 +135,9 @@ namespace GravBoots.Editor
                 case Piece.Exit:
                     go = TestBedBuilder.ExitPad(root, "Exit", Vector3.zero, Vector3.forward, Vector3.up, palette).gameObject;
                     break;
+                case Piece.Turret:
+                    go = TestBedBuilder.TurretMount(root, "Turret", Vector3.zero, Vector3.forward, Vector3.up, palette).gameObject;
+                    break;
                 default:
                     int order = NextSpawnOrder();
                     go = AddSpawn(root, at + Vector3.up * 0.05f, $"Spawn {order}", order).gameObject;
@@ -190,9 +193,21 @@ namespace GravBoots.Editor
         [MenuItem("GravBoots/Add Game Loop to Open Chamber")]
         public static void AddGameLoop()
         {
-            if (Object.FindAnyObjectByType<LevelSession>() != null)
+            var existing = Object.FindAnyObjectByType<LevelSession>();
+            if (existing != null)
             {
-                Debug.Log("[Level Kit] This chamber already has a game loop.");
+                // Chambers made before the playtest log get just that.
+                if (existing.GetComponent<GravBoots.Debugging.PlaytestLog>() == null)
+                {
+                    var log = Undo.AddComponent<GravBoots.Debugging.PlaytestLog>(existing.gameObject);
+                    var serialized = new SerializedObject(log);
+                    serialized.FindProperty("session").objectReferenceValue = existing;
+                    serialized.ApplyModifiedPropertiesWithoutUndo();
+                    EditorSceneManager.MarkSceneDirty(existing.gameObject.scene);
+                    Debug.Log("[Level Kit] Added the playtest log to this chamber.");
+                }
+                else
+                    Debug.Log("[Level Kit] This chamber already has a game loop.");
                 return;
             }
             var player = Object.FindAnyObjectByType<GravBoots.Player.PlayerMotor>();
