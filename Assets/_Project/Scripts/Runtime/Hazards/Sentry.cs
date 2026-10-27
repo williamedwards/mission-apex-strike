@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace GravBoots.Hazards
 {
-    public enum SentryState { Sweep, Lock, Charge, Fire, Cooldown, Disabled }
+    public enum SentryState { Idle, Lock, Charge, Fire, Cooldown, Disabled }
 
     /// <summary>
     /// A sentry robot that only sees and shoots in one flat plane: parallel to the surface it
@@ -15,20 +15,24 @@ namespace GravBoots.Hazards
     /// The plane makes orientation the counterplay: on the same surface you're exposed, on a
     /// wall you're only exposed where the plane crosses it (a red line drawn round the room
     /// shows where), and on the ceiling above you're safe and in position to drop on it.
-    /// Sweep turns a searchlight round the plane; anyone in the plane, inside its view cone
-    /// and in line of sight is locked on to. Lock (turns to face) → Charge (the sight flickers;
-    /// for the last <see cref="aimLockTime"/> it freezes and turns white, so stepping aside or
-    /// leaving the plane dodges) → Fire → Cooldown → Sweep.
+    /// Idle until the player's body reaches into the plane, in range and line of sight,
+    /// anywhere around it. Lock (turns to face you; it only charges once facing you, so being
+    /// behind it buys time) → Charge (the sight flickers; for the last
+    /// <see cref="aimLockTime"/> it freezes and turns white, so stepping aside or leaving the
+    /// plane dodges) → Fire → Cooldown → Idle. A stomp sets off <see cref="SentryWreck"/>.
     /// A stomp needs the player landing on its head moving at least <see cref="stompSpeed"/>
     /// toward it, so walking onto it doesn't count. Drops fall to the world floor, so only
-    /// floor sentries can be stomped. Everything is measured against the motor's pose and
-    /// <see cref="Tick"/> is public, so tests step it by hand.
+    /// floor sentries can be stomped. The stomp is checked on the player motor's
+    /// <see cref="PlayerMotor.Stepped"/>; the rest runs in <see cref="Tick"/>, which is public
+    /// so tests step it by hand.
     /// </remarks>
     public class Sentry : MonoBehaviour
     {
         [SerializeField] PlayerMotor target;
-        [Tooltip("Turns to face the aim, and slumps when destroyed (visual only). Optional.")]
+        [Tooltip("Turns to face the aim, and is thrown off when destroyed (visual only). Optional.")]
         [SerializeField] Transform head;
+        [Tooltip("The solid body; crumbles into rubble when destroyed. Optional.")]
+        [SerializeField] Transform body;
         [Tooltip("The searchlight and shot. Optional.")]
         [SerializeField] LineRenderer sight;
         [Tooltip("Traced round the room where the firing plane meets surfaces. Optional.")]
@@ -44,15 +48,10 @@ namespace GravBoots.Hazards
         [Tooltip("Half the thickness of the plane it sees and shoots in.")]
         [SerializeField] float planeHalfThickness = 0.15f;
 
-        [Header("Sweep")]
-        [SerializeField] float sweepDegreesPerSecond = 60f;
-        [Tooltip("Total sweep arc around its forward; 360 turns all the way round.")]
-        [SerializeField, Range(0f, 360f)] float sweepArc = 360f;
-        [Tooltip("Half-angle of the searchlight: it only notices the player inside this.")]
-        [SerializeField] float viewHalfAngle = 20f;
-
         [Header("Attack")]
+        [Tooltip("Minimum time from noticing the player to charging.")]
         [SerializeField] float lockTime = 0.35f;
+        [Tooltip("How fast it turns to face the player; it charges only once facing them.")]
         [SerializeField] float lockDegreesPerSecond = 270f;
         [SerializeField] float chargeTime = 0.6f;
         [SerializeField] float aimLockTime = 0.2f;
@@ -71,7 +70,6 @@ namespace GravBoots.Hazards
         Health targetHealth;
         float capsuleHeight = 1.8f, capsuleRadius = 0.35f;
         Vector3 aim;
-        float sweepAngle, sweepDirection = 1f;
         float stateTime, unseenTime, recentFallSpeed, shotLength;
         bool initialised;
         readonly RaycastHit[] hits = new RaycastHit[16];
@@ -80,8 +78,19 @@ namespace GravBoots.Hazards
         public SentryState State { get; private set; }
         public bool IsDisabled => State == SentryState.Disabled;
         public bool AutoSimulate { get => autoSimulate; set => autoSimulate = value; }
-        public PlayerMotor Target { get => target; set { target = value; CacheTarget(); } }
-        public float SweepDegreesPerSecond { get => sweepDegreesPerSecond; set => sweepDegreesPerSecond = value; }
+        public PlayerMotor Target
+        {
+            get => target;
+            set
+            {
+                Unsubscribe();
+                target = value;
+                CacheTarget();
+                if (isActiveAndEnabled)
+                    Subscribe();
+            }
+        }
+        public Transform Body { get => body; set => body = value; }
         public Vector3 AimDirection => aim;
         public Vector3 Eye => transform.position + transform.up * eyeHeight;
         public float LockTime => lockTime;
@@ -97,8 +106,34 @@ namespace GravBoots.Hazards
         {
             if (target == null)
                 target = FindAnyObjectByType<PlayerMotor>();
+            if (body == null)
+                body = transform.Find("Body");
             CacheTarget();
             Initialise();
+        }
+
+        void OnEnable() => Subscribe();
+
+        void OnDisable() => Unsubscribe();
+
+        // The stomp is checked on every motor step, not once a frame: at a low frame rate the
+        // motor can land on the head and slide off its edge between two frames.
+        void Subscribe()
+        {
+            if (target != null)
+                target.Stepped += OnTargetStepped;
+        }
+
+        void Unsubscribe()
+        {
+            if (target != null)
+                target.Stepped -= OnTargetStepped;
+        }
+
+        void OnTargetStepped(float deltaTime)
+        {
+            if (State != SentryState.Disabled)
+                CheckStomp(deltaTime);
         }
 
         void Start() => TraceDangerLine();
@@ -124,7 +159,6 @@ namespace GravBoots.Hazards
         void Initialise()
         {
             aim = transform.forward;
-            sweepAngle = 0f;
             initialised = true;
         }
 
@@ -134,8 +168,6 @@ namespace GravBoots.Hazards
                 Initialise();
             if (State == SentryState.Disabled)
                 return;
-            if (CheckStomp(deltaTime))
-                return;
 
             stateTime += deltaTime;
             bool sees = CanSee(out Vector3 toTarget);
@@ -144,24 +176,23 @@ namespace GravBoots.Hazards
 
             switch (State)
             {
-                case SentryState.Sweep:
-                    StepSweep(deltaTime);
-                    if (sees && Vector3.Angle(aim, toTarget) <= viewHalfAngle)
+                case SentryState.Idle:
+                    if (sees)
                         SetState(SentryState.Lock);
                     break;
                 case SentryState.Lock:
                     if (lost)
-                        SetState(SentryState.Sweep);
+                        SetState(SentryState.Idle);
                     else
                     {
                         TurnToward(toTarget, sees, deltaTime);
-                        if (stateTime >= lockTime)
+                        if (stateTime >= lockTime && Vector3.Angle(aim, toTarget) < 3f)
                             SetState(SentryState.Charge);
                     }
                     break;
                 case SentryState.Charge:
                     if (lost)
-                        SetState(SentryState.Sweep);
+                        SetState(SentryState.Idle);
                     else
                     {
                         if (stateTime < chargeTime - aimLockTime)
@@ -179,11 +210,7 @@ namespace GravBoots.Hazards
                     break;
                 case SentryState.Cooldown:
                     if (stateTime >= cooldownTime)
-                    {
-                        // Carry on sweeping from wherever it ended up.
-                        sweepAngle = Vector3.SignedAngle(transform.forward, aim, transform.up);
-                        SetState(SentryState.Sweep);
-                    }
+                        SetState(SentryState.Idle);
                     break;
             }
             if (head != null)
@@ -194,23 +221,6 @@ namespace GravBoots.Hazards
         {
             State = next;
             stateTime = 0f;
-        }
-
-        void StepSweep(float deltaTime)
-        {
-            sweepAngle += sweepDirection * sweepDegreesPerSecond * deltaTime;
-            if (sweepArc < 360f)
-            {
-                float half = sweepArc * 0.5f;
-                if (Mathf.Abs(sweepAngle) > half)
-                {
-                    sweepAngle = Mathf.Clamp(sweepAngle, -half, half);
-                    sweepDirection = -sweepDirection;
-                }
-            }
-            else
-                sweepAngle = Mathf.Repeat(sweepAngle + 180f, 360f) - 180f;
-            aim = Quaternion.AngleAxis(sweepAngle, transform.up) * transform.forward;
         }
 
         void TurnToward(Vector3 toTarget, bool sees, float deltaTime)
@@ -249,10 +259,10 @@ namespace GravBoots.Hazards
         }
 
         /// <summary>Landing on its head, falling fast enough, destroys it.</summary>
-        bool CheckStomp(float deltaTime)
+        void CheckStomp(float deltaTime)
         {
             if (target == null || targetHealth != null && targetHealth.IsDead)
-                return false;
+                return;
             Vector3 up = transform.up;
             float fallSpeed = -Vector3.Dot(target.Velocity, up);
             // Remembered briefly: the motor may already have stopped the fall on the landing step.
@@ -262,10 +272,8 @@ namespace GravBoots.Hazards
             bool overHead = new Vector2(local.x, local.z).magnitude <= stompRadius;
             bool atHead = local.y >= headTop - 0.2f && local.y <= headTop + 0.4f;
             bool upright = Vector3.Angle(target.BodyUp, up) < 30f;
-            if (!(overHead && atHead && upright && recentFallSpeed >= stompSpeed))
-                return false;
-            Disable();
-            return true;
+            if (overHead && atHead && upright && recentFallSpeed >= stompSpeed)
+                Disable();
         }
 
         /// <summary>Destroys the sentry for good (a stomp).</summary>
@@ -278,10 +286,10 @@ namespace GravBoots.Hazards
                 sight.enabled = false;
             if (dangerLine != null)
                 dangerLine.enabled = false;
+            Material spark = eye != null ? eye.sharedMaterial : null;
             if (eye != null && eyeOff != null)
                 eye.sharedMaterial = eyeOff;
-            if (head != null)
-                head.rotation = Quaternion.AngleAxis(35f, head.right) * head.rotation;
+            SentryWreck.Break(this, body, head, spark, target != null ? target.Position : transform.position);
             Destroyed?.Invoke();
         }
 
@@ -327,7 +335,7 @@ namespace GravBoots.Hazards
         {
             if (sight == null)
                 return;
-            bool visible = State != SentryState.Cooldown && State != SentryState.Disabled;
+            bool visible = State is SentryState.Lock or SentryState.Charge or SentryState.Fire;
             sight.enabled = visible;
             if (!visible)
                 return;
@@ -337,10 +345,6 @@ namespace GravBoots.Hazards
             float length = State == SentryState.Fire ? shotLength : ObstacleDistance(Eye, aim, range);
             switch (State)
             {
-                case SentryState.Sweep:
-                    width = 0.03f;
-                    color = new Color(1f, 0.2f, 0.1f, 0.45f);
-                    break;
                 case SentryState.Lock:
                     width = 0.04f;
                     color = new Color(1f, 0.2f, 0.1f, 0.85f);

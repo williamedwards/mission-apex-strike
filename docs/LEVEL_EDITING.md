@@ -88,8 +88,9 @@ through the spawns in order while playing. That's handy for testing the far end 
 ### Sentries
 - **Sentry:** a robot that sees and shoots only in one flat plane, 1 m above the surface it
   stands on.
-- Its searchlight sweeps round. If you're in the plane, inside the searchlight and in its line
-  of sight, it locks on, charges, then fires. One hit kills.
+- It stands still until your body reaches into its plane, in range and in line of sight, from
+  any direction. Then it turns to face you, charges and fires. One hit kills.
+- It charges only once it's facing you, so being behind it buys a moment.
 - In the last fifth of a second of the charge the light turns white and stops aiming: step
   aside or leave the plane.
 - The red line traced round the room is where its plane meets surfaces. The same line shows in
@@ -97,13 +98,16 @@ through the spawns in order while playing. That's handy for testing the far end 
 - **Counterplay is changing surface.** Climb a wall above the line, or walk the ceiling over it.
 - **Dropping onto its head destroys it for good.** You need to land on it from a drop of at
   least half a metre; walking onto it doesn't count.
+  - It bursts into sparks, its head flies off, and its body crumbles into rubble round a low
+    stump that you land on.
+  - The rubble is only visual and never gets in your way.
   - Drops fall toward the world floor, so only floor sentries can be stomped.
   - Sentries on walls and ceilings can only be avoided.
 - In the Inspector:
   - **Range** (14 m): how far its plane reaches.
-  - **Sweep Degrees Per Second**: 0 makes a stationary guard.
-  - **Sweep Arc**: under 360 makes it sweep back and forth around its forward (blue arrow).
-  - **View Half Angle**: how wide the searchlight is.
+  - **Lock Degrees Per Second**: how fast it turns to face you.
+  - **Charge Time** and **Aim Lock Time**: the warning before a shot, and the last part of it,
+    when the aim is frozen and stepping aside dodges.
 
 ### Turrets (placeholder, likely to be removed)
 - **Turret:** a laser turret that sees the side its base faces. Rotate it onto a wall or ceiling

@@ -51,7 +51,8 @@ namespace GravBoots.Debugging
         MagneticBoots boots;
         Health health;
         string file;
-        float startTime, nextSample;
+        // Its own clock: Time.time is reset before the last write when Play mode ends.
+        float elapsed, nextSample;
         bool dirty;
 
         /// <summary>Logs/Playtests in the project when in the Editor; the player's data folder in a build.</summary>
@@ -107,16 +108,17 @@ namespace GravBoots.Debugging
             string scene = SceneManager.GetActiveScene().name;
             record = new PlaytestRecord { scene = scene, startedUtc = now.ToString("o") };
             file = Path.Combine(Folder, $"{scene}_{now:yyyyMMdd_HHmmss}.json");
-            startTime = Time.time;
+            elapsed = 0f;
             Add("start", session.Checkpoint != null ? session.Checkpoint.name : null);
             Write();
         }
 
         void Update()
         {
-            if (record == null || player == null || Time.time < nextSample)
+            elapsed += Time.deltaTime;
+            if (record == null || player == null || elapsed < nextSample)
                 return;
-            nextSample = Time.time + pathInterval;
+            nextSample = elapsed + pathInterval;
             if (session.State == SessionState.Playing)
                 record.path.Add(player.Position);
             if (dirty && record.path.Count % 20 == 0)
@@ -158,7 +160,7 @@ namespace GravBoots.Debugging
                 return;
             record.events.Add(new PlaytestEvent
             {
-                t = Time.time - startTime,
+                t = elapsed,
                 type = type,
                 position = player != null ? player.Position : Vector3.zero,
                 up = player != null ? player.BodyUp : Vector3.zero,
@@ -171,7 +173,7 @@ namespace GravBoots.Debugging
         {
             if (record == null || file == null)
                 return;
-            record.duration = Time.time - startTime;
+            record.duration = elapsed;
             record.deaths = session != null ? session.Deaths : 0;
             try
             {

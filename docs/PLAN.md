@@ -257,14 +257,15 @@ the boots and readability here.
    Nothing else connects to it.
 4. **Sentry and exit:** a plane sentry stands on the island, and its plane covers the island
    and the bottom of the climb. Drop onto it from the ceiling to destroy it. Miss, and it
-   finds you on its next sweep. A curved climb leads to the exit ledge.
+   turns and fires within about a second. A curved climb leads to the exit ledge.
 
 Supporting pieces:
 - `Hazards/Sentry.cs` (it replaced the 3D-aiming turret in the chamber):
   - It sees and shoots only in the plane parallel to its surface, 1 m up.
-  - States: Sweep (a searchlight) → Lock → Charge, with the aim locking for the last 0.2 s →
-    Fire, which kills in one hit → Cooldown.
-  - A stomp from a drop destroys it for good.
+  - States: Idle → Lock (it notices you anywhere in its plane and turns to face you) → Charge,
+    with the aim locking for the last 0.2 s → Fire, which kills in one hit → Cooldown.
+  - A stomp from a drop destroys it for good. It crumbles into rubble round a stump
+    (`SentryWreck`, `DebrisChunk`).
 - `Hazards/Turret.cs`: the earlier placeholder. It aims in 3D and does 50 damage per hit. It
   felt generic, so it's kept only for comparison.
 - `Debugging/PlaytestLog.cs`: writes each run's record.

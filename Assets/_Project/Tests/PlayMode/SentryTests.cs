@@ -8,8 +8,8 @@ using UnityEngine;
 namespace GravBoots.Tests
 {
     /// <summary>
-    /// The plane sentry: it kills in its plane, can't see out of it, is blocked by walls, only
-    /// notices you in its searchlight, and dies for good when dropped on. Built in a rotated
+    /// The plane sentry: it kills in its plane, can't see out of it, is blocked by walls, has to
+    /// turn to face you before charging, and crumbles for good when dropped on. Built in a rotated
     /// local frame (gravity along the frame's down) and stepped by hand.
     /// </summary>
     public class SentryTests
@@ -35,6 +35,9 @@ namespace GravBoots.Tests
         {
             foreach (Object o in created)
                 Object.DestroyImmediate(o);
+            // Wreckage is spawned at the scene root.
+            foreach (DebrisChunk chunk in Object.FindObjectsByType<DebrisChunk>())
+                Object.DestroyImmediate(chunk.gameObject);
             created.Clear();
         }
 
@@ -80,7 +83,7 @@ namespace GravBoots.Tests
         }
 
         /// <summary>A sentry on the floor at <paramref name="localPosition"/>, first looking along <paramref name="localForward"/>, with a solid body up to 1.3 m.</summary>
-        void PlaceSentry(Vector3 localPosition, Vector3 localForward, float sweepSpeed = 0f)
+        void PlaceSentry(Vector3 localPosition, Vector3 localForward)
         {
             var go = new GameObject("Sentry");
             go.transform.SetParent(frame, false);
@@ -91,9 +94,9 @@ namespace GravBoots.Tests
             body.transform.localPosition = new Vector3(0f, 0.65f, 0f);
             body.AddComponent<BoxCollider>().size = new Vector3(0.9f, 1.3f, 0.9f);
             sentry = go.AddComponent<Sentry>();
+            sentry.Body = body.transform;
             sentry.AutoSimulate = false;
             sentry.Target = motor;
-            sentry.SweepDegreesPerSecond = sweepSpeed;
             Physics.SyncTransforms();
         }
 
@@ -107,6 +110,8 @@ namespace GravBoots.Tests
                 sentry.Tick(Dt);
             }
         }
+
+        Vector3 Local(Vector3 world) => frame.InverseTransformPoint(world);
 
         float TimeToShot => sentry.LockTime + sentry.ChargeTime;
 
@@ -141,7 +146,7 @@ namespace GravBoots.Tests
 
             Run(3f);
 
-            Assert.That(sentry.State, Is.EqualTo(SentryState.Sweep));
+            Assert.That(sentry.State, Is.EqualTo(SentryState.Idle));
             Assert.That(health.IsDead, Is.False);
         }
 
@@ -156,25 +161,26 @@ namespace GravBoots.Tests
 
             Run(3f);
 
-            Assert.That(sentry.State, Is.EqualTo(SentryState.Sweep));
+            Assert.That(sentry.State, Is.EqualTo(SentryState.Idle));
             Assert.That(health.IsDead, Is.False);
         }
 
         [Test]
-        public void OnlyNoticesThePlayerInItsSearchlight([ValueSource(nameof(Orientations))] Vector3 up)
+        public void TurnsToFaceAPlayerBehindItBeforeCharging([ValueSource(nameof(Orientations))] Vector3 up)
         {
             BuildFrame(up);
             Floor();
             SpawnPlayer(new Vector3(0f, 0f, -8f));
-            // Looking away and not sweeping: the player behind it is never noticed.
             PlaceSentry(Vector3.zero, Vector3.forward);
-            Run(2f);
-            Assert.That(sentry.State, Is.EqualTo(SentryState.Sweep));
 
-            // Sweeping round at 90°/s, it finds them within the half-turn.
-            sentry.SweepDegreesPerSecond = 90f;
-            Run(2.2f);
-            Assert.That(sentry.State, Is.Not.EqualTo(SentryState.Sweep));
+            Run(0.1f);
+            Assert.That(sentry.State, Is.EqualTo(SentryState.Lock), "notices anyone in its plane, all round");
+            Run(sentry.LockTime);
+            Assert.That(sentry.State, Is.EqualTo(SentryState.Lock), "still turning round");
+            Assert.That(health.IsDead, Is.False);
+
+            Run(1.5f);
+            Assert.That(health.IsDead, Is.True);
         }
 
         [Test]
@@ -200,7 +206,7 @@ namespace GravBoots.Tests
         {
             BuildFrame(up);
             Floor();
-            PlaceSentry(Vector3.zero, Vector3.forward, 60f);
+            PlaceSentry(Vector3.zero, Vector3.forward);
             // Falling from 4 m above its head.
             SpawnPlayer(new Vector3(0f, 5.3f, 0f));
             sentry.Target = motor;
@@ -212,12 +218,34 @@ namespace GravBoots.Tests
             Assert.That(destroyed, Is.True);
             Assert.That(sentry.IsDisabled, Is.True);
             Assert.That(health.IsDead, Is.False);
+            Assert.That(sentry.Body.gameObject.activeSelf, Is.False, "the body crumbles");
+            Assert.That(Local(motor.Position).y, Is.EqualTo(0.35f).Within(0.1f), "lands on the stump");
 
             // Back on the floor in front of it: it stays dead.
             motor.Teleport(frame.TransformPoint(new Vector3(0f, 0f, 6f)), frame.rotation);
             Run(3f);
             Assert.That(sentry.State, Is.EqualTo(SentryState.Disabled));
             Assert.That(health.IsDead, Is.False);
+        }
+
+        [Test]
+        public void StompCountsEvenIfTheSentryDoesNotTickMeanwhile([ValueSource(nameof(Orientations))] Vector3 up)
+        {
+            // At a low frame rate the motor steps several times per sentry update, and can land
+            // on the head and slide off its edge in between.
+            BuildFrame(up);
+            Floor();
+            PlaceSentry(Vector3.zero, Vector3.forward);
+            SpawnPlayer(new Vector3(-0.4f, 5.3f, 0.1f));
+            sentry.Target = motor;
+
+            for (int i = 0; i < 60; i++)
+            {
+                motor.SetMoveInput(Vector3.zero);
+                motor.Tick(Dt);
+            }
+
+            Assert.That(sentry.IsDisabled, Is.True);
         }
 
         [Test]
