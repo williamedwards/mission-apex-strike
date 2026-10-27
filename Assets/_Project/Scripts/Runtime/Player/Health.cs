@@ -12,8 +12,10 @@ namespace GravBoots.Player
         KillVolume,
         /// <summary>Left the level's bounds (the safety net under everything).</summary>
         OutOfBounds,
-        /// <summary>Health ran out (lasers, from Phase 4).</summary>
+        /// <summary>Health ran out.</summary>
         Damage,
+        /// <summary>Shot by a sentry (one hit kills).</summary>
+        Laser,
     }
 
     /// <summary>The player's health. Lethal surfaces and pits kill outright; weapons deal damage.</summary>

@@ -18,7 +18,7 @@ namespace GravBoots.Editor
         const string RootName = "Level";
         const string GridStepKey = "GravBoots.LevelKit.GridStep";
 
-        public enum Piece { PlainBlock, MagneticBlock, LethalFloor, QuarterPipe, RoundedEdge, Spawn, Checkpoint, KillVolume, Exit, Turret }
+        public enum Piece { PlainBlock, MagneticBlock, LethalFloor, QuarterPipe, RoundedEdge, Spawn, Checkpoint, KillVolume, Exit, Turret, Sentry }
 
         /// <summary>Grid size for snapping and resizing (metres), remembered per user.</summary>
         public static float GridStep
@@ -134,6 +134,9 @@ namespace GravBoots.Editor
                     break;
                 case Piece.Exit:
                     go = TestBedBuilder.ExitPad(root, "Exit", Vector3.zero, Vector3.forward, Vector3.up, palette).gameObject;
+                    break;
+                case Piece.Sentry:
+                    go = TestBedBuilder.SentryMount(root, "Sentry", Vector3.zero, Vector3.forward, Vector3.up, palette).gameObject;
                     break;
                 case Piece.Turret:
                     go = TestBedBuilder.TurretMount(root, "Turret", Vector3.zero, Vector3.forward, Vector3.up, palette).gameObject;

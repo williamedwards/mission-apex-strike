@@ -85,7 +85,27 @@ through the spawns in order while playing. That's handy for testing the far end 
 - A chamber made before these existed needs **Add Game Loop to This Chamber** (top of the kit)
   once. One made before the playtest log shows **Add Playtest Log to This Chamber** instead.
 
-### Turrets (placeholder)
+### Sentries
+- **Sentry:** a robot that sees and shoots only in one flat plane, 1 m above the surface it
+  stands on.
+- Its searchlight sweeps round. If you're in the plane, inside the searchlight and in its line
+  of sight, it locks on, charges, then fires. One hit kills.
+- In the last fifth of a second of the charge the light turns white and stops aiming: step
+  aside or leave the plane.
+- The red line traced round the room is where its plane meets surfaces. The same line shows in
+  the Scene view while you edit, so you can see what it covers.
+- **Counterplay is changing surface.** Climb a wall above the line, or walk the ceiling over it.
+- **Dropping onto its head destroys it for good.** You need to land on it from a drop of at
+  least half a metre; walking onto it doesn't count.
+  - Drops fall toward the world floor, so only floor sentries can be stomped.
+  - Sentries on walls and ceilings can only be avoided.
+- In the Inspector:
+  - **Range** (14 m): how far its plane reaches.
+  - **Sweep Degrees Per Second**: 0 makes a stationary guard.
+  - **Sweep Arc**: under 360 makes it sweep back and forth around its forward (blue arrow).
+  - **View Half Angle**: how wide the searchlight is.
+
+### Turrets (placeholder, likely to be removed)
 - **Turret:** a laser turret that sees the side its base faces. Rotate it onto a wall or ceiling
   with the 90° buttons. Solid geometry blocks its line of sight.
 - It tracks with a thin red laser, then charges: the laser thickens and flickers. In the last

@@ -44,6 +44,35 @@ namespace GravBoots.Tests
         }
 
         [Test]
+        public void StandingOnTheSameSurfaceIsInTheSlab()
+        {
+            bool inSlab = BeamMath.CapsuleInSlab(new Vector3(5f, 0f, 0f), Vector3.up, 1.8f, 0.35f,
+                Vector3.up, Vector3.up, 0.15f, out Vector3 aim);
+            Assert.That(inSlab, Is.True);
+            Assert.That(Vector3.Distance(aim, new Vector3(5f, 1f, 0f)), Is.LessThan(1e-3f));
+        }
+
+        [Test]
+        public void StandingOnAWallIsInTheSlabOnlyNearItsLevel()
+        {
+            // The plane is 1 m up; the player stands sideways on a wall at x = 3, body along -X.
+            bool low = BeamMath.CapsuleInSlab(new Vector3(3f, 1.2f, 0f), Vector3.left, 1.8f, 0.35f,
+                Vector3.up, Vector3.up, 0.15f, out _);
+            bool high = BeamMath.CapsuleInSlab(new Vector3(3f, 2f, 0f), Vector3.left, 1.8f, 0.35f,
+                Vector3.up, Vector3.up, 0.15f, out _);
+            Assert.That(low, Is.True);
+            Assert.That(high, Is.False);
+        }
+
+        [Test]
+        public void HangingFromTheCeilingAboveIsOutOfTheSlab()
+        {
+            bool inSlab = BeamMath.CapsuleInSlab(new Vector3(0f, 6f, 4f), Vector3.down, 1.8f, 0.35f,
+                Vector3.up, Vector3.up, 0.15f, out _);
+            Assert.That(inSlab, Is.False);
+        }
+
+        [Test]
         public void BeamStoppingShortMisses()
         {
             Vector3 chest = Vector3.up;

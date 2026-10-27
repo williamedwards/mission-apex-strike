@@ -59,5 +59,42 @@ namespace GravBoots.Hazards
             Vector3 top = foot + up * Mathf.Max(radius, height - radius);
             return SegmentDistance(from, to, bottom, top) <= radius + beamRadius;
         }
+
+        /// <summary>
+        /// Whether a capsule standing on <paramref name="foot"/> along <paramref name="up"/>
+        /// reaches into a flat slab (the plane through <paramref name="planePoint"/> with normal
+        /// <paramref name="planeNormal"/>, <paramref name="halfThickness"/> either side).
+        /// <paramref name="aimPoint"/> is where to aim, in the plane, to hit the capsule.
+        /// </summary>
+        public static bool CapsuleInSlab(Vector3 foot, Vector3 up, float height, float radius,
+            Vector3 planePoint, Vector3 planeNormal, float halfThickness, out Vector3 aimPoint)
+        {
+            Vector3 a = foot + up * radius;
+            Vector3 b = foot + up * Mathf.Max(radius, height - radius);
+            float sa = Vector3.Dot(a - planePoint, planeNormal);
+            float sb = Vector3.Dot(b - planePoint, planeNormal);
+            Vector3 nearest;
+            float distance;
+            if (sa * sb <= 0f && !Mathf.Approximately(sa, sb))
+            {
+                // The body's axis crosses the plane.
+                nearest = Vector3.Lerp(a, b, sa / (sa - sb));
+                distance = 0f;
+            }
+            else if (Mathf.Abs(sa - sb) < 1e-4f)
+            {
+                // Lying along the plane (e.g. standing on a wall beside it).
+                nearest = (a + b) * 0.5f;
+                distance = Mathf.Abs(sa);
+            }
+            else
+            {
+                bool aCloser = Mathf.Abs(sa) < Mathf.Abs(sb);
+                nearest = aCloser ? a : b;
+                distance = Mathf.Abs(aCloser ? sa : sb);
+            }
+            aimPoint = nearest - planeNormal * Vector3.Dot(nearest - planePoint, planeNormal);
+            return distance <= radius + halfThickness;
+        }
     }
 }

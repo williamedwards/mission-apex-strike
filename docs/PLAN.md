@@ -255,13 +255,18 @@ the boots and readability here.
    floor, then out over the pit. The ceiling checkpoint is here.
 3. **The drop:** from the ceiling strip, about 7.5 m onto a magnetic island in the death pit.
    Nothing else connects to it.
-4. **Turret and exit:** a placeholder turret (15 m range) on the west wall covers the island
-   and the climb. A cover block on the island and a hood that hides the ceiling from it give
-   counterplay. A curved climb leads to the exit ledge.
+4. **Sentry and exit:** a plane sentry stands on the island, and its plane covers the island
+   and the bottom of the climb. Drop onto it from the ceiling to destroy it. Miss, and it
+   finds you on its next sweep. A curved climb leads to the exit ledge.
 
 Supporting pieces:
-- `Hazards/Turret.cs`: Idle → Track → Charge, with the aim locking for the last 0.25 s → Fire
-  (hitscan, 50 damage) → Cooldown. It works on any surface.
+- `Hazards/Sentry.cs` (it replaced the 3D-aiming turret in the chamber):
+  - It sees and shoots only in the plane parallel to its surface, 1 m up.
+  - States: Sweep (a searchlight) → Lock → Charge, with the aim locking for the last 0.2 s →
+    Fire, which kills in one hit → Cooldown.
+  - A stomp from a drop destroys it for good.
+- `Hazards/Turret.cs`: the earlier placeholder. It aims in 3D and does 50 damage per hit. It
+  felt generic, so it's kept only for comparison.
 - `Debugging/PlaytestLog.cs`: writes each run's record.
 - **GravBoots → Playtests**: draws the records in the Scene view.
 
@@ -279,15 +284,20 @@ review the records in the Scene view.
 - **Exit check:** riding a moving magnetic platform upside down stays stable, and every hazard
   gives a readable warning before it fires.
 
-### Phase 4: Laser enemies
-- `Turret` states: Idle → Track (line-of-sight cone, laser sight) → Charge (wind-up
-  warning) → Fire → Cooldown. Two weapon types: hitscan beam and dodgeable bolts (pooled).
-- Turrets can be mounted on any surface and aim correctly whatever orientation the player is
-  in.
-- Counterplay comes from the route: break line of sight by moving onto another surface, take
-  cover, or drop past.
-- Damage and knockback, which can knock the player off a magnetic surface.
-- **Exit check:** a room you can clear only by moving between surfaces to dodge charged shots.
+### Phase 4: Sentries (plane-firing robots)
+Decided during the gate. The enemy is the **plane sentry** (`Hazards/Sentry.cs`, prototyped).
+It sees and shoots only in the plane parallel to the surface it stands on, so the counterplay is
+changing surface. One hit kills, and dropping onto one destroys it for good.
+- **Sentries on tracks:** they ride rails using the Phase 3 `KinematicMover`. Rails can run
+  over curves, so a sentry's plane swings across the room as it climbs onto a wall.
+- **Readability:** keep the red line where its plane meets the room, and add audio cues for
+  lock and charge (ElevenLabs).
+- **Next hazard candidates from the brainstorm:**
+  - laser planes: a full-room sheet of light that rises and falls;
+  - magnet mines: drawn to the boots, shed by letting go;
+  - charged panels.
+- **Exit check:** a room with a stationary sentry and a tracked one, where the only safe route
+  changes surface and one sentry must be stomped.
 
 ### Phase 5: Visual identity (sci-fi test chamber)
 - A modular kit: white magnetic panels, dark non-magnetic metal, glass, orange and blue accent

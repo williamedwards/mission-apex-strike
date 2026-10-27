@@ -43,7 +43,7 @@ namespace GravBoots.Editor
         {
             public Material Floor, Wall, Ceiling, Dark, Orange, Blue, PlayerBody, Visor;
             public Material Magnetic, BootsOff, BootsOn, Marker, Guide;
-            public Material CheckpointIdle, CheckpointLit, Exit, TurretEye;
+            public Material CheckpointIdle, CheckpointLit, Exit, TurretEye, SentryShell;
         }
 
         [MenuItem("GravBoots/Build Camera Test Bed")]
@@ -170,6 +170,7 @@ namespace GravBoots.Editor
                 CheckpointLit = EnsureMaterial("Checkpoint_Lit", new Color(0.3f, 1f, 0.6f), null, emissive: true),
                 Exit = EnsureMaterial("Exit_Pad", new Color(1f, 0.85f, 0.2f), null, emissive: true),
                 TurretEye = EnsureMaterial("Turret_Eye", new Color(1f, 0.15f, 0.1f), null, emissive: true),
+                SentryShell = EnsureMaterial("Sentry_Shell", new Color(0.93f, 0.93f, 0.95f), null, smoothness: 0.6f),
             };
         }
 
@@ -854,6 +855,54 @@ namespace GravBoots.Editor
             Set(turret, "head", head);
             Set(turret, "beam", line);
             return turret;
+        }
+
+        /// <summary>
+        /// A sentry standing on a surface facing <paramref name="up"/>, first looking along
+        /// <paramref name="forward"/>: a solid body you can land on, a head that turns, its
+        /// searchlight, and the red line where its firing plane meets the room.
+        /// </summary>
+        internal static Sentry SentryMount(Transform parent, string name, Vector3 localPosition, Vector3 forward, Vector3 up, Palette palette)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPosition;
+            go.transform.localRotation = Quaternion.LookRotation(forward, up);
+            var sentry = go.AddComponent<Sentry>();
+
+            // Solid up to the head's top (1.3 m), which is what a stomp lands on.
+            Box(go.transform, "Body", new Vector3(0f, 0.65f, 0f), new Vector3(0.9f, 1.3f, 0.9f), palette.SentryShell);
+            var head = new GameObject("Head").transform;
+            head.SetParent(go.transform, false);
+            head.localPosition = new Vector3(0f, 1f, 0f);
+            Primitive(head, PrimitiveType.Cube, "Visor", new Vector3(0f, 0f, 0.42f), new Vector3(0.6f, 0.16f, 0.1f), palette.Dark);
+            var eye = Primitive(head, PrimitiveType.Sphere, "Eye", new Vector3(0f, 0f, 0.48f), Vector3.one * 0.14f, palette.TurretEye);
+
+            var sight = Line(go.transform, "Sight", palette);
+            var danger = Line(go.transform, "Danger Line", palette);
+            danger.startWidth = danger.endWidth = 0.05f;
+            danger.startColor = danger.endColor = new Color(1f, 0.2f, 0.1f, 0.6f);
+            danger.enabled = true;
+
+            Set(sentry, "head", head);
+            Set(sentry, "sight", sight);
+            Set(sentry, "dangerLine", danger);
+            Set(sentry, "eye", eye.GetComponent<Renderer>());
+            Set(sentry, "eyeOff", palette.Dark);
+            return sentry;
+        }
+
+        static LineRenderer Line(Transform parent, string name, Palette palette)
+        {
+            var line = new GameObject(name).AddComponent<LineRenderer>();
+            line.transform.SetParent(parent, false);
+            line.useWorldSpace = true;
+            line.positionCount = 2;
+            line.sharedMaterial = palette.Guide;
+            line.shadowCastingMode = ShadowCastingMode.Off;
+            line.receiveShadows = false;
+            line.enabled = false;
+            return line;
         }
 
         /// <summary>An invisible box that kills on entry (inside death pits).</summary>

@@ -38,7 +38,9 @@ namespace GravBoots.Editor
             Row(("Quarter-Pipe", LevelKit.Piece.QuarterPipe), ("Rounded Edge", LevelKit.Piece.RoundedEdge));
             Row(("Lethal Floor", LevelKit.Piece.LethalFloor), ("Kill Volume", LevelKit.Piece.KillVolume));
             Row(("Checkpoint", LevelKit.Piece.Checkpoint), ("Exit", LevelKit.Piece.Exit));
-            Row(("Turret", LevelKit.Piece.Turret), ("Spawn Point", LevelKit.Piece.Spawn));
+            Row(("Sentry", LevelKit.Piece.Sentry), ("Turret", LevelKit.Piece.Turret));
+            if (GUILayout.Button("Spawn Point"))
+                LevelKit.Place(LevelKit.Piece.Spawn);
 
             Header("Selected");
             GameObject[] selection = Selection.gameObjects;
@@ -69,6 +71,7 @@ namespace GravBoots.Editor
                     "Curves: set Radius and Width in the Inspector; they start on a surface and curve toward its forward (blue arrow).\n" +
                     "Kill Volumes are invisible boxes (red outline) that kill on entry: fill the bottom of pits with them.\n" +
                     "Checkpoints and the Exit trigger when walked through; rotate a checkpoint onto a wall to respawn there magnetized.\n" +
+                    "Sentries see and shoot only in their plane (red line round the room); drop onto one to destroy it.\n" +
                     "Turrets see the side their base faces (rotate onto any surface); walls break their line of sight.\n" +
                     "Ctrl+D duplicates, Ctrl+Z undoes. Ctrl+S saves the chamber. Press Play to test.\n" +
                     "Full guide: docs/LEVEL_EDITING.md",
