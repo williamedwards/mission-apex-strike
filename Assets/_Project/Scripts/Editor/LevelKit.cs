@@ -18,7 +18,7 @@ namespace GravBoots.Editor
         const string RootName = "Level";
         const string GridStepKey = "GravBoots.LevelKit.GridStep";
 
-        public enum Piece { PlainBlock, MagneticBlock, LethalFloor, QuarterPipe, RoundedEdge, Spawn, Checkpoint, KillVolume, Exit, Turret, Sentry }
+        public enum Piece { PlainBlock, MagneticBlock, LethalFloor, QuarterPipe, RoundedEdge, Spawn, Checkpoint, KillVolume, Exit, Turret, Sentry, MovingPlatform, TrackedSentry }
 
         /// <summary>Grid size for snapping and resizing (metres), remembered per user.</summary>
         public static float GridStep
@@ -138,6 +138,14 @@ namespace GravBoots.Editor
                 case Piece.Sentry:
                     go = TestBedBuilder.SentryMount(root, "Sentry", Vector3.zero, Vector3.forward, Vector3.up, palette).gameObject;
                     break;
+                case Piece.MovingPlatform:
+                    go = TestBedBuilder.MovingPlatform(root, "Moving Platform", Vector3.zero, Quaternion.identity,
+                        new[] { Vector3.zero, new Vector3(0f, 0f, 6f) }, new Vector3(3f, 0.3f, 3f), true, palette).gameObject;
+                    break;
+                case Piece.TrackedSentry:
+                    go = TestBedBuilder.TrackedSentry(root, "Sentry on Track", Vector3.zero, Quaternion.identity,
+                        new[] { Vector3.zero, new Vector3(0f, 0f, 6f) }, null, palette).gameObject;
+                    break;
                 case Piece.Turret:
                     go = TestBedBuilder.TurretMount(root, "Turret", Vector3.zero, Vector3.forward, Vector3.up, palette).gameObject;
                     break;
@@ -222,6 +230,76 @@ namespace GravBoots.Editor
             LevelSession session = TestBedBuilder.BuildSession(player.gameObject);
             Undo.RegisterCreatedObjectUndo(session.gameObject, "Add Game Loop");
             EditorSceneManager.MarkSceneDirty(session.gameObject.scene);
+        }
+
+        // ------------------------------------------------------------ mover paths
+
+        /// <summary>Adds a point to a mover's path, <paramref name="distance"/> on along the last point's forward.</summary>
+        public static Transform AddPoint(KinematicMover mover, float distance = 3f)
+        {
+            Transform last = LastPoint(mover);
+            Vector3 position = last != null ? last.position + last.forward * distance : mover.transform.position;
+            Quaternion rotation = last != null ? last.rotation : mover.transform.rotation;
+            return AppendPoint(mover, position, rotation);
+        }
+
+        /// <summary>
+        /// Continues a mover's path round a 90° curve from its last point (heading along that
+        /// point's forward, standing on its up): concave climbs onto the wall ahead, convex
+        /// goes over an edge. Matches a quarter-pipe or rounded edge of the same radius.
+        /// </summary>
+        public static void AddArc(KinematicMover mover, float radius, bool concave, int segments = 8)
+        {
+            Transform last = LastPoint(mover);
+            if (last == null)
+                return;
+            Vector3 start = last.position, forward = last.forward, up = last.up;
+            float sign = concave ? 1f : -1f;
+            for (int i = 1; i <= segments; i++)
+            {
+                float angle = Mathf.PI * 0.5f * i / segments;
+                float s = Mathf.Sin(angle), c = Mathf.Cos(angle);
+                Vector3 position = start + forward * (radius * s) + up * (sign * radius * (1f - c));
+                Vector3 normal = up * c - forward * (sign * s);
+                Vector3 travel = forward * c + up * (sign * s);
+                AppendPoint(mover, position, Quaternion.LookRotation(travel, normal));
+            }
+        }
+
+        public static void RemoveLastPoint(KinematicMover mover)
+        {
+            Transform last = LastPoint(mover);
+            if (last == null || mover.points.Length <= 1)
+                return;
+            Undo.RecordObject(mover, "Remove Point");
+            var points = new Transform[mover.points.Length - 1];
+            System.Array.Copy(mover.points, points, points.Length);
+            mover.points = points;
+            Undo.DestroyObjectImmediate(last.gameObject);
+            mover.CachePath();
+        }
+
+        static Transform LastPoint(KinematicMover mover)
+        {
+            for (int i = mover.points.Length - 1; i >= 0; i--)
+                if (mover.points[i] != null)
+                    return mover.points[i];
+            return null;
+        }
+
+        static Transform AppendPoint(KinematicMover mover, Vector3 position, Quaternion rotation)
+        {
+            var point = new GameObject($"Point {mover.points.Length + 1}").transform;
+            Undo.RegisterCreatedObjectUndo(point.gameObject, "Add Point");
+            point.SetParent(mover.transform, false);
+            point.SetPositionAndRotation(position, rotation);
+            Undo.RecordObject(mover, "Add Point");
+            var points = new Transform[mover.points.Length + 1];
+            System.Array.Copy(mover.points, points, mover.points.Length);
+            points[points.Length - 1] = point;
+            mover.points = points;
+            mover.CachePath();
+            return point;
         }
 
         // ------------------------------------------------------------ editing the selection

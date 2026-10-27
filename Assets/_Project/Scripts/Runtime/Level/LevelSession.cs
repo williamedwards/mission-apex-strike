@@ -17,7 +17,8 @@ namespace GravBoots.Level
     /// <remarks>
     /// Respawning restores the checkpoint's pose and gravity frame, and the boots: magnetized if
     /// the checkpoint was reached magnetized or faces away from world up, and the surface under
-    /// it is magnetic. (The level clock joins this in Phase 3.) Death to control again is
+    /// it is magnetic. The <see cref="LevelClock"/> goes back to when the checkpoint was
+    /// reached, so moving elements are in the same phase every attempt. Death to control again is
     /// <see cref="respawnDelay"/> plus a frame, kept under a second so failing is cheap.
     /// <see cref="Tick"/> and <see cref="Begin"/> are public so tests can drive it without frames.
     /// </remarks>
@@ -41,6 +42,7 @@ namespace GravBoots.Level
         Bounds bounds;
         bool begun;
         bool restoreMagnetized;
+        float checkpointClockTime;
         float dyingTime;
         LevelExit exitReached;
 
@@ -137,6 +139,7 @@ namespace GravBoots.Level
                 previous.SetLit(false);
             Checkpoint = spawn;
             restoreMagnetized = reachedMagnetized;
+            checkpointClockTime = LevelClock.Instance != null ? LevelClock.Instance.Time : 0f;
             if (spawn is Checkpoint lit)
                 lit.SetLit(true);
             CheckpointChanged?.Invoke(spawn);
@@ -152,6 +155,9 @@ namespace GravBoots.Level
                 controller.enabled = true;
             if (Checkpoint == null)
                 return;
+            // Movers first: the surface under the spawn may be one of them.
+            if (LevelClock.Instance != null)
+                LevelClock.Instance.SetTime(checkpointClockTime);
 
             Transform spawn = Checkpoint.transform;
             Vector3 up = spawn.up;

@@ -214,6 +214,7 @@ namespace GravBoots.Player
                 return;
             BootsState previous = State;
             State = next;
+            gravity.FollowsSurface = next == BootsState.Magnetized;
             StateChanged?.Invoke(previous, next);
         }
     }

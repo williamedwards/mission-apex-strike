@@ -32,6 +32,13 @@ namespace GravBoots.Player
         float jumpBufferTimer;
         float coyoteTimer;
 
+        // What we're standing on, and where we stand on it, so we move when it moves.
+        Transform platform;
+        Vector3 platformLocalPosition;
+        Quaternion platformLocalRotation;
+        Vector3 platformVelocity;
+        bool justBoarded;
+
         readonly RaycastHit[] hits = new RaycastHit[16];
         readonly Collider[] overlaps = new Collider[16];
 
@@ -52,6 +59,8 @@ namespace GravBoots.Player
         public Collider GroundCollider { get; private set; }
         /// <summary>Touching something underfoot that is too steep to stand on.</summary>
         public bool OnSteepSurface { get; private set; }
+        /// <summary>Velocity of the point we stand on, from its motion over the last step (zero on static ground).</summary>
+        public Vector3 PlatformVelocity => platformVelocity;
 
         /// <summary>Raised at the end of every step with its delta time, after the pose is final.</summary>
         public event Action<float> Stepped;
@@ -92,6 +101,8 @@ namespace GravBoots.Player
             IsGrounded = false;
             OnSteepSurface = false;
             GroundNormal = BodyUp;
+            platform = null;
+            platformVelocity = Vector3.zero;
             body.position = position;
             body.rotation = rotation;
             transform.SetPositionAndRotation(position, rotation);
@@ -102,6 +113,7 @@ namespace GravBoots.Player
             if (settings == null || deltaTime <= 0f)
                 return;
 
+            RideGround(deltaTime);
             gravity.Tick(deltaTime, rotation * Vector3.forward);
             Vector3 up = gravity.Up;
 
@@ -113,6 +125,7 @@ namespace GravBoots.Player
             CollideAndSlide(velocity * deltaTime, up, wasGrounded && !jumped);
             UpdateGround(up, wasGrounded && !jumped);
             Depenetrate();
+            RememberGround();
 
             if (autoSimulate)
             {
@@ -127,6 +140,51 @@ namespace GravBoots.Player
             }
 
             Stepped?.Invoke(deltaTime);
+        }
+
+        /// <summary>
+        /// Moves us with whatever we stood on last step, if it moved: a moving platform, or a
+        /// sentry's head on a track. Static ground doesn't move, so this costs nothing there.
+        /// </summary>
+        void RideGround(float deltaTime)
+        {
+            if (platform == null)
+            {
+                platformVelocity = Vector3.zero;
+                return;
+            }
+            Vector3 carried = platform.TransformPoint(platformLocalPosition);
+            Quaternion carriedRotation = platform.rotation * platformLocalRotation;
+            Quaternion turn = carriedRotation * Quaternion.Inverse(rotation);
+            platformVelocity = (carried - position) / deltaTime;
+            position = carried;
+            rotation = carriedRotation;
+            if (gravity.FollowsSurface)
+                gravity.Rotate(turn);
+            if (justBoarded)
+            {
+                // Landing on a moving platform: our own velocity is relative to it from now on.
+                velocity -= Vector3.ProjectOnPlane(platformVelocity, GroundNormal);
+                justBoarded = false;
+            }
+        }
+
+        /// <summary>After the step: note what we stand on; leaving a moving platform keeps its velocity.</summary>
+        void RememberGround()
+        {
+            Transform ground = IsGrounded && GroundCollider != null ? GroundCollider.transform : null;
+            if (ground != platform)
+            {
+                if (ground == null)
+                    velocity += platformVelocity;
+                justBoarded = ground != null;
+                platform = ground;
+            }
+            if (platform != null)
+            {
+                platformLocalPosition = platform.InverseTransformPoint(position);
+                platformLocalRotation = Quaternion.Inverse(platform.rotation) * rotation;
+            }
         }
 
         void UpdateOrientation(Vector3 up, float deltaTime)

@@ -21,6 +21,11 @@ namespace GravBoots.Gravity
         public Vector3 Up => up;
         public Vector3 TargetUp => targetUp;
         public bool IsBlending => up != targetUp;
+        /// <summary>
+        /// Up is tied to a surface (the boots are magnetized), so it turns with that surface when
+        /// the surface itself rotates (riding a moving panel).
+        /// </summary>
+        public bool FollowsSurface { get; set; }
 
         void Awake()
         {
@@ -31,6 +36,13 @@ namespace GravBoots.Gravity
         public void SetUp(Vector3 newUp)
         {
             up = targetUp = newUp.normalized;
+        }
+
+        /// <summary>Turns Up, and any blend target, by <paramref name="turn"/> (the surface it follows rotated).</summary>
+        public void Rotate(Quaternion turn)
+        {
+            up = (turn * up).normalized;
+            targetUp = (turn * targetUp).normalized;
         }
 
         /// <summary>Rotates Up toward <paramref name="newUp"/> at a fixed angular speed.</summary>

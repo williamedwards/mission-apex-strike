@@ -18,8 +18,8 @@ namespace GravBoots.Hazards
     /// Idle until the player's body reaches into the plane, in range and line of sight,
     /// anywhere around it. Lock (turns to face you; it only charges once facing you, so being
     /// behind it buys time) → Charge (the sight flickers; for the last
-    /// <see cref="aimLockTime"/> it freezes and turns white, so stepping aside or leaving the
-    /// plane dodges) → Fire → Cooldown → Idle. A stomp sets off <see cref="SentryWreck"/>.
+    /// <see cref="aimLockTime"/> it holds its aim on the point it locked and turns white, so
+    /// stepping aside or leaving the plane dodges) → Fire → Cooldown → Idle. A stomp sets off <see cref="SentryWreck"/>.
     /// A stomp needs the player landing on its head moving at least <see cref="stompSpeed"/>
     /// toward it, so walking onto it doesn't count. Drops fall to the world floor, so only
     /// floor sentries can be stomped. The stomp is checked on the player motor's
@@ -70,6 +70,11 @@ namespace GravBoots.Hazards
         Health targetHealth;
         float capsuleHeight = 1.8f, capsuleRadius = 0.35f;
         Vector3 aim;
+        Quaternion aimFrame;
+        Vector3 lockedPoint;
+        float targetDistance;
+        Vector3 tracedPosition;
+        Quaternion tracedRotation;
         float stateTime, unseenTime, recentFallSpeed, shotLength;
         bool initialised;
         readonly RaycastHit[] hits = new RaycastHit[16];
@@ -142,6 +147,9 @@ namespace GravBoots.Hazards
         {
             if (autoSimulate)
                 Tick(Time.deltaTime);
+            if (State != SentryState.Disabled
+                && ((transform.position - tracedPosition).sqrMagnitude > 1e-4f || Quaternion.Angle(transform.rotation, tracedRotation) > 0.1f))
+                TraceDangerLine();
             DrawSight();
         }
 
@@ -159,6 +167,7 @@ namespace GravBoots.Hazards
         void Initialise()
         {
             aim = transform.forward;
+            aimFrame = transform.rotation;
             initialised = true;
         }
 
@@ -168,6 +177,9 @@ namespace GravBoots.Hazards
                 Initialise();
             if (State == SentryState.Disabled)
                 return;
+            // Riding a track: the aim turns with the sentry.
+            aim = (transform.rotation * Quaternion.Inverse(aimFrame)) * aim;
+            aimFrame = transform.rotation;
 
             stateTime += deltaTime;
             bool sees = CanSee(out Vector3 toTarget);
@@ -196,7 +208,12 @@ namespace GravBoots.Hazards
                     else
                     {
                         if (stateTime < chargeTime - aimLockTime)
+                        {
                             TurnToward(toTarget, sees, deltaTime);
+                            lockedPoint = Eye + aim * targetDistance;
+                        }
+                        else
+                            AimAt(lockedPoint);
                         if (stateTime >= chargeTime)
                         {
                             SetState(SentryState.Fire);
@@ -223,6 +240,18 @@ namespace GravBoots.Hazards
             stateTime = 0f;
         }
 
+        /// <summary>
+        /// Keeps aiming at the point locked in at the end of tracking. A point rather than a
+        /// direction, so a sentry moving on a track still hits where it locked, while a player
+        /// who steps aside is missed.
+        /// </summary>
+        void AimAt(Vector3 point)
+        {
+            Vector3 direction = Vector3.ProjectOnPlane(point - Eye, transform.up);
+            if (direction.sqrMagnitude > 1e-4f)
+                aim = direction.normalized;
+        }
+
         void TurnToward(Vector3 toTarget, bool sees, float deltaTime)
         {
             if (sees)
@@ -244,6 +273,7 @@ namespace GravBoots.Hazards
             if (distance > range || distance < 0.01f)
                 return false;
             toTarget = offset / distance;
+            targetDistance = distance;
             return ObstacleDistance(eye, toTarget, distance) >= distance - capsuleRadius;
         }
 
@@ -289,6 +319,10 @@ namespace GravBoots.Hazards
             Material spark = eye != null ? eye.sharedMaterial : null;
             if (eye != null && eyeOff != null)
                 eye.sharedMaterial = eyeOff;
+            // A wreck stops dead, even on a track.
+            foreach (var mover in GetComponentsInParent<GravBoots.Level.KinematicMover>())
+                if (mover.platform == transform)
+                    mover.enabled = false;
             SentryWreck.Break(this, body, head, spark, target != null ? target.Position : transform.position);
             Destroyed?.Invoke();
         }
@@ -325,6 +359,8 @@ namespace GravBoots.Hazards
         {
             if (dangerLine == null || State == SentryState.Disabled)
                 return;
+            tracedPosition = transform.position;
+            tracedRotation = transform.rotation;
             Vector3[] points = DangerLoop();
             dangerLine.loop = true;
             dangerLine.positionCount = points.Length;

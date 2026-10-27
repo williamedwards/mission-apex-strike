@@ -906,6 +906,68 @@ namespace GravBoots.Editor
             return line;
         }
 
+        /// <summary>
+        /// A <see cref="KinematicMover"/> with its path points (local poses under the returned
+        /// root, which sits at the first point) and a platform: a deck of <paramref name="size"/>
+        /// whose top face is the platform's origin, so a point's up is the deck's walking side.
+        /// </summary>
+        internal static KinematicMover MovingPlatform(Transform parent, string name, Vector3 localStart, Quaternion localRotation,
+            Vector3[] offsets, Vector3 size, bool magnetic, Palette palette, MoverMode mode = MoverMode.PingPong,
+            float speed = 2f, float wait = 1f)
+        {
+            KinematicMover mover = Track(parent, name, localStart, localRotation, offsets, null, mode, speed, wait);
+            var platform = new GameObject("Platform").transform;
+            platform.SetParent(mover.transform, false);
+            if (magnetic)
+                MagBox(platform, "Deck", new Vector3(0f, -size.y * 0.5f, 0f), size, palette);
+            else
+                Box(platform, "Deck", new Vector3(0f, -size.y * 0.5f, 0f), size, palette.Blue);
+            mover.platform = platform;
+            mover.CachePath();
+            mover.Evaluate(0f);
+            return mover;
+        }
+
+        /// <summary>A sentry riding a track: the sentry itself is the mover's platform.</summary>
+        internal static KinematicMover TrackedSentry(Transform parent, string name, Vector3 localStart, Quaternion localRotation,
+            Vector3[] offsets, Quaternion[] rotations, Palette palette, float speed = 2f, float wait = 1f)
+        {
+            KinematicMover mover = Track(parent, name, localStart, localRotation, offsets, rotations, MoverMode.PingPong, speed, wait);
+            Sentry sentry = SentryMount(mover.transform, "Sentry", Vector3.zero, Vector3.forward, Vector3.up, palette);
+            mover.platform = sentry.transform;
+            mover.CachePath();
+            mover.Evaluate(0f);
+            return mover;
+        }
+
+        /// <summary>
+        /// The mover and its points. <paramref name="offsets"/> are in the root's frame; each
+        /// point takes the root's rotation unless <paramref name="rotations"/> (also in the
+        /// root's frame) says otherwise.
+        /// </summary>
+        static KinematicMover Track(Transform parent, string name, Vector3 localStart, Quaternion localRotation,
+            Vector3[] offsets, Quaternion[] rotations, MoverMode mode, float speed, float wait)
+        {
+            var root = new GameObject(name).transform;
+            root.SetParent(parent, false);
+            root.localPosition = localStart;
+            root.localRotation = localRotation;
+            var mover = root.gameObject.AddComponent<KinematicMover>();
+            mover.points = new Transform[offsets.Length];
+            for (int i = 0; i < offsets.Length; i++)
+            {
+                var point = new GameObject($"Point {i + 1}").transform;
+                point.SetParent(root, false);
+                point.localPosition = offsets[i];
+                point.localRotation = rotations != null && i < rotations.Length ? rotations[i] : Quaternion.identity;
+                mover.points[i] = point;
+            }
+            mover.mode = mode;
+            mover.speed = speed;
+            mover.wait = wait;
+            return mover;
+        }
+
         /// <summary>An invisible box that kills on entry (inside death pits).</summary>
         internal static KillVolume KillZone(Transform parent, string name, Vector3 localCentre, Vector3 size)
         {

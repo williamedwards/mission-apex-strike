@@ -274,11 +274,33 @@ Supporting pieces:
 **To run the gate:** a first-time player plays without help; watch where they hesitate, then
 review the records in the Scene view.
 
-### Phase 3: Moving elements and timing hazards
-- A generic `KinematicMover` (waypoints or curves; ping-pong, loop or trigger modes) driven by
-  `LevelClock`.
-- The motor inherits platform velocity and rotation **in any orientation**. Riding a moving
-  magnetic panel upside down is a key showcase.
+### Phase 3: Moving elements and timing hazards (movers built; hazards to come)
+**Built:**
+- **`KinematicMover`:**
+  - It follows a path of points, each a position and a rotation.
+  - Modes: ping-pong, loop, or on-step (it waits until the player stands on it).
+  - It eases in and out, and turning counts toward the path length, so a turntable works.
+  - It's driven by `LevelClock`, which a respawn rewinds to the checkpoint's time.
+- **Riding:** the motor rides whatever it stands on.
+  - It's carried by that object's translation and rotation, in any orientation.
+  - When magnetized, the gravity frame turns with the surface.
+  - Leaving keeps the platform's velocity.
+- **Sentries on tracks:** a sentry can be a mover's platform.
+  - Its aim turns with it, and the aim lock holds a point rather than a direction, so a
+    moving sentry still hits.
+  - A destroyed sentry stops on its track.
+- **Test level `Levels/Chamber_03.unity`:**
+  1. an elevator;
+  2. a ferry over a death pit;
+  3. up onto the ceiling and across on a moving ceiling panel, upside down;
+  4. a drop onto a patrolling sentry;
+  5. a curve up to the exit, beside a second sentry that rides its own track up the wall.
+
+**Still to do:**
+- **Crushing:** a platform moving into the player only pushes them aside. Crushers need
+  detection: still overlapping after depenetration should kill.
+- **Smoother visuals:** platforms move at the physics rate, while the player is interpolated.
+  If riding looks juddery, interpolate the platform visuals.
 - Crushers, sliding doors, rotating arms, piston panels that push the player off magnetic
   surfaces, and **magnetic panels that switch on and off on a timer** (they flicker before
   switching off, and the player drops when one does).

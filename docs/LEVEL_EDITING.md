@@ -109,6 +109,30 @@ through the spawns in order while playing. That's handy for testing the far end 
   - **Charge Time** and **Aim Lock Time**: the warning before a shot, and the last part of it,
     when the aim is frozen and stepping aside dodges.
 
+### Moving platforms and tracks
+- **Moving Platform:** a deck that travels along a path of **Points**. The points are the
+  mover's children, joined by a blue line in the Scene view.
+  - Move or rotate a point to reshape the path. The short line at each point is the platform's
+    up there.
+  - A platform whose points face down hangs from the ceiling. With magnetic decks, you can ride
+    it upside down.
+- **Sentry on Track:** the same, with a sentry as the platform.
+  - It patrols the path, its firing plane moving with it.
+  - Destroying it stops it where it is.
+- **Inspector settings:**
+  - **Mode:** *PingPong* (there and back, pausing at each end), *Loop* (round and back to the
+    first point), or *OnStep* (waits until you stand on it, then travels once).
+  - **Speed:** in metres per second. Movement eases in and out.
+  - **Wait:** the pause at the ends.
+  - **Phase Offset:** staggers movers with the same timing.
+  - **Add Point:** adds a point straight on.
+  - **Add Curve Arc / Add Edge Arc:** add points round a quarter-pipe or rounded edge of the
+    given radius, so a track can climb onto a wall.
+- In the editor a platform shows where it starts. Press Play to see it move.
+- **Timing:** everything runs from the level clock, so timings are identical every attempt.
+  Dying puts every mover back where it was when you reached the checkpoint.
+- **Crushing isn't handled yet:** a platform moving into you just pushes you aside.
+
 ### Turrets (placeholder, likely to be removed)
 - **Turret:** a laser turret that sees the side its base faces. Rotate it onto a wall or ceiling
   with the 90° buttons. Solid geometry blocks its line of sight.
