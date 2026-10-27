@@ -249,6 +249,69 @@ namespace GravBoots.Tests
         }
 
         [Test]
+        public void StompReachesAcrossItsTopButNotFarBeyond()
+        {
+            BuildFrame(Vector3.up);
+            Floor();
+            PlaceSentry(Vector3.zero, Vector3.forward);
+
+            Assert.That(sentry.WouldStomp(new Vector3(0f, 5f, 0f)), Is.True, "dead centre");
+            Assert.That(sentry.WouldStomp(new Vector3(1f, 5f, 0f)), Is.True, "on its shoulder");
+            Assert.That(sentry.WouldStomp(new Vector3(1.5f, 5f, 0f)), Is.False, "beside it");
+            sentry.Disable();
+            Assert.That(sentry.WouldStomp(new Vector3(0f, 5f, 0f)), Is.False, "already destroyed");
+        }
+
+        [Test]
+        public void ASentryOnAWallCannotBeStomped()
+        {
+            BuildFrame(Vector3.right);
+            Floor();
+            PlaceSentry(Vector3.zero, Vector3.forward);
+            Assert.That(sentry.WouldStomp(sentry.transform.position + Vector3.up * 3f), Is.False);
+        }
+
+        [Test]
+        public void LandingMarkerTurnsGoldOverASentry()
+        {
+            // Hanging from a magnetic ceiling 6 m above a floor sentry.
+            BuildFrame(Vector3.up);
+            Floor();
+            PlaceSentry(Vector3.zero, Vector3.forward);
+            var ceiling = new GameObject("Ceiling");
+            ceiling.transform.SetParent(frame, false);
+            ceiling.transform.localPosition = new Vector3(0f, 6.5f, 0f);
+            ceiling.AddComponent<BoxCollider>().size = new Vector3(20f, 1f, 20f);
+            ceiling.layer = Layers.Magnetic;
+            SpawnPlayer(new Vector3(0f, 6f, 0f));
+            motor.Gravity.SetUp(Vector3.down);
+            motor.Teleport(new Vector3(0f, 6f, 0f), Quaternion.LookRotation(Vector3.forward, Vector3.down));
+            var boots = motor.gameObject.AddComponent<MagneticBoots>();
+            boots.Settings = ScriptableObject.CreateInstance<BootsSettings>();
+            created.Add(boots.Settings);
+            boots.Attach();
+            Physics.SyncTransforms();
+            var marker = new GameObject("Marker").AddComponent<LandingMarker>();
+            created.Add(marker.gameObject);
+            marker.Bind(motor, boots);
+
+            marker.Refresh();
+            Assert.That(marker.IsShowing, Is.True);
+            Assert.That(marker.IsTarget, Is.True, "over its head");
+
+            // Off to one side but within the stomp radius: the fall would clip its top.
+            motor.Teleport(new Vector3(1f, 6f, 0f), Quaternion.LookRotation(Vector3.forward, Vector3.down));
+            Physics.SyncTransforms();
+            marker.Refresh();
+            Assert.That(marker.IsTarget, Is.True, "near enough that the fall clips it");
+
+            motor.Teleport(new Vector3(3f, 6f, 0f), Quaternion.LookRotation(Vector3.forward, Vector3.down));
+            Physics.SyncTransforms();
+            marker.Refresh();
+            Assert.That(marker.IsTarget, Is.False, "over the floor beside it");
+        }
+
+        [Test]
         public void WalkingOntoItIsNotAStomp([ValueSource(nameof(Orientations))] Vector3 up)
         {
             BuildFrame(up);

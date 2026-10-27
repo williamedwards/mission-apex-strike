@@ -26,7 +26,7 @@ namespace GravBoots.Hazards
     /// <see cref="PlayerMotor.Stepped"/>; the rest runs in <see cref="Tick"/>, which is public
     /// so tests step it by hand.
     /// </remarks>
-    public class Sentry : MonoBehaviour
+    public class Sentry : MonoBehaviour, IStompTarget
     {
         [SerializeField] PlayerMotor target;
         [Tooltip("Turns to face the aim, and is thrown off when destroyed (visual only). Optional.")]
@@ -63,7 +63,8 @@ namespace GravBoots.Hazards
         [Header("Stomp")]
         [Tooltip("Top of the sentry's head above its surface.")]
         [SerializeField] float headTop = 1.3f;
-        [SerializeField] float stompRadius = 0.75f;
+        [Tooltip("How far from its centre (across its top) a landing still counts.")]
+        [SerializeField] float stompRadius = 1.1f;
         [Tooltip("How fast the player must be falling onto it (m/s). 5 m/s is a drop of about 0.5 m.")]
         [SerializeField] float stompSpeed = 5f;
 
@@ -304,6 +305,18 @@ namespace GravBoots.Hazards
             bool upright = Vector3.Angle(target.BodyUp, up) < 30f;
             if (overHead && atHead && upright && recentFallSpeed >= stompSpeed)
                 Disable();
+        }
+
+        /// <summary>
+        /// Whether a drop falling straight down through <paramref name="point"/> lands within its
+        /// stomp radius. Only a sentry standing on a floor can be stomped: drops fall world-down.
+        /// </summary>
+        public bool WouldStomp(Vector3 point)
+        {
+            if (State == SentryState.Disabled || Vector3.Angle(transform.up, Vector3.up) > 30f)
+                return false;
+            Vector3 local = transform.InverseTransformPoint(point);
+            return new Vector2(local.x, local.z).magnitude <= stompRadius;
         }
 
         /// <summary>Destroys the sentry for good (a stomp).</summary>

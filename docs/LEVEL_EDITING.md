@@ -98,6 +98,12 @@ through the spawns in order while playing. That's handy for testing the far end 
 - **Counterplay is changing surface.** Climb a wall above the line, or walk the ceiling over it.
 - **Dropping onto its head destroys it for good.** You need to land on it from a drop of at
   least half a metre; walking onto it doesn't count.
+  - Anywhere within 1.1 m of its centre counts (**Stomp Radius**), so clipping its shoulder on
+    the way down works too.
+  - The landing marker turns **gold** when a drop from where you are would destroy one.
+  - For a moving sentry, give it a pause under the drop point that overlaps the platform's
+    pause above. Give both the same cycle (path length ÷ speed + wait, doubled for
+    ping-pong), then use **Phase Offset** to line the pauses up.
   - It bursts into sparks, its head flies off, and its body crumbles into rubble round a low
     stump that you land on.
   - The rubble is only visual and never gets in your way.

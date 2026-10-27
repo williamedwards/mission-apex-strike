@@ -2185,6 +2185,7 @@ MonoBehaviour:
   guide: {fileID: 1684415572}
   safeColor: {r: 0.35, g: 0.8, b: 1, a: 1}
   lethalColor: {r: 1, g: 0.2, b: 0.15, a: 1}
+  targetColor: {r: 1, g: 0.8, b: 0.15, a: 1}
   minimumTilt: 20
   maxDistance: 200
 --- !u!4 &694536926
@@ -4752,8 +4753,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1314662831}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.0000009536743, y: 0, z: 6.000002}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -4795,7 +4796,7 @@ MonoBehaviour:
   loseSightGrace: 0.2
   beamRadius: 0.08
   headTop: 1.3
-  stompRadius: 0.75
+  stompRadius: 1.1
   stompSpeed: 5
 --- !u!1 &1338610042
 GameObject:
@@ -4949,7 +4950,7 @@ Transform:
   m_GameObject: {fileID: 1345636152}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -6, y: 6, z: 54}
+  m_LocalPosition: {x: 0, y: 6, z: 55}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -4975,9 +4976,9 @@ MonoBehaviour:
   - {fileID: 1980031995}
   - {fileID: 1609290239}
   mode: 0
-  speed: 2
-  wait: 1
-  phaseOffset: 0
+  speed: 1.5
+  wait: 3.6
+  phaseOffset: 8.4
 --- !u!1 &1347960781
 GameObject:
   m_ObjectHideFlags: 0
@@ -5509,7 +5510,7 @@ MonoBehaviour:
   loseSightGrace: 0.2
   beamRadius: 0.08
   headTop: 1.3
-  stompRadius: 0.75
+  stompRadius: 1.1
   stompSpeed: 5
 --- !u!1 &1499397937
 GameObject:
@@ -6224,7 +6225,7 @@ Transform:
   m_GameObject: {fileID: 1609290238}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 12}
+  m_LocalPosition: {x: 0, y: 0, z: 6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

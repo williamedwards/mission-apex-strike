@@ -642,7 +642,7 @@ MonoBehaviour:
   loseSightGrace: 0.2
   beamRadius: 0.08
   headTop: 1.3
-  stompRadius: 0.75
+  stompRadius: 1.1
   stompSpeed: 5
 --- !u!1 &177722689
 GameObject:
@@ -1178,6 +1178,7 @@ MonoBehaviour:
   guide: {fileID: 1932838127}
   safeColor: {r: 0.35, g: 0.8, b: 1, a: 1}
   lethalColor: {r: 1, g: 0.2, b: 0.15, a: 1}
+  targetColor: {r: 1, g: 0.8, b: 0.15, a: 1}
   minimumTilt: 20
   maxDistance: 200
 --- !u!4 &407576548
