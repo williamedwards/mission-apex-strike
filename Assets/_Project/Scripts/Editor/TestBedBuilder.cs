@@ -1162,6 +1162,11 @@ namespace GravBoots.Editor
             trigger.center = new Vector3(0f, size.y * 0.5f, 0f);
             checkpoint.label = name;
             checkpoint.order = order;
+            if (CheckpointModel.Available)
+            {
+                CheckpointModel.Apply(checkpoint);
+                return checkpoint;
+            }
             var pad = Primitive(go.transform, PrimitiveType.Cylinder, "Pad", new Vector3(0f, 0.01f, 0f), new Vector3(1.6f, 0.01f, 1.6f), palette.CheckpointIdle);
             pad.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
             Set(checkpoint, "pad", pad.GetComponent<Renderer>());

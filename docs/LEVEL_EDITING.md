@@ -77,7 +77,7 @@ through the spawns in order while playing. That's handy for testing the far end 
   the bottom of pits with one so falls end quickly. Resize it with its face dots like a block.
   Orange **Lethal** surfaces kill on touch too. Falling far outside the chamber kills anyway,
   but slowly.
-- **Checkpoint:** a pad that lights up when walked through. Dying puts you back on the most
+- **Checkpoint:** a round machinery pad, glowing blue, that turns green when walked through. Dying puts you back on the most
   recent one. Turn it onto a wall or ceiling with the 90° buttons and you respawn there with
   the boots on (it must sit on a magnetic surface). The green box is its trigger; resize it in
   the Inspector (Box Collider → Size) to cover the whole route past it.

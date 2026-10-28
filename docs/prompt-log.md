@@ -8149,4 +8149,324 @@ Looks great, commit it.
 
 ### Saved assistant responses
 
+```text
+I've committed it as `f00fbe7`. It includes Chamber_04's start and exit elevators, the floor and ceiling openings, the exit shaft with its light bands, the camera holding to watch you leave, the new camera test, and the docs update.
+
+Two things are still left out, as before:
+- **ProBuilder settings:** your settings file.
+- **`Art/Hazards/Sentry/Model2`:** the byte-for-byte duplicate of the sentry model. You can delete it whenever you like, or keep it if you'd rather.
+```
+
+
+## 2026-10-28T10:54:40.037Z — claude — 0d59ecb527a6
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:61b48f72-ac99-4880-b416-35933b3dc821`
+
+### Prompt
+
+```text
+Alright, next up, I'd like to do models for the checkpoints for the moving platforms and checkpoints.  These should be inspired by the elevator design, glowing blue strips, dark surface for the non-magnetic platform and light surface for the magnetic moving platform, round for the checkpoint with a color shift upon activation.  Can you generate reference images for me?
+```
+
+### Saved assistant responses
+
+```text
+I'll make three references in the elevator's style, using its final front view as the style reference. Each prompt carries the gameplay constraints:
+- **Platforms:** a flat, walkable square deck. They come in many sizes, so the detail goes on the edges and underside rather than the top. One dark, for non-magnetic; one with a light panelled top, for magnetic.
+- **Checkpoint:** a low round pad you walk straight over, about ankle height. It's shown inactive, since I'd do the colour shift in code by swapping the glow colour.
+```
+
+```text
+Here are the three references, generated with the elevator's front view as the style guide:
+
+- **[Dark platform](Assets/_Project/Art/Level/Platform/Reference/platform_dark_ref_01.png):** a flat deck of dark metal plates with heavy trim and blue strips round the edge, and thrusters and pipes underneath.
+- **[Magnetic platform](Assets/_Project/Art/Level/Platform/Reference/platform_magnetic_ref_01.png):** the same build with a light, almost white panel grid on top. It reads like our magnetic panels, so it's clear at a glance which platforms you can stick to.
+- **[Checkpoint pad](Assets/_Project/Art/Level/Checkpoint/Reference/checkpoint_ref_01.png):** a low round pad with an armoured, vented rim, blue strips round the side and a large glowing emitter disc in the centre.
+
+**For the game:**
+- **Platform sizes:** our moving platforms come in many sizes, and a model like this can't be stretched without distorting its trim. I'd use the models for the standard 3 × 3 m deck. Other sizes would either keep the greybox, or be built from a few model pieces (corners, edges and centre tiles), which would need a segmented export from Tripo.
+- **Collision:** collision stays a plain flat box on top, magnetic or not, as now. The machinery underneath is just for looks. It does hang below the deck, so it needs a little clearance where platforms pass close to floors.
+- **Checkpoint colour shift:** I'd do this in code by changing the emitter's glow colour, for example dim blue when idle and bright green when reached, as the current pad does. So one model covers both states.
+- **Checkpoint height:** the pad's rim looks about 0.3 m tall at our 2.4 m size, close to the player's 0.35 m step limit. I'd sink it slightly into the floor, or scale it flatter, so you walk straight over it.
+
+All three are single three-quarter views. If you want front and back views for Tripo's multi-view mode, as with the elevator, I can generate those.
+```
+
+
+## 2026-10-28T10:55:10.689Z — codex — ce1dc6ecf73c
+
+Source ID: `codex:01a18226-43e9-7fc3-ad9b-d6bb64a8bcb0:msg_01a18226-4d54-7051-8938-868edd445e0f`
+
+### Prompt
+
+```text
+<image name=[Image #1] path="Assets/_Project/Art/Level/Elevator/Reference/elevator_ref_04_front.png">
+</image>
+Codex could not read the local image at `-`: No such file or directory (os error 2)
+The attached image is a sci-fi elevator from the same game; match its style (dark grey armoured machinery, vents, pipes, glowing blue light strips). Use your built-in image generation tool to generate one image from exactly this prompt, without rewording it:
+
+"Sci-fi checkpoint pad for a game, three-quarter view from slightly above. A low, round floor pad, only ankle high, with a flat walkable top: a dark grey armoured rim with small vents and pipes, a ring of glowing blue light strips around it, and a large glowing circular emitter disc in the centre with a ring pattern. Nothing tall standing on it. Plain flat light-grey background, even studio lighting, no shadows, no text, no extra panels. Suitable for conversion to a 3D game asset."
+
+Save the result as Assets/_Project/Art/Level/Checkpoint/Reference/checkpoint_ref_01.png (copy it there from wherever the tool writes it). Do not change any other files. Reply with the saved path.
+```
+
+Image attachment present in source transcript; image data is not exported.
+
+### Saved assistant responses
+
+```text
+Assets/_Project/Art/Level/Checkpoint/Reference/checkpoint_ref_01.png
+```
+
+
+## 2026-10-28T10:55:10.948Z — codex — d03adc8ca377
+
+Source ID: `codex:01a18226-43e1-7b23-a741-64ebc02b8781:msg_01a18226-4e54-7ff0-bf1b-f47fde02c701`
+
+### Prompt
+
+```text
+<image name=[Image #1] path="Assets/_Project/Art/Level/Elevator/Reference/elevator_ref_04_front.png">
+</image>
+Codex could not read the local image at `-`: No such file or directory (os error 2)
+The attached image is a sci-fi elevator from the same game; match its style (dark grey armoured machinery, vents, pipes, glowing blue light strips). Use your built-in image generation tool to generate one image from exactly this prompt, without rewording it:
+
+"Sci-fi magnetic moving platform for a game, three-quarter view from slightly above. A flat square deck about one third as thick as it is wide, with a perfectly flat, walkable top surface of light, almost white panels in a clean grid, like a magnetic plate. Around its edges a heavy dark grey machinery trim with glowing blue light strips; underneath, compact thrusters, pistons and pipes. No railings, nothing standing on the top surface. Plain flat light-grey background, even studio lighting, no shadows, no text, no extra panels. Suitable for conversion to a 3D game asset."
+
+Save the result as Assets/_Project/Art/Level/Platform/Reference/platform_magnetic_ref_01.png (copy it there from wherever the tool writes it). Do not change any other files. Reply with the saved path.
+```
+
+Image attachment present in source transcript; image data is not exported.
+
+### Saved assistant responses
+
+```text
+Assets/_Project/Art/Level/Platform/Reference/platform_magnetic_ref_01.png
+```
+
+
+## 2026-10-28T10:55:11.092Z — codex — b84e8930d11f
+
+Source ID: `codex:01a18226-43e1-79b3-a74b-394f2ae16f2b:msg_01a18226-4ee7-7d72-97f6-2369bfd3dda8`
+
+### Prompt
+
+```text
+<image name=[Image #1] path="Assets/_Project/Art/Level/Elevator/Reference/elevator_ref_04_front.png">
+</image>
+Codex could not read the local image at `-`: No such file or directory (os error 2)
+The attached image is a sci-fi elevator from the same game; match its style (dark grey armoured machinery, vents, pipes, glowing blue light strips). Use your built-in image generation tool to generate one image from exactly this prompt, without rewording it:
+
+"Sci-fi moving platform for a game, three-quarter view from slightly above. A flat square deck about one third as thick as it is wide, with a perfectly flat, walkable top surface of dark grey metal plates. Around its edges a heavy machinery trim with glowing blue light strips; underneath, compact thrusters, pistons and pipes. No railings, nothing standing on the top surface. Plain flat light-grey background, even studio lighting, no shadows, no text, no extra panels. Suitable for conversion to a 3D game asset."
+
+Save the result as Assets/_Project/Art/Level/Platform/Reference/platform_dark_ref_01.png (copy it there from wherever the tool writes it). Do not change any other files. Reply with the saved path.
+```
+
+Image attachment present in source transcript; image data is not exported.
+
+### Saved assistant responses
+
+```text
+Assets/_Project/Art/Level/Platform/Reference/platform_dark_ref_01.png
+```
+
+
+## 2026-10-28T10:57:34.875Z — claude — 0a2fec80c65a
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:0cd979c4-e7ae-475c-839a-fb4ea0d56846`
+
+### Prompt
+
+```text
+One possible problem I notice with the platforms is the underside thrusters are going to collide with existing geometry in our setup.
+```
+
+### Saved assistant responses
+
+```text
+You're right. Our platforms often run flush against other geometry:
+- **Elevator-style lifts:** they rise to sit level with a floor.
+- **Ferries:** they dock against ledges.
+- **Ceiling shuttles:** they slide along a surface.
+- **Upside-down and wall platforms:** their underside faces the ceiling or wall they ride along.
+
+Thrusters hanging below the deck would clip visibly through those surfaces. They wouldn't block anything, since collision stays a flat box. But clipping right where the player is looking would look broken, and it would force levels to leave clearance under every platform.
+
+The fix is to keep everything within the deck's thickness, as a solid slab:
+- **Underside:** flat, with recessed vents and panel lines rather than protrusions. No thrusters, pistons or pipes hanging below.
+- **Edges:** the machinery look moves to the sides: the armoured trim, the blue strips, and maybe a few shallow recessed housings.
+- **Overall shape:** a clean box, as wide as our deck and about 0.3 m thick against 3 m width. So "one tenth as thick as it is wide", rather than the one third I asked for before.
+
+For the checkpoint, the same thinking applies to its height, which is why I'd sink or flatten it.
+
+Do you want me to regenerate both platforms as slim slabs on those lines?
+```
+
+
+## 2026-10-28T11:00:23.877Z — claude — 4c6a6613a29f
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:45cdb608-88b0-4d37-b046-622df3499de2`
+
+### Prompt
+
+```text
+Sure, go ahead.  I've already generated a checkpoint model, so we'll if that one is workable for you.
+```
+
+### Saved assistant responses
+
+```text
+I'll regenerate both platforms as slim slabs, using the first versions as style references. While those run, I'll look at your checkpoint model in Blender.
+```
+
+```text
+No problem, I'll look at the checkpoint once it's in. Meanwhile, both slim platforms are done; let me review them.
+```
+
+```text
+The slim versions solve the clipping problem:
+
+- **[Dark platform](Assets/_Project/Art/Level/Platform/Reference/platform_dark_ref_02.png):** a thin slab, about a tenth as thick as it is wide, with a flat dark plated top. Nothing hangs below it. The machinery is now all in the edge trim: armoured corner blocks, recessed vents and long blue light strips.
+- **[Magnetic platform](Assets/_Project/Art/Level/Platform/Reference/platform_magnetic_ref_02.png):** the same slab with the light panel grid on top. Its edge trim is a slightly different design, but it clearly belongs with the dark one.
+
+**Two small things to watch in Tripo:**
+- **Corner blocks:** they look like they stand slightly proud of the top surface. Collision would stay the flat box, so you'd never trip on them. But if they come out tall in the mesh, I'd scale the model a touch flatter, so they don't look like something you'd catch your feet on.
+- **Background:** Codex ignored the plain light-grey background this time and gave both a dark vignette. Tripo usually copes. If it struggles to separate the slab from the background, I can regenerate on light grey.
+
+Drop the checkpoint model in whenever it's ready, and I'll read it in Blender to see whether it fits: its height, its footprint, and where the emitter disc is for the colour shift.
+```
+
+
+## 2026-10-28T11:00:45.926Z — codex — a96dc85e76f7
+
+Source ID: `codex:01a1822b-61e4-70b2-9f20-80de74d01ac6:msg_01a1822b-6adb-7d13-b719-825e2a8c5c49`
+
+### Prompt
+
+```text
+<image name=[Image #1] path="Assets/_Project/Art/Level/Platform/Reference/platform_dark_ref_01.png">
+</image>
+Codex could not read the local image at `-`: No such file or directory (os error 2)
+The attached image is an earlier version of this game object; keep its style, materials and trim (dark grey armoured machinery, glowing blue light strips) but follow the new shape exactly. Use your built-in image generation tool to generate one image from exactly this prompt, without rewording it:
+
+"Sci-fi moving platform for a game, three-quarter view from slightly above. A thin, flat square slab, about one tenth as thick as it is wide, with a perfectly flat, walkable top surface of dark grey metal plates and a perfectly flat underside (only recessed vents and panel lines, nothing protruding below). All the machinery detail is on the four edges: an armoured trim with shallow recessed housings and glowing blue light strips. No thrusters, pistons or pipes hanging below, no railings, nothing standing on top. Plain flat light-grey background, even studio lighting, no shadows, no text, no extra panels. Suitable for conversion to a 3D game asset."
+
+Save the result as Assets/_Project/Art/Level/Platform/Reference/platform_dark_ref_02.png (copy it there from wherever the tool writes it). Do not change any other files. Reply with the saved path.
+```
+
+Image attachment present in source transcript; image data is not exported.
+
+### Saved assistant responses
+
+```text
+Assets/_Project/Art/Level/Platform/Reference/platform_dark_ref_02.png
+```
+
+
+## 2026-10-28T11:00:45.935Z — codex — 4cb18e8fee29
+
+Source ID: `codex:01a1822b-61fc-7651-9942-b5f24e11a375:msg_01a1822b-6ae3-7ca0-bc42-16965d80318b`
+
+### Prompt
+
+```text
+<image name=[Image #1] path="Assets/_Project/Art/Level/Platform/Reference/platform_magnetic_ref_01.png">
+</image>
+Codex could not read the local image at `-`: No such file or directory (os error 2)
+The attached image is an earlier version of this game object; keep its style, materials and trim (dark grey armoured machinery, glowing blue light strips) but follow the new shape exactly. Use your built-in image generation tool to generate one image from exactly this prompt, without rewording it:
+
+"Sci-fi magnetic moving platform for a game, three-quarter view from slightly above. A thin, flat square slab, about one tenth as thick as it is wide, with a perfectly flat, walkable top surface of light, almost white panels in a clean grid, and a perfectly flat underside (only recessed vents and panel lines, nothing protruding below). All the machinery detail is on the four edges: a dark grey armoured trim with shallow recessed housings and glowing blue light strips. No thrusters, pistons or pipes hanging below, no railings, nothing standing on top. Plain flat light-grey background, even studio lighting, no shadows, no text, no extra panels. Suitable for conversion to a 3D game asset."
+
+Save the result as Assets/_Project/Art/Level/Platform/Reference/platform_magnetic_ref_02.png (copy it there from wherever the tool writes it). Do not change any other files. Reply with the saved path.
+```
+
+Image attachment present in source transcript; image data is not exported.
+
+### Saved assistant responses
+
+```text
+Assets/_Project/Art/Level/Platform/Reference/platform_magnetic_ref_02.png
+```
+
+
+## 2026-10-28T11:02:53.888Z — claude — a2d99fc641cb
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:2a23a59e-c98f-4f87-93f1-f34738a22a7b`
+
+### Prompt
+
+```text
+Checkpoint model is there now.  I'll work on the other two.
+```
+
+### Saved assistant responses
+
+```text
+The checkpoint model is workable; my renders are attached above.
+
+**What you made:**
+- **Shape:** a flat round pad with an armoured, vented rim, piping and blue strips round the side.
+- **Emitter:** a large glowing disc fills the top, with a segmented outer ring and concentric rings in the middle.
+- **Cost:** one mesh, about 6,200 polygons, with one material and one texture, so it's cheap to draw.
+- **Height:** it's 0.116 as tall as it is wide, so at our 2.4 m pad size it stands about 0.28 m. That's under the 0.35 m step limit. I'd still sink it a few centimetres so walking onto it doesn't feel like a ledge.
+
+**The colour shift:** today a checkpoint just swaps its pad's material between "idle" and "lit", so the model slots straight into that. The blue is painted into the texture, so I'd generate a second copy of the texture with the blues shifted to green. That gives two materials:
+- **Idle:** the original blue, glowing softly.
+- **Reached:** the green copy, glowing brighter.
+
+The centre disc and the strips change colour together, and no code changes are needed.
+
+**Fitting it in:**
+- **Builder:** the checkpoint builder uses the model in place of the flat cylinder, keeping its trigger box.
+- **Chambers:** existing chamber checkpoints get their pads swapped through the Editor. Those on walls and ceilings turn with them, since the pad sits flush on whatever surface the checkpoint faces.
+```
+
+
+## 2026-10-28T11:04:14.373Z — claude — 1550f04af652
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:49505540-2738-4dc9-96d5-7aa2a954360f`
+
+### Prompt
+
+```text
+Yes, build it
+```
+
+### Saved assistant responses
+
+```text
+It compiles. Next I'll generate the textures and materials, then render an idle and a reached pad side by side in a preview scene, to check the colour shift before touching any chamber.
+```
+
+```text
+Your checkpoint model is in, on every checkpoint. All tests pass: EditMode 47 of 47 and PlayMode 282 of 282.
+
+**How it's built:**
+- **Pad:** the model is 2 m across, flattened to 0.12 m and sunk halfway into the surface, so it stands 6 cm proud. Like the old pad it has no collision, so walking over it is smooth, and the boots don't let go on wall and ceiling checkpoints.
+- **Colour shift:** from the model's texture I generated a green copy, plus glow masks that pick out just the painted blue, so the metal doesn't glow. Idle glows its original blue; reached glows brighter, in green-mint. The centre disc and the rim strips change together. The checkpoint already swapped between "idle" and "lit" materials, so no game code changed.
+- **Builder:** the checkpoint builder uses the model, so the test bed and the Level Kit's Checkpoint piece both get it. It falls back to the flat disc if the model is missing.
+- **Regenerating:** if you change the model or want different colours, run **GravBoots → Rebuild Checkpoint Materials**. The generated files live in `Art/Level/Checkpoint/Generated/`.
+
+**In the chambers:** I swapped the pads on all 18 checkpoints, five of them on walls or ceilings, through the Editor: one in Chamber_02, two in Chamber_03 and fifteen in Chamber_04. Each scene saved clean.
+
+**Checked:**
+- **Preview render:** an idle pad beside a reached one, with a player-sized capsule for scale.
+- **In Chamber_04:** walking from the start elevator to the first checkpoint, it turned from blue to green as I passed through, with no errors. I deleted my playtest record. I haven't looked at a wall or ceiling checkpoint in game, though they're oriented the same way as before.
+
+**Also waiting to be committed:** the platform reference images in `Art/Level/Platform/Reference/`. Send the platform models over whenever they're ready.
+```
+
+
+## 2026-10-28T11:09:53.592Z — claude — bbea3d0ac855
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:89986326-d441-4deb-a46d-d9d635b33c02`
+
+### Prompt
+
+```text
+Commit
+```
+
+### Saved assistant responses
+
 No response imported yet.
