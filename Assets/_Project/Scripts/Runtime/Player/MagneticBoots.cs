@@ -103,6 +103,8 @@ namespace GravBoots.Player
         {
             if (settings == null)
                 return;
+            // Every step as well as on changes, so tuning the speed while playing takes effect.
+            ApplyMoveLimits();
 
             bool toggle = toggleRequested;
             toggleRequested = false;
@@ -215,7 +217,16 @@ namespace GravBoots.Player
             BootsState previous = State;
             State = next;
             gravity.FollowsSurface = next == BootsState.Magnetized;
+            ApplyMoveLimits();
             StateChanged?.Invoke(previous, next);
+        }
+
+        /// <summary>Magnetized walking is slower and heavier; otherwise the motor's own settings apply.</summary>
+        void ApplyMoveLimits()
+        {
+            bool heavy = IsMagnetized && settings != null;
+            motor.MoveSpeedOverride = heavy ? settings.magnetizedMoveSpeed : 0f;
+            motor.GroundAccelerationOverride = heavy ? settings.magnetizedAcceleration : 0f;
         }
     }
 }

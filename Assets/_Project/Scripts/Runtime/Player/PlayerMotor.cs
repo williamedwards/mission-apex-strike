@@ -62,6 +62,11 @@ namespace GravBoots.Player
         public bool OnSteepSurface { get; private set; }
         /// <summary>Velocity of the point we stand on, from its motion over the last step (zero on static ground).</summary>
         public Vector3 PlatformVelocity => platformVelocity;
+        /// <summary>Replaces <see cref="MotorSettings.moveSpeed"/> while above 0 (the boots set it while magnetized).</summary>
+        public float MoveSpeedOverride { get; set; }
+        /// <summary>Replaces <see cref="MotorSettings.groundAcceleration"/> while above 0.</summary>
+        public float GroundAccelerationOverride { get; set; }
+        public float MoveSpeed => MoveSpeedOverride > 0f ? MoveSpeedOverride : settings.moveSpeed;
 
         /// <summary>Raised at the end of every step with its delta time, after the pose is final.</summary>
         public event Action<float> Stepped;
@@ -127,6 +132,8 @@ namespace GravBoots.Player
             UpdateGround(up, wasGrounded && !jumped);
             Depenetrate();
             RememberGround();
+            // Riding and turning compose rotations every step; keep rounding error from building up.
+            rotation = Quaternion.Normalize(rotation);
 
             if (autoSimulate)
             {
@@ -214,14 +221,15 @@ namespace GravBoots.Player
 
             Vector3 desired = Vector3.ProjectOnPlane(moveInput, up);
             desired = desired.sqrMagnitude > 1e-6f
-                ? desired.normalized * (moveInput.magnitude * settings.moveSpeed)
+                ? desired.normalized * (moveInput.magnitude * MoveSpeed)
                 : Vector3.zero;
 
             if (IsGrounded)
             {
                 Vector3 target = TangentToSurface(desired, GroundNormal, up);
                 Vector3 current = Vector3.ProjectOnPlane(velocity, GroundNormal);
-                velocity = Vector3.MoveTowards(current, target, settings.groundAcceleration * deltaTime);
+                float acceleration = GroundAccelerationOverride > 0f ? GroundAccelerationOverride : settings.groundAcceleration;
+                velocity = Vector3.MoveTowards(current, target, acceleration * deltaTime);
             }
             else
             {

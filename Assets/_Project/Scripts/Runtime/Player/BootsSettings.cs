@@ -21,6 +21,12 @@ namespace GravBoots.Player
         [Tooltip("The sharpest crease the boots follow. Curves are made of segments well under this; right-angle joins are far over it, so they can't be crossed.")]
         public float followMaxAngle = 30f;
 
+        [Header("Walking magnetized")]
+        [Tooltip("Top speed while magnetized (m/s): heavier and more deliberate than the free 6 m/s.")]
+        public float magnetizedMoveSpeed = 2.5f;
+        [Tooltip("How quickly you reach that speed or stop while magnetized (m/s²); lower feels heavier.")]
+        public float magnetizedAcceleration = 18f;
+
         [Header("Losing contact")]
         [Tooltip("How long the boots tolerate no magnetic contact (seams, small bumps) before letting go.")]
         public float contactGrace = 0.12f;

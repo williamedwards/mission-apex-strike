@@ -6,6 +6,7 @@ namespace GravBoots.Player
     /// Drives the character's Animator from the motor: speed along the body's surface, grounded,
     /// and a jump pose chosen by vertical speed. All measured relative to the body's own up, so
     /// it reads the same on floors, walls and ceilings. The clips play in place (no root motion).
+    /// Magnetized, the gait is a heavy walk (no run) kept in stride with the ground.
     /// </summary>
     public class PlayerAnimation : MonoBehaviour
     {
@@ -13,11 +14,16 @@ namespace GravBoots.Player
         public static readonly int MoveScaleId = Animator.StringToHash("MoveScale");
         public static readonly int GroundedId = Animator.StringToHash("Grounded");
         public static readonly int AirPhaseId = Animator.StringToHash("AirPhase");
+        public static readonly int MagnetizedId = Animator.StringToHash("Magnetized");
+        public static readonly int WalkScaleId = Animator.StringToHash("WalkScale");
 
         [SerializeField] PlayerMotor motor;
         [SerializeField] Animator animator;
+        [SerializeField] MagneticBoots boots;
         [Tooltip("Ground speed (m/s) of the run clip; faster than this plays it faster.")]
         [SerializeField] float runClipSpeed = 3.5f;
+        [Tooltip("Ground speed (m/s) of the walk clip. Magnetized, faster than this plays it faster, so planted feet keep pace with the ground.")]
+        [SerializeField] float walkClipSpeed = 1.25f;
         [Tooltip("Seconds to ease the blend between idle, walk and run when speed changes.")]
         [SerializeField] float speedDamping = 0.12f;
         [Tooltip("Jump clip times (s): takeoff, peak and falling poses of its first hop.")]
@@ -28,10 +34,13 @@ namespace GravBoots.Player
 
         float airTime;
 
-        public void Bind(PlayerMotor playerMotor, Animator playerAnimator, float runClipGroundSpeed)
+        public void Bind(PlayerMotor playerMotor, Animator playerAnimator, MagneticBoots playerBoots,
+            float walkClipGroundSpeed, float runClipGroundSpeed)
         {
             motor = playerMotor;
             animator = playerAnimator;
+            boots = playerBoots;
+            walkClipSpeed = walkClipGroundSpeed;
             runClipSpeed = runClipGroundSpeed;
         }
 
@@ -41,9 +50,12 @@ namespace GravBoots.Player
                 return;
             Vector3 up = motor.BodyUp;
             Vector3 velocity = motor.Velocity;
-            float speed = GroundSpeed(motor);
-            animator.SetFloat(SpeedId, speed, speedDamping, Time.deltaTime);
+            animator.SetFloat(SpeedId, GroundSpeed(motor), speedDamping, Time.deltaTime);
+            // Pace the clips by the eased speed the blend uses, so stride and blend agree.
+            float speed = animator.GetFloat(SpeedId);
             animator.SetFloat(MoveScaleId, Mathf.Max(1f, speed / runClipSpeed));
+            animator.SetFloat(WalkScaleId, Mathf.Max(1f, speed / walkClipSpeed));
+            animator.SetBool(MagnetizedId, boots != null && boots.IsMagnetized);
             float vertical = Vector3.Dot(velocity, up);
             // A jump leaves the ground rising fast; show that at once, but let small drops pass.
             airTime = motor.IsGrounded ? 0f : airTime + Time.deltaTime;

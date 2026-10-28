@@ -125,6 +125,13 @@ namespace GravBoots.Tests
             Assert.That(boots.State, Is.EqualTo(BootsState.Magnetized), "boots should switch on");
         }
 
+        /// <summary>
+        /// How long magnetized walking takes to cover what full-speed walking covers in
+        /// <paramref name="secondsAtFullSpeed"/> (these tests were laid out at full speed).
+        /// </summary>
+        float Magnetized(float secondsAtFullSpeed) =>
+            secondsAtFullSpeed * motor.Settings.moveSpeed / boots.Settings.magnetizedMoveSpeed;
+
         Vector3 Local(Vector3 world) => frame.InverseTransformPoint(world);
         Vector3 LocalDir(Vector3 world) => frame.InverseTransformDirection(world);
 
@@ -162,7 +169,7 @@ namespace GravBoots.Tests
             Activate();
 
             // Long enough to be well up the 10 m wall, not so long as to reach its top.
-            Run(1.6f, Vector2.up);
+            Run(Magnetized(1.6f), Vector2.up);
 
             Assert.That(boots.State, Is.EqualTo(BootsState.Magnetized));
             Assert.That(motor.IsGrounded, Is.True);
@@ -201,7 +208,7 @@ namespace GravBoots.Tests
             SpawnPlayer(new Vector3(0f, 4.02f, -2f));
             Activate();
 
-            Run(1.5f, Vector2.up);
+            Run(Magnetized(1.5f), Vector2.up);
 
             Assert.That(boots.State, Is.EqualTo(BootsState.Magnetized), "should still be attached");
             Assert.That(motor.IsGrounded, Is.True);
@@ -364,5 +371,74 @@ namespace GravBoots.Tests
 
             Assert.That(peak, Is.GreaterThan(1f));
         }
-    }
+    
+        [Test]
+        public void MagnetizedWalkingIsSlower([ValueSource(nameof(Orientations))] Vector3 up)
+        {
+            BuildFrame(up);
+            Floor(magnetic: true);
+            SpawnPlayer(Vector3.zero);
+            Activate();
+
+            Run(1f, Vector2.up);
+
+            float heavy = Vector3.ProjectOnPlane(motor.Velocity, motor.BodyUp).magnitude;
+            Assert.That(heavy, Is.EqualTo(boots.Settings.magnetizedMoveSpeed).Within(0.05f), "magnetized top speed");
+        }
+
+        [Test]
+        public void FullSpeedReturnsWhenTheBootsSwitchOff()
+        {
+            // On the floor, so switching off leaves you standing rather than dropping.
+            BuildFrame(Vector3.up);
+            Floor(magnetic: true);
+            SpawnPlayer(Vector3.zero);
+            Activate();
+            Run(1f, Vector2.up);
+
+            boots.RequestToggle();
+            Run(0.5f, Vector2.up);
+            Assert.That(boots.State, Is.EqualTo(BootsState.Off));
+            float free = Vector3.ProjectOnPlane(motor.Velocity, motor.Gravity.Up).magnitude;
+            Assert.That(free, Is.EqualTo(motor.Settings.moveSpeed).Within(0.05f), "full speed with the boots off");
+        }
+
+        [Test]
+        public void MagnetizedStartIsHeavier()
+        {
+            BuildFrame(Vector3.up);
+            Floor(magnetic: true);
+            SpawnPlayer(Vector3.zero);
+            Activate();
+
+            Run(0.05f, Vector2.up);
+
+            float speed = Vector3.ProjectOnPlane(motor.Velocity, motor.BodyUp).magnitude;
+            Assert.That(speed, Is.LessThan(boots.Settings.magnetizedAcceleration * 0.05f + 0.05f), "accelerates at the magnetized rate");
+            Assert.That(speed, Is.LessThan(boots.Settings.magnetizedMoveSpeed * 0.5f), "not yet up to speed after 0.05 s");
+        }
+
+        [Test]
+        public void RotationStaysUnitLengthThroughLongMagnetizedWalking([ValueSource(nameof(Orientations))] Vector3 up)
+        {
+            // Back and forth over the quarter pipe from the floor to the wall, pausing on the curve.
+            BuildFrame(up);
+            Floor(magnetic: true);
+            Curve(new Vector3(0f, 0f, 1.5f), Vector3.forward, Vector3.up, CurvedRamp.Shape.Concave, 2f, 10f);
+            Box(new Vector3(0f, 6f, 4f), new Vector3(10f, 8f, 1f), magnetic: true);
+            SpawnPlayer(new Vector3(0f, 0f, -1f));
+            Activate();
+
+            float worst = 0f;
+            for (int turn = 0; turn < 12; turn++)
+            {
+                Run(1.2f, turn % 2 == 0 ? Vector2.up : Vector2.down);
+                Run(1.5f);
+                Quaternion q = motor.Rotation;
+                worst = Mathf.Max(worst, Mathf.Abs(Mathf.Sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w) - 1f));
+            }
+
+            Assert.That(worst, Is.LessThan(1e-4f), "rotation drifted from unit length");
+        }
+}
 }

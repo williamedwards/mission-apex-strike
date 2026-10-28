@@ -238,7 +238,8 @@ namespace GravBoots.Tests
                 Activate();
             else
                 Assert.That(boots.State, Is.EqualTo(BootsState.Magnetized), "a spawn on a wall or ceiling starts magnetized");
-            Run(1.5f, Vector2.up);
+            // As far as 1.5 s at full speed, at the slower magnetized pace.
+            Run(1.5f * motor.Settings.moveSpeed / boots.Settings.magnetizedMoveSpeed, Vector2.up);
             Assert.That(boots.State, Is.EqualTo(BootsState.Magnetized));
             Assert.That(Local(motor.Position).z, Is.GreaterThan(3f), "should have walked past the checkpoint");
 

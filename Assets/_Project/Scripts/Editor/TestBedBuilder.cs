@@ -261,10 +261,12 @@ namespace GravBoots.Editor
                 character.name = "Character";
                 var animator = character.GetComponent<Animator>();
                 animator.Rebind();
-                animator.runtimeAnimatorController = BuildPlayerAnimator(PlayerModelPath, animator.humanScale, out float runClipSpeed);
+                animator.runtimeAnimatorController = BuildPlayerAnimator(PlayerModelPath, animator.humanScale,
+                    out float walkClipSpeed, out float runClipSpeed);
                 animator.applyRootMotion = false;
                 animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-                root.AddComponent<PlayerAnimation>().Bind(motor, animator, runClipSpeed);
+                root.AddComponent<PlayerAnimation>().Bind(motor, animator, boots, walkClipSpeed, runClipSpeed);
+                character.AddComponent<FootPlanting>().Bind(motor, boots, animator);
                 BuildBootsGlow(root, boots, animator);
                 foreach (Transform t in root.GetComponentsInChildren<Transform>())
                     t.gameObject.layer = PlayerLayer;
@@ -497,10 +499,13 @@ namespace GravBoots.Editor
 
         /// <summary>
         /// The player's Animator: a Move blend tree (idle, walk, run by ground speed, run sped up
-        /// past its own pace) and an Air state that holds a jump pose picked by AirPhase.
+        /// past its own pace), a MagnetizedMove one (idle and walk only, the walk sped up to keep
+        /// stride with the ground), and an Air state that holds a jump pose picked by AirPhase.
+        /// IK is on so <see cref="FootPlanting"/> can pin feet while magnetized.
         /// </summary>
         /// <remarks>Humanoid clip speeds are per unit of body size; <paramref name="humanScale"/> turns them into m/s.</remarks>
-        static RuntimeAnimatorController BuildPlayerAnimator(string modelPath, float humanScale, out float runClipSpeed)
+        static RuntimeAnimatorController BuildPlayerAnimator(string modelPath, float humanScale,
+            out float walkClipSpeed, out float runClipSpeed)
         {
             AnimationClip Clip(string clipName)
             {
@@ -516,35 +521,58 @@ namespace GravBoots.Editor
             controller.AddParameter(new AnimatorControllerParameter { name = "MoveScale", type = AnimatorControllerParameterType.Float, defaultFloat = 1f });
             controller.AddParameter(new AnimatorControllerParameter { name = "Grounded", type = AnimatorControllerParameterType.Bool, defaultBool = true });
             controller.AddParameter("AirPhase", AnimatorControllerParameterType.Float);
+            controller.AddParameter("Magnetized", AnimatorControllerParameterType.Bool);
+            controller.AddParameter(new AnimatorControllerParameter { name = "WalkScale", type = AnimatorControllerParameterType.Float, defaultFloat = 1f });
 
             AnimatorStateMachine machine = controller.layers[0].stateMachine;
             AnimatorState move = controller.CreateBlendTreeInController("Move", out BlendTree tree);
             tree.blendParameter = "Speed";
             tree.useAutomaticThresholds = false;
-            AnimationClip walk = Clip("Walk"), run = Clip("Run");
-            tree.AddChild(Clip("Idle"), 0f);
+            AnimationClip idle = Clip("Idle"), walk = Clip("Walk"), run = Clip("Run");
+            walkClipSpeed = walk.averageSpeed.magnitude * humanScale;
             runClipSpeed = run.averageSpeed.magnitude * humanScale;
-            tree.AddChild(walk, walk.averageSpeed.magnitude * humanScale);
+            tree.AddChild(idle, 0f);
+            tree.AddChild(walk, walkClipSpeed);
             tree.AddChild(run, runClipSpeed);
             move.speedParameterActive = true;
             move.speedParameter = "MoveScale";
+
+            AnimatorState heavy = controller.CreateBlendTreeInController("MagnetizedMove", out BlendTree heavyTree);
+            heavyTree.blendParameter = "Speed";
+            heavyTree.useAutomaticThresholds = false;
+            heavyTree.AddChild(idle, 0f);
+            heavyTree.AddChild(walk, walkClipSpeed);
+            heavy.speedParameterActive = true;
+            heavy.speedParameter = "WalkScale";
+            Transition(move, heavy, 0.2f, (AnimatorConditionMode.If, "Magnetized"));
+            Transition(heavy, move, 0.2f, (AnimatorConditionMode.IfNot, "Magnetized"));
 
             AnimatorState air = machine.AddState("Air");
             air.motion = Clip("Jump");
             air.timeParameterActive = true;
             air.timeParameter = "AirPhase";
 
-            AnimatorStateTransition leave = move.AddTransition(air);
-            leave.hasExitTime = false;
-            leave.duration = 0.15f;
-            leave.AddCondition(AnimatorConditionMode.IfNot, 0f, "Grounded");
-            AnimatorStateTransition land = air.AddTransition(move);
-            land.hasExitTime = false;
-            land.duration = 0.15f;
-            land.AddCondition(AnimatorConditionMode.If, 0f, "Grounded");
+            Transition(move, air, 0.15f, (AnimatorConditionMode.IfNot, "Grounded"));
+            Transition(heavy, air, 0.15f, (AnimatorConditionMode.IfNot, "Grounded"));
+            Transition(air, move, 0.15f, (AnimatorConditionMode.If, "Grounded"), (AnimatorConditionMode.IfNot, "Magnetized"));
+            Transition(air, heavy, 0.15f, (AnimatorConditionMode.If, "Grounded"), (AnimatorConditionMode.If, "Magnetized"));
             machine.defaultState = move;
+
+            AnimatorControllerLayer[] layers = controller.layers;
+            layers[0].iKPass = true;
+            controller.layers = layers;
             AssetDatabase.SaveAssets();
             return controller;
+        }
+
+        static void Transition(AnimatorState from, AnimatorState to, float duration,
+            params (AnimatorConditionMode mode, string parameter)[] conditions)
+        {
+            AnimatorStateTransition transition = from.AddTransition(to);
+            transition.hasExitTime = false;
+            transition.duration = duration;
+            foreach ((AnimatorConditionMode mode, string parameter) in conditions)
+                transition.AddCondition(mode, 0f, parameter);
         }
 
         // ---------------------------------------------------------------- scene setup
