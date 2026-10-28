@@ -8,6 +8,7 @@ using GravBoots.Level;
 using GravBoots.Player;
 using Unity.Cinemachine;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -28,6 +29,8 @@ namespace GravBoots.Editor
         const string ScenePath = Root + "/Scenes/CameraTestBed.unity";
         const string SandboxPath = Root + "/Scenes/Sandbox.unity";
         internal const string PlayerPrefabPath = Root + "/Prefabs/Player.prefab";
+        const string PlayerModelPath = Root + "/Art/Characters/Player/Model/tripo_convert_b0228436-c2f5-499d-a62d-b1bf14bdc437.fbx";
+        const string PlayerAnimatorPath = Root + "/Art/Characters/Player/PlayerAnimator.controller";
         const string GridTexturePath = Root + "/Art/GreyboxGrid.png";
         const string PanelTexturePath = Root + "/Art/MagneticPanel.png";
         const string MaterialFolder = Root + "/Materials";
@@ -250,10 +253,28 @@ namespace GravBoots.Editor
 
             var visual = new GameObject("Visual").transform;
             visual.SetParent(root.transform, false);
-            Primitive(visual, PrimitiveType.Capsule, "Body", new Vector3(0f, 0.9f, 0f), new Vector3(0.7f, 0.9f, 0.7f), palette.PlayerBody);
-            Primitive(visual, PrimitiveType.Cube, "Visor", new Vector3(0f, 1.5f, 0.3f), new Vector3(0.45f, 0.14f, 0.18f), palette.Visor);
-            var bootL = Primitive(visual, PrimitiveType.Cube, "Boot_L", new Vector3(-0.15f, 0.08f, 0.06f), new Vector3(0.2f, 0.16f, 0.36f), palette.BootsOff);
-            var bootR = Primitive(visual, PrimitiveType.Cube, "Boot_R", new Vector3(0.15f, 0.08f, 0.06f), new Vector3(0.2f, 0.16f, 0.36f), palette.BootsOff);
+            GameObject bootL, bootR;
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerModelPath);
+            if (model != null)
+            {
+                var character = (GameObject)PrefabUtility.InstantiatePrefab(model, visual);
+                character.name = "Character";
+                var animator = character.GetComponent<Animator>();
+                animator.runtimeAnimatorController = BuildPlayerAnimator(PlayerModelPath);
+                animator.applyRootMotion = false;
+                animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                root.AddComponent<PlayerAnimation>().Bind(motor, animator);
+                // Glowing soles under the boots stand in for the old boot blocks.
+                bootL = Sole(animator, HumanBodyBones.LeftFoot, HumanBodyBones.LeftToes, "Sole_L", palette.BootsOff);
+                bootR = Sole(animator, HumanBodyBones.RightFoot, HumanBodyBones.RightToes, "Sole_R", palette.BootsOff);
+            }
+            else
+            {
+                Primitive(visual, PrimitiveType.Capsule, "Body", new Vector3(0f, 0.9f, 0f), new Vector3(0.7f, 0.9f, 0.7f), palette.PlayerBody);
+                Primitive(visual, PrimitiveType.Cube, "Visor", new Vector3(0f, 1.5f, 0.3f), new Vector3(0.45f, 0.14f, 0.18f), palette.Visor);
+                bootL = Primitive(visual, PrimitiveType.Cube, "Boot_L", new Vector3(-0.15f, 0.08f, 0.06f), new Vector3(0.2f, 0.16f, 0.36f), palette.BootsOff);
+                bootR = Primitive(visual, PrimitiveType.Cube, "Boot_R", new Vector3(0.15f, 0.08f, 0.06f), new Vector3(0.2f, 0.16f, 0.36f), palette.BootsOff);
+            }
             var bootsVisual = root.AddComponent<BootsVisual>();
             Set(bootsVisual, "boots", boots);
             Set(bootsVisual, "offMaterial", palette.BootsOff);
@@ -271,6 +292,75 @@ namespace GravBoots.Editor
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
             Object.DestroyImmediate(root);
             return prefab;
+        }
+
+        /// <summary>A flat glowing plate under a foot, from heel to toes, that moves with the foot bone.</summary>
+        static GameObject Sole(Animator animator, HumanBodyBones footBone, HumanBodyBones toesBone, string name, Material material)
+        {
+            Transform foot = animator.GetBoneTransform(footBone);
+            Transform toes = animator.GetBoneTransform(toesBone);
+            Vector3 heel = Vector3.ProjectOnPlane(foot.position, Vector3.up);
+            Vector3 tip = Vector3.ProjectOnPlane(toes.position, Vector3.up);
+            Vector3 along = tip - heel;
+            var sole = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            sole.name = name;
+            Object.DestroyImmediate(sole.GetComponent<Collider>());
+            sole.GetComponent<MeshRenderer>().sharedMaterial = material;
+            sole.transform.SetPositionAndRotation(heel + along * 0.5f + Vector3.up * 0.025f,
+                Quaternion.LookRotation(along, Vector3.up));
+            sole.transform.localScale = new Vector3(0.15f, 0.05f, along.magnitude + 0.2f);
+            sole.transform.SetParent(foot, true);
+            return sole;
+        }
+
+        /// <summary>
+        /// The player's Animator: a Move blend tree (idle, walk, run by ground speed, run sped up
+        /// past its own pace) and an Air state that holds a jump pose picked by AirPhase.
+        /// </summary>
+        static RuntimeAnimatorController BuildPlayerAnimator(string modelPath)
+        {
+            AnimationClip Clip(string clipName)
+            {
+                foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(modelPath))
+                    if (asset is AnimationClip clip && clip.name == clipName)
+                        return clip;
+                throw new FileNotFoundException($"No '{clipName}' clip in the player model", modelPath);
+            }
+
+            AssetDatabase.DeleteAsset(PlayerAnimatorPath);
+            var controller = AnimatorController.CreateAnimatorControllerAtPath(PlayerAnimatorPath);
+            controller.AddParameter("Speed", AnimatorControllerParameterType.Float);
+            controller.AddParameter(new AnimatorControllerParameter { name = "MoveScale", type = AnimatorControllerParameterType.Float, defaultFloat = 1f });
+            controller.AddParameter(new AnimatorControllerParameter { name = "Grounded", type = AnimatorControllerParameterType.Bool, defaultBool = true });
+            controller.AddParameter("AirPhase", AnimatorControllerParameterType.Float);
+
+            AnimatorStateMachine machine = controller.layers[0].stateMachine;
+            AnimatorState move = controller.CreateBlendTreeInController("Move", out BlendTree tree);
+            tree.blendParameter = "Speed";
+            tree.useAutomaticThresholds = false;
+            AnimationClip walk = Clip("Walk"), run = Clip("Run");
+            tree.AddChild(Clip("Idle"), 0f);
+            tree.AddChild(walk, walk.averageSpeed.magnitude);
+            tree.AddChild(run, run.averageSpeed.magnitude);
+            move.speedParameterActive = true;
+            move.speedParameter = "MoveScale";
+
+            AnimatorState air = machine.AddState("Air");
+            air.motion = Clip("Jump");
+            air.timeParameterActive = true;
+            air.timeParameter = "AirPhase";
+
+            AnimatorStateTransition leave = move.AddTransition(air);
+            leave.hasExitTime = false;
+            leave.duration = 0.1f;
+            leave.AddCondition(AnimatorConditionMode.IfNot, 0f, "Grounded");
+            AnimatorStateTransition land = air.AddTransition(move);
+            land.hasExitTime = false;
+            land.duration = 0.08f;
+            land.AddCondition(AnimatorConditionMode.If, 0f, "Grounded");
+            machine.defaultState = move;
+            AssetDatabase.SaveAssets();
+            return controller;
         }
 
         // ---------------------------------------------------------------- scene setup
