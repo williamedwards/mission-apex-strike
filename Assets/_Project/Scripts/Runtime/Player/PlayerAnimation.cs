@@ -6,7 +6,8 @@ namespace GravBoots.Player
     /// Drives the character's Animator from the motor: speed along the body's surface, grounded,
     /// and a jump pose chosen by vertical speed. All measured relative to the body's own up, so
     /// it reads the same on floors, walls and ceilings. The clips play in place (no root motion).
-    /// Magnetized, the gait is a heavy walk (no run) kept in stride with the ground.
+    /// Magnetized, the gait is a heavy walk (no run) kept in stride with the ground. Dying plays a
+    /// fall; respawning snaps back to standing.
     /// </summary>
     public class PlayerAnimation : MonoBehaviour
     {
@@ -16,10 +17,12 @@ namespace GravBoots.Player
         public static readonly int AirPhaseId = Animator.StringToHash("AirPhase");
         public static readonly int MagnetizedId = Animator.StringToHash("Magnetized");
         public static readonly int WalkScaleId = Animator.StringToHash("WalkScale");
+        public static readonly int DeadId = Animator.StringToHash("Dead");
 
         [SerializeField] PlayerMotor motor;
         [SerializeField] Animator animator;
         [SerializeField] MagneticBoots boots;
+        [SerializeField] Health health;
         [Tooltip("Ground speed (m/s) of the run clip; faster than this plays it faster.")]
         [SerializeField] float runClipSpeed = 3.5f;
         [Tooltip("Ground speed (m/s) of the magnetized walk clip; faster than this plays it faster, so planted feet keep pace with the ground.")]
@@ -33,16 +36,47 @@ namespace GravBoots.Player
         [SerializeField] float airDelay = 0.1f;
 
         float airTime;
+        bool snapToStanding;
 
-        public void Bind(PlayerMotor playerMotor, Animator playerAnimator, MagneticBoots playerBoots,
+        public void Bind(PlayerMotor playerMotor, Animator playerAnimator, MagneticBoots playerBoots, Health playerHealth,
             float magnetizedWalkClipSpeed, float runClipGroundSpeed)
         {
             motor = playerMotor;
             animator = playerAnimator;
             boots = playerBoots;
+            health = playerHealth;
             walkClipSpeed = magnetizedWalkClipSpeed;
             runClipSpeed = runClipGroundSpeed;
         }
+
+        void OnEnable()
+        {
+            if (health == null)
+                return;
+            health.Died += OnDied;
+            health.Restored += OnRestored;
+        }
+
+        void OnDisable()
+        {
+            if (health == null)
+                return;
+            health.Died -= OnDied;
+            health.Restored -= OnRestored;
+        }
+
+        /// <summary>Falls over on any death: on the ground, shot in mid-air, or dropping into a pit.</summary>
+        void OnDied(DeathCause cause)
+        {
+            if (animator != null)
+                animator.SetBool(DeadId, true);
+        }
+
+        /// <summary>
+        /// Respawned: back to standing without blending up from lying down. Done on the next
+        /// update, because the session sets the boots for the checkpoint after restoring health.
+        /// </summary>
+        void OnRestored() => snapToStanding = true;
 
         void Update()
         {
@@ -62,6 +96,13 @@ namespace GravBoots.Player
             animator.SetBool(GroundedId, motor.IsGrounded || airTime < airDelay && vertical < 1f);
             float jumpSpeed = motor.Settings != null ? motor.Settings.JumpSpeed : 8f;
             animator.SetFloat(AirPhaseId, AirPoseTime(vertical, jumpSpeed, airPoseTimes) / jumpClipLength);
+
+            if (snapToStanding)
+            {
+                snapToStanding = false;
+                animator.SetBool(DeadId, false);
+                animator.Play(boots != null && boots.IsMagnetized ? "MagnetizedMove" : "Move", 0, 0f);
+            }
         }
 
         /// <summary>

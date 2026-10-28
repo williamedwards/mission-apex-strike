@@ -230,7 +230,7 @@ audio (clank, hum, thud), and a playtest of how the camera feels through corners
 Built: `Health`, `PlayerSensor` (an overlap check after every motor step: `Lethal`-tagged
 surfaces and `KillVolume`s kill; checkpoints and the exit are reported), `Checkpoint` (a
 `SpawnPoint` with a trigger and a pad that lights), `LevelExit`, and `LevelSession` (start,
-checkpoint, death → fade → respawn in 0.6 s, the safety net 25 m outside the level's bounds,
+checkpoint, death → fall and fade → respawn in 1.2 s, the safety net 25 m outside the level's bounds,
 the run clock and deaths; R returns to the checkpoint and Backspace restarts the chamber),
 plus `SessionHud`. The landing marker also turns red over kill volumes. Level Kit: Checkpoint,
 Kill Volume and Exit buttons, and "Add Game Loop" for older chambers. Test bed: kill volumes in
@@ -238,7 +238,7 @@ both pits, and the Checkpoint Run area. `GameLoopTests` cover it at all six orie
 `LevelClock` phase joins the respawn in Phase 3.
 - `KillVolume` (death pits, plus a safety net under the whole level), `Health`, `Checkpoint`,
   `RespawnManager` (respawn restores the boots state, gravity frame and `LevelClock` phase).
-- Level start and exit, a fast restart key, death → respawn in under 1 second.
+- Level start and exit, a fast restart key, death → respawn in about a second (1.2 s, long enough to see the fall).
 - A minimal HUD: boots state, health, checkpoint reached.
 
 ### 🚦 Gate: "Is it fun?" (chamber blocked out; first-time playtest pending)

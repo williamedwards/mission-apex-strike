@@ -19,7 +19,8 @@ namespace GravBoots.Level
     /// the checkpoint was reached magnetized or faces away from world up, and the surface under
     /// it is magnetic. The <see cref="LevelClock"/> goes back to when the checkpoint was
     /// reached, so moving elements are in the same phase every attempt. Death to control again is
-    /// <see cref="respawnDelay"/> plus a frame, kept under a second so failing is cheap.
+    /// <see cref="respawnDelay"/> plus a frame: long enough to see the fall, short enough that
+    /// failing stays cheap.
     /// <see cref="Tick"/> and <see cref="Begin"/> are public so tests can drive it without frames.
     /// </remarks>
     public class LevelSession : MonoBehaviour
@@ -28,7 +29,7 @@ namespace GravBoots.Level
         [SerializeField] CameraRig cameraRig;
         [SerializeField] PlayerInputReader input;
         [Tooltip("Seconds from death to respawn; the screen fades out over this time.")]
-        [SerializeField] float respawnDelay = 0.6f;
+        [SerializeField] float respawnDelay = 1.2f;
         [Tooltip("How far outside the level's geometry the player can go before the safety net kills.")]
         [SerializeField] float boundsMargin = 25f;
         [Tooltip("Where the run starts. Empty: the first spawn point in order.")]

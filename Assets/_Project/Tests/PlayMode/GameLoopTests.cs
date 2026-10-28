@@ -296,13 +296,13 @@ namespace GravBoots.Tests
         }
 
         [Test]
-        public void DeathToRespawnTakesUnderASecond()
+        public void DeathToRespawnTakesTheRespawnDelay()
         {
             BuildFrame(Vector3.up);
             Floor();
             Spawn(Vector3.zero);
             SpawnPlayer(new Vector3(0f, 0f, 0f));
-            StartSession(respawnDelay: 0.6f);
+            StartSession(respawnDelay: 1.2f);
             Run(0.8f, Vector2.up);
 
             health.Kill(DeathCause.Lethal);
@@ -315,7 +315,7 @@ namespace GravBoots.Tests
             }
 
             Assert.That(session.State, Is.EqualTo(SessionState.Playing));
-            Assert.That(waited, Is.LessThan(1f));
+            Assert.That(waited, Is.EqualTo(1.2f).Within(Dt * 1.5f), "the delay plus at most a frame");
             Assert.That(health.IsDead, Is.False);
             Assert.That(health.Current, Is.EqualTo(health.Max));
             Assert.That(Local(motor.Position).z, Is.EqualTo(0f).Within(0.1f));

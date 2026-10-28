@@ -36416,7 +36416,7 @@ MonoBehaviour:
   player: {fileID: 737107565}
   cameraRig: {fileID: 2081184199}
   input: {fileID: 737107563}
-  respawnDelay: 0.6
+  respawnDelay: 1.2
   boundsMargin: 25
   startSpawn: {fileID: 0}
 --- !u!4 &1795922928

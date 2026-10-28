@@ -244,8 +244,10 @@ MonoBehaviour:
   guide: {fileID: 934520396}
   safeColor: {r: 0.35, g: 0.8, b: 1, a: 1}
   lethalColor: {r: 1, g: 0.2, b: 0.15, a: 1}
+  targetColor: {r: 1, g: 0.8, b: 0.15, a: 1}
   minimumTilt: 20
   maxDistance: 200
+  targetSearchRadius: 1.2
 --- !u!4 &327141719
 Transform:
   m_ObjectHideFlags: 0
@@ -427,6 +429,7 @@ MonoBehaviour:
   health: {fileID: 1654661592}
   noticeSeconds: 1.5
   fadeInSeconds: 0.25
+  damageFlashSeconds: 0.3
   accent: {r: 0.3, g: 1, b: 0.6, a: 1}
 --- !u!114 &476044565
 MonoBehaviour:
@@ -443,8 +446,9 @@ MonoBehaviour:
   player: {fileID: 1514300830}
   cameraRig: {fileID: 584486995}
   input: {fileID: 1514300831}
-  respawnDelay: 0.6
+  respawnDelay: 1.2
   boundsMargin: 25
+  startSpawn: {fileID: 0}
 --- !u!4 &476044566
 Transform:
   m_ObjectHideFlags: 0

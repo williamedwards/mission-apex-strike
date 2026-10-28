@@ -35,6 +35,9 @@ namespace GravBoots.Editor
         const string AnimationsFolder = Root + "/Art/Characters/Player/Animations";
         /// <summary>A clip anywhere under <see cref="AnimationsFolder"/> with this name drives the magnetized walk.</summary>
         const string MagnetizedWalkClip = "PurposefulWalk2";
+        /// <summary>Played on dying; sped up so the fall lands (about 0.75 s) well within the respawn delay.</summary>
+        const string DeathClip = "FallingProne";
+        const float DeathClipSpeed = 1.5f;
         const string GridTexturePath = Root + "/Art/GreyboxGrid.png";
         const string PanelTexturePath = Root + "/Art/MagneticPanel.png";
         const string MaterialFolder = Root + "/Materials";
@@ -245,7 +248,7 @@ namespace GravBoots.Editor
             var motor = root.AddComponent<PlayerMotor>();
             var reader = root.AddComponent<PlayerInputReader>();
             root.AddComponent<PlayerController>();
-            root.AddComponent<Health>();
+            var health = root.AddComponent<Health>();
             root.AddComponent<PlayerSensor>();
             var boots = root.AddComponent<MagneticBoots>();
             Set(boots, "settings", bootsSettings);
@@ -268,7 +271,7 @@ namespace GravBoots.Editor
                     out float magnetizedWalkSpeed, out float runClipSpeed);
                 animator.applyRootMotion = false;
                 animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-                root.AddComponent<PlayerAnimation>().Bind(motor, animator, boots, magnetizedWalkSpeed, runClipSpeed);
+                root.AddComponent<PlayerAnimation>().Bind(motor, animator, boots, health, magnetizedWalkSpeed, runClipSpeed);
                 // Off for now: pinning fought the walk cycle. Tick it on in play to compare.
                 var planting = character.AddComponent<FootPlanting>();
                 planting.Bind(motor, boots, animator);
@@ -537,6 +540,7 @@ namespace GravBoots.Editor
             controller.AddParameter(new AnimatorControllerParameter { name = "Grounded", type = AnimatorControllerParameterType.Bool, defaultBool = true });
             controller.AddParameter("AirPhase", AnimatorControllerParameterType.Float);
             controller.AddParameter("Magnetized", AnimatorControllerParameterType.Bool);
+            controller.AddParameter("Dead", AnimatorControllerParameterType.Bool);
             controller.AddParameter(new AnimatorControllerParameter { name = "WalkScale", type = AnimatorControllerParameterType.Float, defaultFloat = 1f });
 
             AnimatorStateMachine machine = controller.layers[0].stateMachine;
@@ -575,6 +579,21 @@ namespace GravBoots.Editor
             Transition(heavy, air, 0.15f, (AnimatorConditionMode.IfNot, "Grounded"));
             Transition(air, move, 0.15f, (AnimatorConditionMode.If, "Grounded"), (AnimatorConditionMode.IfNot, "Magnetized"));
             Transition(air, heavy, 0.15f, (AnimatorConditionMode.If, "Grounded"), (AnimatorConditionMode.If, "Magnetized"));
+
+            // Death: from anything, once; respawning puts the Animator straight back (PlayerAnimation).
+            AnimationClip fall = ExtraClip(DeathClip);
+            if (fall != null)
+            {
+                AnimatorState death = machine.AddState("Death");
+                death.motion = fall;
+                death.speed = DeathClipSpeed;
+                AnimatorStateTransition die = machine.AddAnyStateTransition(death);
+                die.hasExitTime = false;
+                die.duration = 0.1f;
+                die.canTransitionToSelf = false;
+                die.AddCondition(AnimatorConditionMode.If, 0f, "Dead");
+                Transition(death, move, 0f, (AnimatorConditionMode.IfNot, "Dead"));
+            }
             machine.defaultState = move;
 
             AnimatorControllerLayer[] layers = controller.layers;
