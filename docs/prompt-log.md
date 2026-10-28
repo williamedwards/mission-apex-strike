@@ -9444,3 +9444,34 @@ I committed the hints fix as `361ecc6` and expanded Chamber_04, which isn't comm
 **Untested by hand:** the scripted run proves each room can be finished. Whether the Gauntlet feels hard but fair is for your playtest, especially the shuttle transfer and the final jump.
 ```
 
+
+## 2026-10-28T19:05:57.764Z — claude — 00d4062776ec
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:dc385a0a-2291-4f7f-af16-ac5f888c11dd`
+
+### Prompt
+
+```text
+Plays well to me, go ahead and commit.  One small issue, I see z-fighting around the checkpoints before and after the "gauntlet" puzzle.
+```
+
+### Saved assistant responses
+
+```text
+Committing first, then looking at the two checkpoints either side of the Gauntlet.
+```
+
+```text
+The scene diff is just the three floors, six lines. Next, the coplanar-face scan again, this time around every checkpoint in the level, to make sure nothing else like this is left:
+```
+
+```text
+I committed the new rooms as `cb3190b`, then fixed the z-fighting. The fix is saved in Chamber_04 but not committed yet, and I haven't checked it in the game view, only with the geometry scan below.
+
+**Cause:** the original corridors have 3 m floors that fit exactly between the two doorway walls. My builder made the new corridors' floors the full 4 m long instead. So 0.5 m at each end overlapped the boxes under the doorways, and their top surfaces sat in the same plane. That's the flicker you saw by the checkpoints. All three new corridors had it: after Corkscrew, after the Diving Board (before the Gauntlet), and after the Gauntlet. You'd have seen it at the two around the Gauntlet.
+
+**Fix:** the three new corridor floors are now 3 m long, the same as the originals. The scene diff is only those three floors, and the walkway is still continuous.
+
+**Check:** I scanned around all 21 checkpoints for overlapping boxes whose faces share a plane. Nothing visible is left. The only matches are in room 09, and they're hidden faces: sides pressed against walls and undersides.
+```
+
