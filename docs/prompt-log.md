@@ -10071,3 +10071,52 @@ I've updated both documents and rebuilt the log, but nothing is committed yet.
 - The reflection.
 ```
 
+
+## 2026-10-28T21:11:35.814Z — claude — 0acde362c8f3
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:7b1634e2-a06a-45b7-8577-205d80e0163c`
+
+### Prompt
+
+```text
+Commit them
+```
+
+### Saved assistant responses
+
+```text
+I've committed the documentation updates as `561b82d`. That's the README, the prompt log rebuilt with 168 prompts, its template, and the raw prompt capture.
+
+As usual, I left out the ProBuilder settings file and the orphan `Model2.meta`. Nothing is pushed yet.
+```
+
+
+## 2026-10-28T21:15:52.472Z — claude — 666260d42563
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:69a0b6db-7558-47ba-a7b7-a5313fddbded`
+
+### Prompt
+
+```text
+Assignment title is "PG3 : Unreal or Unity MCP Game", the game trailer component has been removed from the assignment so you can delete that section.
+```
+
+### Saved assistant responses
+
+```text
+The template and README no longer mention a trailer; `PROMPT_LOG.md` will drop it on rebuild. Rebuilding and checking headings and links:
+```
+
+```text
+I've set the assignment title and removed everything trailer-related. Nothing is committed yet.
+
+- **Title:** the prompt log's header now reads "PG3: Unreal or Unity MCP Game". I tidied the space before the colon; tell me if the space should stay.
+- **Trailer removed:**
+  - The "Trailer Shot Prompts" section in the prompt log.
+  - The trailer row in the prompt log's tool inventory.
+  - The trailer row in the README's tool table.
+- **Renumbering:** the sections after it moved up one. Debugging is now 5, the reflection 6, attribution 7, and the full prompt list 8. I updated the links that point to them, including the README's link to the attribution sheet.
+
+I rebuilt the log, and the appendix now has 169 prompts.
+```
+

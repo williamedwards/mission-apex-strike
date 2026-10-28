@@ -74,7 +74,7 @@ def main() -> None:
     lines = [
         MARKER,
         "",
-        "## 9. Complete Prompt List (Chronological)",
+        "## 8. Complete Prompt List (Chronological)",
         "",
         f"All {len(unique)} prompts captured from the local Claude Code and Codex transcripts, in order "
         f"(times UTC). Duplicates that a continued session copies into its new transcript are removed "

@@ -131,7 +131,6 @@ every prompt and reply.
 | ElevenLabs Sound Effects API (Creator plan) | `eleven_text_to_sound_v2` | 13 in-game sound effects (723 credits over 31 generations) |
 | ElevenLabs (Creator plan) | Eleven Music | Two background tracks |
 | Unity 6000.5.9f1 | URP, Cinemachine, Input System, ProBuilder | Engine |
-| [Trailer tool] | [model] | [Trailer] |
 
 ## Reference items
 
@@ -152,7 +151,7 @@ every prompt and reply.
 ## Asset attribution
 
 The full **Asset Attribution Sheet** (every asset, its tool, license and prompt) is
-[section 8 of the master prompt log](PROMPT_LOG.md#8-asset-attribution--licensing). In brief:
+[section 7 of the master prompt log](PROMPT_LOG.md#7-asset-attribution--licensing). In brief:
 
 - **3D models and animations: Tripo** (tripo3d.ai), generated on the paid **Pro plan**: private
   models with commercial rights, about 750 credits in all. (Models generated on Tripo's

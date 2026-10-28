@@ -7,7 +7,7 @@
 # Master AI Prompt Log & Workflow Analysis
 
 **Course:** AME 294: Games and AI — Creating Games with Artificial Intelligence  
-**Assignment:** [Portfolio Game 3 — confirm the assignment title]  
+**Assignment:** PG3: Unreal or Unity MCP Game  
 **Student Name:** William Edwards  
 **Project Title:** Mission: Apex Strike  
 **Repository URL:** https://github.com/williamedwards/mission-apex-strike  
@@ -16,7 +16,7 @@
 Mission: Apex Strike is a 3D puzzle obstacle course in Unity 6 (URP). Magnetic boots let the
 player walk up curved ramps onto walls and ceilings, and dropping back to the floor is part of
 every solution. This log selects the prompts behind the major decisions, the Tripo 3D assets,
-the audio and the error recoveries; [section 9](#9-complete-prompt-list-chronological) lists
+the audio and the error recoveries; [section 8](#8-complete-prompt-list-chronological) lists
 every prompt in order.
 
 **Reading this log.** Prompts are quoted exactly as typed, typos included. "Reported" outcomes
@@ -38,7 +38,6 @@ playtested each step.
 | Sound effects | ElevenLabs Sound Effects API (Creator plan), called by Claude Code | `eleven_text_to_sound_v2` | 13 in-game effects, from 31 generations |
 | Music | ElevenLabs (Creator plan), used by the author | Eleven Music | Two background tracks |
 | Audio and mesh analysis (non-generative) | ffmpeg, NumPy, Blender (headless) | — | Loudness and spectrum checks, cutting footsteps, inspecting FBX files |
-| Trailer | [tool] | [model] | [trailer shots] |
 
 ---
 
@@ -142,7 +141,7 @@ the start, and carries the player up and out at the end while the camera watches
 {{prompt:The Apex Inversion}}
 
 **Reported outcome:** Title and end screens over slow camera moves through the chamber's rooms.
-The game was renamed mid-task (see the note at the top of section 9).
+The game was renamed mid-task (see the note at the top of section 8).
 
 ### 2.4 Level Design
 
@@ -465,13 +464,7 @@ Dark ambient background music with unsettling, sparse texture. Starts soft and g
 
 ---
 
-## 5. Trailer Shot Prompts
-
-[Add the trailer shot prompts, tools and settings here.]
-
----
-
-## 6. Debugging, Error Recovery & Friction Log
+## 5. Debugging, Error Recovery & Friction Log
 
 ### Incident 1: Flickering corridor floors and a platform pushing the player through the floor
 
@@ -594,14 +587,14 @@ Dark ambient background music with unsettling, sparse texture. Starts soft and g
 
 ---
 
-## 7. Human-in-the-Loop Curation & Analytical Reflection
+## 6. Human-in-the-Loop Curation & Analytical Reflection
 
 [Reflection, 200–300 words: what the AI did, what you did, and where the engine changed the
 division of labour compared to PG2.]
 
 ---
 
-## 8. Asset Attribution & Licensing
+## 7. Asset Attribution & Licensing
 
 **Terms in brief** (check each against your plan before publishing):
 
@@ -638,7 +631,7 @@ division of labour compared to PG2.]
 | `Shaders/VoidFog.shader` | Shader | Written with Claude Code | Original | §2.5 |
 | `Audio/SFX/Draft/*` (13 effects in use) | Sound effects | ElevenLabs `eleven_text_to_sound_v2` | ElevenLabs terms, Creator plan (commercial use, no attribution) | §4.1–4.2 |
 | `Audio/Background/Draft/*.mp3` | Music | Eleven Music | Eleven Music terms, Creator plan (non-commercial project) | §4.3 |
-| `Scripts/**`, `Tests/**`, `Editor/**` | Code | Claude Code (Claude Opus 5.5) | User-owned output | §2, §9 |
+| `Scripts/**`, `Tests/**`, `Editor/**` | Code | Claude Code (Claude Opus 5.5) | User-owned output | §2, §8 |
 | UI text | Font | Unity's built-in default font | Unity terms | — |
 
 (Paths are under `Assets/_Project/` unless shown otherwise.)
