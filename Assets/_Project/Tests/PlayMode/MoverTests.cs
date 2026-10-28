@@ -128,14 +128,18 @@ namespace GravBoots.Tests
             Physics.SyncTransforms();
         }
 
-        /// <summary>Steps the clock (movers), then the motor, then the session, as in play.</summary>
+        /// <summary>
+        /// Steps the clock (movers), then the motor, then the session, as in play. The stick only
+        /// counts while the session is playing, as the controller is off otherwise.
+        /// </summary>
         void Run(float seconds, Vector2 stick = default, System.Action eachStep = null)
         {
             int steps = Mathf.RoundToInt(seconds / Dt);
             for (int i = 0; i < steps; i++)
             {
                 clock.Tick(Dt);
-                motor.SetMoveInput(mapper.Map(stick, frame.forward, frame.up, motor.Gravity.Up));
+                if (session == null || session.State == SessionState.Playing)
+                    motor.SetMoveInput(mapper.Map(stick, frame.forward, frame.up, motor.Gravity.Up));
                 motor.Tick(Dt);
                 session?.Tick(Dt);
                 eachStep?.Invoke();
@@ -382,5 +386,123 @@ namespace GravBoots.Tests
 
             Assert.That(Vector3.Distance(sentry.transform.position, where), Is.LessThan(1e-3f));
         }
-    }
+    
+        // ---------------------------------------------------------------- tube elevators
+
+        SpawnPoint SpawnAt(Vector3 localPosition)
+        {
+            var spawn = new GameObject("Spawn").AddComponent<SpawnPoint>();
+            spawn.transform.SetParent(frame, false);
+            spawn.transform.localPosition = localPosition;
+            return spawn;
+        }
+
+        /// <summary>Starts a session (instant respawns) and puts the player on <paramref name="start"/>.</summary>
+        void BeginSession(SpawnPoint start)
+        {
+            var go = new GameObject("Session");
+            created.Add(go);
+            session = go.AddComponent<LevelSession>();
+            session.RespawnDelay = 0f;
+            Physics.SyncTransforms();
+            session.Begin(motor);
+            session.SetCheckpoint(start, false);
+            session.RespawnAtCheckpoint();
+        }
+
+        /// <summary>A start elevator: the platform rises 4 m to the frame's floor level, spawns at both ends.</summary>
+        Elevator StartElevator()
+        {
+            KinematicMover mover = Mover(new[] { new Vector3(0f, -4f, 0f), Vector3.zero }, mode: MoverMode.OnStep, speed: 2f, wait: 0f);
+            var elevator = mover.gameObject.AddComponent<Elevator>();
+            elevator.role = ElevatorRole.Start;
+            elevator.mover = mover;
+            elevator.boardingSpawn = SpawnAt(new Vector3(0f, -4f + 0.02f, 0f));
+            elevator.arrivalSpawn = SpawnAt(new Vector3(0f, 0.02f, 0f));
+            return elevator;
+        }
+
+        /// <summary>Steps until the session hands over control (or gives up after <paramref name="limit"/> seconds).</summary>
+        float RideUntilPlaying(Vector2 stick, float limit = 5f)
+        {
+            float t = 0f;
+            while (session.State == SessionState.Arriving && t < limit)
+            {
+                Run(Dt, stick);
+                t += Dt;
+            }
+            return t;
+        }
+
+        [Test]
+        public void StartElevatorRidesUpThenHandsOverControl([ValueSource(nameof(Orientations))] Vector3 up)
+        {
+            BuildFrame(up);
+            Elevator elevator = StartElevator();
+            SpawnPlayer(new Vector3(0f, -4f, 0f));
+            BeginSession(elevator.boardingSpawn);
+
+            Assert.That(session.State, Is.EqualTo(SessionState.Arriving), "the run starts riding up");
+            Run(0.5f, Vector2.up);
+            Assert.That(session.State, Is.EqualTo(SessionState.Arriving));
+            Vector3 onDeck = OnPlatform(elevator.mover, motor);
+            Assert.That(new Vector2(onDeck.x, onDeck.z).magnitude, Is.LessThan(0.1f), "the stick does nothing while riding");
+
+            float ride = RideUntilPlaying(Vector2.up);
+
+            Assert.That(session.State, Is.EqualTo(SessionState.Playing), $"control comes back at the top (after {ride:0.00} s)");
+            Assert.That(Local(motor.Position).y, Is.EqualTo(0f).Within(0.05f), "at floor level");
+            Assert.That(session.Checkpoint, Is.EqualTo(elevator.arrivalSpawn), "respawns are at the top from now on");
+            Vector3 before = Local(motor.Position);
+            Run(0.25f, Vector2.up);
+            Assert.That(Local(motor.Position).z - before.z, Is.GreaterThan(0.3f), "and the stick works again");
+        }
+
+        [Test]
+        public void DyingAfterTheStartRideRespawnsAtTheTopWithoutRidingAgain([ValueSource(nameof(Orientations))] Vector3 up)
+        {
+            BuildFrame(up);
+            Elevator elevator = StartElevator();
+            SpawnPlayer(new Vector3(0f, -4f, 0f));
+            BeginSession(elevator.boardingSpawn);
+            RideUntilPlaying(default);
+            Run(0.5f);
+
+            health.Kill(DeathCause.Lethal);
+            Run(Dt);
+
+            Assert.That(session.State, Is.EqualTo(SessionState.Playing), "no second ride");
+            Assert.That(Local(elevator.mover.platform.position).y, Is.EqualTo(0f).Within(1e-3f), "the platform stays up");
+            Assert.That(Local(motor.Position).y, Is.EqualTo(0f).Within(0.05f), "back on it at the top");
+        }
+
+        [Test]
+        public void ExitElevatorEndsTheRunAndCarriesThePlayerOut([ValueSource(nameof(Orientations))] Vector3 up)
+        {
+            BuildFrame(up);
+            Box(frame, new Vector3(0f, -0.5f, -4f), new Vector3(4f, 1f, 8f));
+            KinematicMover mover = Mover(new[] { new Vector3(0f, 0f, 2f), new Vector3(0f, 5f, 2f) }, mode: MoverMode.OnStep, speed: 2f, wait: 0f);
+            var elevator = mover.gameObject.AddComponent<Elevator>();
+            elevator.role = ElevatorRole.Exit;
+            elevator.mover = mover;
+            var exit = new GameObject("Exit", typeof(BoxCollider)).AddComponent<LevelExit>();
+            exit.transform.SetParent(mover.platform, false);
+            var trigger = exit.GetComponent<BoxCollider>();
+            trigger.isTrigger = true;
+            trigger.size = new Vector3(1.4f, 2f, 1.4f);
+            trigger.center = new Vector3(0f, 1f, 0f);
+            SpawnPlayer(new Vector3(0f, 0f, -4f));
+            BeginSession(SpawnAt(new Vector3(0f, 0.02f, -4f)));
+
+            for (float t = 0f; session.State == SessionState.Playing && t < 3f; t += Dt)
+                Run(Dt, Vector2.up);
+            Assert.That(session.State, Is.EqualTo(SessionState.Complete), "stepping on ends the run");
+
+            Run(4f);
+
+            Assert.That(motor.IsGrounded, Is.True);
+            Assert.That(motor.GroundCollider.transform.IsChildOf(mover.platform), Is.True, "riding the platform");
+            Assert.That(Local(motor.Position).y, Is.EqualTo(5f).Within(0.05f), "carried to the top");
+        }
+}
 }

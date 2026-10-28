@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 
 namespace GravBoots.Level
 {
-    public enum SessionState { Playing, Dying, Complete }
+    public enum SessionState { Playing, Dying, Complete, Arriving }
 
     /// <summary>
     /// One run of a chamber: starts the player at the first spawn, tracks the active checkpoint,
@@ -21,6 +21,8 @@ namespace GravBoots.Level
     /// reached, so moving elements are in the same phase every attempt. Death to control again is
     /// <see cref="respawnDelay"/> plus a frame: long enough to see the fall, short enough that
     /// failing stays cheap.
+    /// Spawning on a start <see cref="Elevator"/>'s boarding spawn holds the controls
+    /// (<see cref="SessionState.Arriving"/>) until its platform stops at the top.
     /// <see cref="Tick"/> and <see cref="Begin"/> are public so tests can drive it without frames.
     /// </remarks>
     public class LevelSession : MonoBehaviour
@@ -46,6 +48,9 @@ namespace GravBoots.Level
         float checkpointClockTime;
         float dyingTime;
         LevelExit exitReached;
+        Elevator[] elevators = Array.Empty<Elevator>();
+        /// <summary>The start elevator carrying the player in, while <see cref="SessionState.Arriving"/>.</summary>
+        Elevator arriving;
 
         public SessionState State { get; private set; }
         public PlayerMotor Player => player;
@@ -108,6 +113,7 @@ namespace GravBoots.Level
             begun = true;
 
             spawns = FindObjectsByType<SpawnPoint>().OrderBy(s => s.order).ThenBy(s => s.name).ToArray();
+            elevators = FindObjectsByType<Elevator>();
             foreach (Checkpoint checkpoint in spawns.OfType<Checkpoint>())
                 checkpoint.SetLit(false);
             bounds = MeasureLevel();
@@ -129,6 +135,10 @@ namespace GravBoots.Level
                     dyingTime += deltaTime;
                     if (dyingTime >= respawnDelay)
                         RespawnAtCheckpoint();
+                    break;
+                case SessionState.Arriving:
+                    if (arriving == null || arriving.HasArrived)
+                        Arrive();
                     break;
             }
         }
@@ -176,7 +186,27 @@ namespace GravBoots.Level
                 boots.Attach();
             if (cameraRig != null)
                 cameraRig.SnapBehindTarget();
+
+            // On a start elevator's platform: ride up with the controls held until it stops.
+            arriving = elevators.FirstOrDefault(e => e != null && e.role == ElevatorRole.Start && e.boardingSpawn == Checkpoint);
+            if (arriving != null)
+            {
+                State = SessionState.Arriving;
+                if (controller != null)
+                    controller.enabled = false;
+            }
             Respawned?.Invoke();
+        }
+
+        /// <summary>The start elevator has stopped at the top: hand over control, and respawn up here from now on.</summary>
+        void Arrive()
+        {
+            State = SessionState.Playing;
+            if (controller != null)
+                controller.enabled = true;
+            if (arriving != null && arriving.arrivalSpawn != null)
+                SetCheckpoint(arriving.arrivalSpawn, false);
+            arriving = null;
         }
 
         void OnStepped(float deltaTime)

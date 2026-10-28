@@ -82,6 +82,18 @@ through the spawns in order while playing. That's handy for testing the far end 
   the boots on (it must sit on a magnetic surface). The green box is its trigger; resize it in
   the Inspector (Box Collider → Size) to cover the whole route past it.
 - **Exit:** the gold pad that finishes the chamber.
+- **Start Elevator:** a glass tube whose platform carries the player up out of a shaft below
+  the floor as the run begins. The controls are held until it stops, and from then on deaths
+  respawn on it at the top, without riding again. Placing one makes it the chamber's start.
+  - It needs a hole in the floor: a square 2.9 m opening round the tube (it brings its own
+    shaft walls and bottom, 6 m down).
+  - Leave the doorway (the gap in the glass, facing the piece's forward) clear; the rest of
+    the tube is solid.
+- **Exit Elevator:** a glass tube whose platform carries the exit. Stepping on finishes the
+  chamber, then the platform rises 6 m up the tube with the player on it. It can replace the
+  gold pad.
+- To change how far either one travels, move its **Bottom** or **Top** point (the mover's
+  children); the tube and shaft don't resize themselves, so match them by hand or re-place it.
 - A chamber made before these existed needs **Add Game Loop to This Chamber** (top of the kit)
   once. One made before the playtest log shows **Add Playtest Log to This Chamber** instead.
 

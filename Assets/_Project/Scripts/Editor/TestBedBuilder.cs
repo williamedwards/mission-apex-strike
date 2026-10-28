@@ -86,7 +86,8 @@ namespace GravBoots.Editor
             BuildPitRoom(Area(areas, "Pit Under Ceiling", 5), palette);
             BuildBootsGym(Area(areas, "Boots Gym", 6), palette);
             // The Boots Gym is wide enough to fill slot 7 as well.
-            SpawnPoint newest = BuildCheckpointRun(Area(areas, "Checkpoint Run", 8), palette);
+            BuildCheckpointRun(Area(areas, "Checkpoint Run", 8), palette);
+            SpawnPoint newest = BuildElevators(Area(areas, "Elevators", 9), palette);
 
             var player = (GameObject)PrefabUtility.InstantiatePrefab(playerPrefab);
             player.transform.SetPositionAndRotation(new Vector3(0f, 0.05f, -2f), Quaternion.identity);
@@ -1116,6 +1117,29 @@ namespace GravBoots.Editor
             PointLight(area, new Vector3(0f, -4f, 2f), 10f, 1.5f);
             return Spawn(area, "Checkpoint Run: up the wall curve, cross the wall checkpoint, then drop into the pit to respawn on the wall", 15,
                 new Vector3(0f, 0.05f, -10f));
+        }
+
+        /// <summary>
+        /// Ride up out of a shaft in a start elevator, walk to the exit elevator and ride out.
+        /// The floor has an opening for the start elevator's shaft.
+        /// </summary>
+        static SpawnPoint BuildElevators(Transform area, Palette p)
+        {
+            const float hole = ElevatorBuilder.ShaftOpening, z0 = -8f;
+            float h = hole * 0.5f;
+            Box(area, "Floor South", new Vector3(0f, -0.25f, (-14f + z0 - h) * 0.5f), new Vector3(12f, 0.5f, z0 - h + 14f), p.Floor);
+            Box(area, "Floor North", new Vector3(0f, -0.25f, (z0 + h + 14f) * 0.5f), new Vector3(12f, 0.5f, 14f - z0 - h), p.Floor);
+            Box(area, "Floor West", new Vector3((-6f - h) * 0.5f, -0.25f, z0), new Vector3(6f - h, 0.5f, hole), p.Floor);
+            Box(area, "Floor East", new Vector3((6f + h) * 0.5f, -0.25f, z0), new Vector3(6f - h, 0.5f, hole), p.Floor);
+
+            Elevator start = ElevatorBuilder.Build(area, "Start Elevator", new Vector3(0f, 0f, z0), Vector3.forward, Vector3.up,
+                ElevatorRole.Start, p, spawnOrder: 17);
+            ElevatorBuilder.Build(area, "Exit Elevator", new Vector3(0f, 0f, 10f), Vector3.back, Vector3.up, ElevatorRole.Exit, p);
+
+            PointLight(area, new Vector3(0f, 5f, -6f), 18f, 2f);
+            PointLight(area, new Vector3(0f, 5f, 8f), 18f, 2f);
+            start.boardingSpawn.label = "Elevators: ride up from below, walk to the far tube and step on to ride out";
+            return start.boardingSpawn;
         }
 
         // ---------------------------------------------------------------- helpers

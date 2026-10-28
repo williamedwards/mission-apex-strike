@@ -40,6 +40,7 @@ namespace GravBoots.Editor
             Row(("Checkpoint", LevelKit.Piece.Checkpoint), ("Exit", LevelKit.Piece.Exit));
             Row(("Sentry", LevelKit.Piece.Sentry), ("Turret", LevelKit.Piece.Turret));
             Row(("Moving Platform", LevelKit.Piece.MovingPlatform), ("Sentry on Track", LevelKit.Piece.TrackedSentry));
+            Row(("Start Elevator", LevelKit.Piece.StartElevator), ("Exit Elevator", LevelKit.Piece.ExitElevator));
             if (GUILayout.Button("Spawn Point"))
                 LevelKit.Place(LevelKit.Piece.Spawn);
 

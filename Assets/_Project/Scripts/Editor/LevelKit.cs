@@ -18,7 +18,7 @@ namespace GravBoots.Editor
         const string RootName = "Level";
         const string GridStepKey = "GravBoots.LevelKit.GridStep";
 
-        public enum Piece { PlainBlock, MagneticBlock, LethalFloor, QuarterPipe, RoundedEdge, Spawn, Checkpoint, KillVolume, Exit, Turret, Sentry, MovingPlatform, TrackedSentry }
+        public enum Piece { PlainBlock, MagneticBlock, LethalFloor, QuarterPipe, RoundedEdge, Spawn, Checkpoint, KillVolume, Exit, Turret, Sentry, MovingPlatform, TrackedSentry, StartElevator, ExitElevator }
 
         /// <summary>Grid size for snapping and resizing (metres), remembered per user.</summary>
         public static float GridStep
@@ -145,6 +145,25 @@ namespace GravBoots.Editor
                 case Piece.TrackedSentry:
                     go = TestBedBuilder.TrackedSentry(root, "Sentry on Track", Vector3.zero, Quaternion.identity,
                         new[] { Vector3.zero, new Vector3(0f, 0f, 6f) }, null, palette).gameObject;
+                    break;
+                case Piece.StartElevator:
+                {
+                    Elevator start = ElevatorBuilder.Build(root, "Start Elevator", Vector3.zero, Vector3.forward, Vector3.up,
+                        ElevatorRole.Start, palette, spawnOrder: -1);
+                    go = start.gameObject;
+                    // The run starts here from now on.
+                    var session = Object.FindAnyObjectByType<LevelSession>();
+                    if (session != null)
+                    {
+                        var serialized = new SerializedObject(session);
+                        serialized.FindProperty("startSpawn").objectReferenceValue = start.boardingSpawn;
+                        serialized.ApplyModifiedProperties();
+                    }
+                    break;
+                }
+                case Piece.ExitElevator:
+                    go = ElevatorBuilder.Build(root, "Exit Elevator", Vector3.zero, Vector3.forward, Vector3.up,
+                        ElevatorRole.Exit, palette).gameObject;
                     break;
                 case Piece.Turret:
                     go = TestBedBuilder.TurretMount(root, "Turret", Vector3.zero, Vector3.forward, Vector3.up, palette).gameObject;

@@ -35,6 +35,8 @@ namespace GravBoots.Level
 
         public float Length => cumulative != null && cumulative.Length > 0 ? cumulative[cumulative.Length - 1] : 0f;
         public bool Triggered => triggerTime >= 0f;
+        /// <summary>The platform is at the last point of its path (as of the last evaluation).</summary>
+        public bool AtEnd { get; private set; }
 
         void OnEnable()
         {
@@ -95,6 +97,7 @@ namespace GravBoots.Level
                 local = Triggered ? time - triggerTime : 0f;
             }
             float distance = MoverPath.Distance(local, Length, speed, wait, mode);
+            AtEnd = Length > 0f && distance >= Length - 1e-4f;
             MoverPath.Sample(positions, rotations, cumulative, distance, out Vector3 position, out Quaternion rotation);
             // Only when it changes, so the editor doesn't keep marking the scene modified.
             if (platform.position != position || platform.rotation != rotation)
