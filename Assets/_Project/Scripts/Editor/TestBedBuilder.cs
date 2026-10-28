@@ -31,6 +31,7 @@ namespace GravBoots.Editor
         internal const string PlayerPrefabPath = Root + "/Prefabs/Player.prefab";
         const string PlayerModelPath = Root + "/Art/Characters/Player/Model/tripo_convert_b0228436-c2f5-499d-a62d-b1bf14bdc437.fbx";
         const string PlayerAnimatorPath = Root + "/Art/Characters/Player/PlayerAnimator.controller";
+        const string EffectsFolder = Root + "/Art/Characters/Player/Effects";
         const string GridTexturePath = Root + "/Art/GreyboxGrid.png";
         const string PanelTexturePath = Root + "/Art/MagneticPanel.png";
         const string MaterialFolder = Root + "/Materials";
@@ -253,7 +254,6 @@ namespace GravBoots.Editor
 
             var visual = new GameObject("Visual").transform;
             visual.SetParent(root.transform, false);
-            GameObject bootL, bootR;
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerModelPath);
             if (model != null)
             {
@@ -265,17 +265,16 @@ namespace GravBoots.Editor
                 animator.applyRootMotion = false;
                 animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
                 root.AddComponent<PlayerAnimation>().Bind(motor, animator, runClipSpeed);
-                // Glowing soles under the boots stand in for the old boot blocks.
-                bootL = Sole(animator, HumanBodyBones.LeftFoot, HumanBodyBones.LeftToes, "Sole_L", palette.BootsOff);
-                bootR = Sole(animator, HumanBodyBones.RightFoot, HumanBodyBones.RightToes, "Sole_R", palette.BootsOff);
+                BuildBootsGlow(root, boots, animator);
+                foreach (Transform t in root.GetComponentsInChildren<Transform>())
+                    t.gameObject.layer = PlayerLayer;
+                return SavePlayerPrefab(root);
             }
-            else
-            {
-                Primitive(visual, PrimitiveType.Capsule, "Body", new Vector3(0f, 0.9f, 0f), new Vector3(0.7f, 0.9f, 0.7f), palette.PlayerBody);
-                Primitive(visual, PrimitiveType.Cube, "Visor", new Vector3(0f, 1.5f, 0.3f), new Vector3(0.45f, 0.14f, 0.18f), palette.Visor);
-                bootL = Primitive(visual, PrimitiveType.Cube, "Boot_L", new Vector3(-0.15f, 0.08f, 0.06f), new Vector3(0.2f, 0.16f, 0.36f), palette.BootsOff);
-                bootR = Primitive(visual, PrimitiveType.Cube, "Boot_R", new Vector3(0.15f, 0.08f, 0.06f), new Vector3(0.2f, 0.16f, 0.36f), palette.BootsOff);
-            }
+            // No character model: the original capsule placeholder, whose boot blocks change colour.
+            Primitive(visual, PrimitiveType.Capsule, "Body", new Vector3(0f, 0.9f, 0f), new Vector3(0.7f, 0.9f, 0.7f), palette.PlayerBody);
+            Primitive(visual, PrimitiveType.Cube, "Visor", new Vector3(0f, 1.5f, 0.3f), new Vector3(0.45f, 0.14f, 0.18f), palette.Visor);
+            GameObject bootL = Primitive(visual, PrimitiveType.Cube, "Boot_L", new Vector3(-0.15f, 0.08f, 0.06f), new Vector3(0.2f, 0.16f, 0.36f), palette.BootsOff);
+            GameObject bootR = Primitive(visual, PrimitiveType.Cube, "Boot_R", new Vector3(0.15f, 0.08f, 0.06f), new Vector3(0.2f, 0.16f, 0.36f), palette.BootsOff);
             var bootsVisual = root.AddComponent<BootsVisual>();
             Set(bootsVisual, "boots", boots);
             Set(bootsVisual, "offMaterial", palette.BootsOff);
@@ -288,30 +287,212 @@ namespace GravBoots.Editor
             renderers.ApplyModifiedPropertiesWithoutUndo();
             foreach (Transform t in root.GetComponentsInChildren<Transform>())
                 t.gameObject.layer = PlayerLayer;
+            return SavePlayerPrefab(root);
+        }
 
+        static GameObject SavePlayerPrefab(GameObject root)
+        {
             Directory.CreateDirectory(Path.GetDirectoryName(PlayerPrefabPath));
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
             Object.DestroyImmediate(root);
             return prefab;
         }
 
-        /// <summary>A flat glowing plate under a foot, from heel to toes, that moves with the foot bone.</summary>
-        static GameObject Sole(Animator animator, HumanBodyBones footBone, HumanBodyBones toesBone, string name, Material material)
+        // ---------------------------------------------------------------- boots glow
+
+        /// <summary>
+        /// The magnetized effect on the character: per ankle, two counter-spinning energy rings in
+        /// a soft halo, rising sparks, and a glow under the sole. <see cref="BootsGlow"/> shows it
+        /// only while magnetized.
+        /// </summary>
+        static void BuildBootsGlow(GameObject root, MagneticBoots boots, Animator animator)
         {
-            Transform foot = animator.GetBoneTransform(footBone);
-            Transform toes = animator.GetBoneTransform(toesBone);
-            Vector3 heel = Vector3.ProjectOnPlane(foot.position, Vector3.up);
-            Vector3 tip = Vector3.ProjectOnPlane(toes.position, Vector3.up);
-            Vector3 along = tip - heel;
-            var sole = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            sole.name = name;
-            Object.DestroyImmediate(sole.GetComponent<Collider>());
-            sole.GetComponent<MeshRenderer>().sharedMaterial = material;
-            sole.transform.SetPositionAndRotation(heel + along * 0.5f + Vector3.up * 0.025f,
-                Quaternion.LookRotation(along, Vector3.up));
-            sole.transform.localScale = new Vector3(0.15f, 0.05f, along.magnitude + 0.2f);
-            sole.transform.SetParent(foot, true);
-            return sole;
+            Directory.CreateDirectory(EffectsFolder);
+            Mesh ring = SaveMesh(GlowMeshes.Torus(0.105f, 0.006f), "BootRing");
+            Mesh innerRing = SaveMesh(GlowMeshes.Torus(0.09f, 0.004f), "BootRingInner");
+            Mesh halo = SaveMesh(GlowMeshes.Halo(0.07f, 0.105f, 0.16f), "BootHalo");
+            Mesh sole = SaveMesh(GlowMeshes.Disc(0.22f), "SoleGlow");
+            // Rings blend normally so they read on light floors; halo, sole and sparks add light.
+            Material core = GlowMaterial("Boots_RingCore", new Color(0.7f, 0.95f, 1f, 1f), additive: false, null);
+            Material glow = GlowMaterial("Boots_Glow", new Color(0.2f, 0.6f, 1f, 0.8f), additive: true, null);
+            Material spark = GlowMaterial("Boots_Spark", new Color(0.55f, 0.85f, 1f, 1f), additive: true, EnsureSoftDotTexture());
+
+            var rings = new System.Collections.Generic.List<Transform>();
+            var glows = new System.Collections.Generic.List<Renderer>();
+            var sparks = new System.Collections.Generic.List<ParticleSystem>();
+            foreach (bool left in new[] { true, false })
+            {
+                string side = left ? "L" : "R";
+                Transform shin = animator.GetBoneTransform(left ? HumanBodyBones.LeftLowerLeg : HumanBodyBones.RightLowerLeg);
+                Transform foot = animator.GetBoneTransform(left ? HumanBodyBones.LeftFoot : HumanBodyBones.RightFoot);
+                Transform toes = animator.GetBoneTransform(left ? HumanBodyBones.LeftToes : HumanBodyBones.RightToes);
+
+                // Round the ankle, square to the shin, riding the shin so it ignores the foot flexing.
+                Vector3 axis = (shin.position - foot.position).normalized;
+                var anchor = new GameObject("BootGlow_" + side).transform;
+                anchor.SetPositionAndRotation(foot.position + axis * 0.03f, Quaternion.FromToRotation(Vector3.up, axis));
+                anchor.SetParent(shin, true);
+                rings.Add(GlowPart(anchor, "Ring", ring, core, Vector3.zero, glows));
+                rings.Add(GlowPart(anchor, "InnerRing", innerRing, core, new Vector3(0f, 0.06f, 0f), glows));
+                GlowPart(anchor, "Halo", halo, glow, Vector3.zero, glows);
+                sparks.Add(Sparks(anchor, spark));
+
+                // Under the sole, flat to the ground in the bind pose, then moving with the foot.
+                Vector3 heel = Vector3.ProjectOnPlane(foot.position, Vector3.up);
+                Vector3 tip = Vector3.ProjectOnPlane(toes.position, Vector3.up);
+                var soleGlow = new GameObject("SoleGlow_" + side).transform;
+                soleGlow.SetPositionAndRotation(Vector3.Lerp(heel, tip, 0.4f) + Vector3.up * 0.01f, Quaternion.identity);
+                soleGlow.SetParent(foot, true);
+                GlowPart(soleGlow, "Glow", sole, glow, Vector3.zero, glows);
+            }
+
+            var bootsGlow = root.AddComponent<BootsGlow>();
+            Set(bootsGlow, "boots", boots);
+            var serialized = new SerializedObject(bootsGlow);
+            void Fill<T>(string field, System.Collections.Generic.List<T> items) where T : Object
+            {
+                SerializedProperty list = serialized.FindProperty(field);
+                list.arraySize = items.Count;
+                for (int i = 0; i < items.Count; i++)
+                    list.GetArrayElementAtIndex(i).objectReferenceValue = items[i];
+            }
+            Fill("rings", rings);
+            Fill("glows", glows);
+            Fill("sparks", sparks);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        static Transform GlowPart(Transform parent, string name, Mesh mesh, Material material, Vector3 localPosition,
+            System.Collections.Generic.List<Renderer> glows)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPosition;
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.enabled = false;
+            glows.Add(renderer);
+            return go.transform;
+        }
+
+        /// <summary>Sparks thrown off the ring's rim that drift up the leg and fade; stopped until magnetized.</summary>
+        static ParticleSystem Sparks(Transform anchor, Material material)
+        {
+            var go = new GameObject("Sparks");
+            go.transform.SetParent(anchor, false);
+            var system = go.AddComponent<ParticleSystem>();
+            system.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+            ParticleSystem.MainModule main = system.main;
+            main.playOnAwake = false;
+            main.loop = true;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.7f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.05f, 0.25f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.03f, 0.06f);
+            main.startColor = Color.white;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.maxParticles = 80;
+
+            ParticleSystem.EmissionModule emission = system.emission;
+            emission.rateOverTime = 32f;
+
+            // A circle in the ring's plane (the shape's circle lies in its XY plane).
+            ParticleSystem.ShapeModule shape = system.shape;
+            shape.shapeType = ParticleSystemShapeType.Circle;
+            shape.radius = 0.105f;
+            shape.radiusThickness = 0f;
+            shape.rotation = new Vector3(90f, 0f, 0f);
+
+            ParticleSystem.VelocityOverLifetimeModule velocity = system.velocityOverLifetime;
+            velocity.enabled = true;
+            velocity.space = ParticleSystemSimulationSpace.Local;
+            velocity.x = new ParticleSystem.MinMaxCurve(0f, 0f);
+            velocity.y = new ParticleSystem.MinMaxCurve(0.3f, 0.7f);
+            velocity.z = new ParticleSystem.MinMaxCurve(0f, 0f);
+
+            ParticleSystem.ColorOverLifetimeModule colour = system.colorOverLifetime;
+            colour.enabled = true;
+            var fade = new Gradient();
+            fade.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(new Color(0.3f, 0.6f, 1f), 1f) },
+                new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0.8f, 0.4f), new GradientAlphaKey(0f, 1f) });
+            colour.color = fade;
+
+            ParticleSystem.SizeOverLifetimeModule size = system.sizeOverLifetime;
+            size.enabled = true;
+            size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 1f, 1f, 0.3f));
+
+            var renderer = go.GetComponent<ParticleSystemRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            return system;
+        }
+
+        static Mesh SaveMesh(Mesh mesh, string name)
+        {
+            string path = $"{EffectsFolder}/{name}.asset";
+            var existing = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            if (existing == null)
+            {
+                mesh.name = name;
+                AssetDatabase.CreateAsset(mesh, path);
+                return mesh;
+            }
+            // Keep the asset (and its GUID); replace its contents.
+            existing.Clear();
+            EditorUtility.CopySerialized(mesh, existing);
+            existing.name = name;
+            Object.DestroyImmediate(mesh);
+            EditorUtility.SetDirty(existing);
+            return existing;
+        }
+
+        /// <summary>A URP particle material: alpha-blended, or additive (light that adds onto what's behind).</summary>
+        static Material GlowMaterial(string name, Color color, bool additive, Texture texture)
+        {
+            string path = $"{EffectsFolder}/{name}.mat";
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                material = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+                AssetDatabase.CreateAsset(material, path);
+            }
+            material.SetColor("_BaseColor", color);
+            material.SetTexture("_BaseMap", texture);
+            material.SetFloat("_Surface", 1f);
+            material.SetFloat("_Blend", additive ? 2f : 0f);
+            material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            material.SetFloat("_DstBlend", (float)(additive ? BlendMode.One : BlendMode.OneMinusSrcAlpha));
+            material.SetFloat("_ZWrite", 0f);
+            material.SetFloat("_Cull", (float)CullMode.Off);
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.renderQueue = (int)RenderQueue.Transparent;
+            EditorUtility.SetDirty(material);
+            return material;
+        }
+
+        /// <summary>A small white dot that fades to transparent at the edge, for sparks.</summary>
+        static Texture2D EnsureSoftDotTexture()
+        {
+            string path = $"{EffectsFolder}/SoftDot.asset";
+            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (texture != null)
+                return texture;
+            const int size = 32;
+            texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { name = "SoftDot", wrapMode = TextureWrapMode.Clamp };
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(size, size) * 0.5f) / (size * 0.5f);
+                    float a = Mathf.Clamp01(1f - d);
+                    texture.SetPixel(x, y, new Color(1f, 1f, 1f, a * a));
+                }
+            texture.Apply();
+            AssetDatabase.CreateAsset(texture, path);
+            return texture;
         }
 
         /// <summary>
