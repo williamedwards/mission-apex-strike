@@ -8632,4 +8632,64 @@ Alright, commit that.  Next, could you replace the orange kill floors with a sha
 
 ### Saved assistant responses
 
+```text
+Those helpers are all available. Now the shader:
+```
+
+```text
+I'll drop the tooltip attribute from the shader; it isn't one Unity's material inspector recognises. Then the editor helper that turns a lethal surface into a void.
+```
+
+```text
+The shader compiles cleanly. I'll try it in the test bed before touching the chambers: rebuild it, then stand at the edge of the Checkpoint Run pit and look in.
+```
+
+```text
+The kit also has a **Lethal** button that turns selected blocks lethal, and it will still paint them orange. Let me find it.
+```
+
+```text
+Making a block lethal should also give it the void, and making it magnetic or plain again should remove the void.
+```
+
+```text
+The orange kill floors are gone; every lethal surface is now a shadowed void. All tests pass: EditMode 47 of 47 and PlayMode 282 of 282.
+
+**How it works:**
+- **The floor:** turns flat, unlit black.
+- **The darkness:** a box above it is drawn with a small new shader (`Shaders/VoidFog.shader`). It reads the depth buffer to find the surface behind each pixel, then darkens it more the lower it sits in the box: clear at the top, black at the bottom. So pit walls fade into nothing. A player falling in, or a platform passing through, sinks into the dark too. It works whether the camera is outside the box or inside it, as when you fall.
+- **Fog height:** each void's height is set from the open space above it: half the clear height, from 1.5 to 5 m. So it never reaches a route overhead.
+- **Gameplay:** unchanged. The surfaces are still lethal, and the kill volumes and red landing marker work as before.
+
+**Where it's in place:**
+- **Chambers:** all seven lethal surfaces, through the Editor: the pits in Chamber_02 and Chamber_03, plus four pits and the lethal room floor in Chamber_04. Each scene saved clean.
+- **Test bed:** its three pits, through the builder.
+- **Level Kit:** its **Lethal Floor** piece and its **Lethal** button now make voids. Turning a block back to Magnetic or Plain removes the darkness.
+
+**What I checked, with rendered views:**
+- **Test bed:** looking down into the Checkpoint Run pit, the lit walls fade smoothly to pure black, with no floor in sight.
+- **Chamber_04, room 9:** the sentry's island stands over a dark gap, and its red danger line still shows where the plane is.
+- **Chamber_04, lethal room floor:** a black void, with the walls fading into it.
+
+There were no errors, and I deleted my playtest records.
+
+**Things to know:**
+- **Moved voids:** if you move or resize a lethal block after making it, press **Lethal** again to refit its darkness. The guide says so.
+- **Tight clearance:** the darkness only touches what's inside its box. The closest call is room 9's moving sentry, about a metre above the top of its void, so it never darkens.
+- **Unchanged:** the test bed's ten other orange pieces aren't lethal, so I left them alone.
+```
+
+
+## 2026-10-28T11:49:53.665Z — claude — 3a00d9c0f093
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:b75e8026-7800-49d0-8419-6fa8006297eb`
+
+### Prompt
+
+```text
+Looks, mostly good, but the kill floor we encounter in Chamber_04 should probably be converted into a proper recessed pit or else the darkness effect looks rather strange.  Fix that, then commit.
+```
+
+### Saved assistant responses
+
 No response imported yet.

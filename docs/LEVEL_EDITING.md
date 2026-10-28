@@ -49,7 +49,7 @@ Tip: Top and side views, with the flat view on, make lining blocks up much easie
 
 ### Surfaces
 Select pieces and use **Magnetic / Plain / Lethal** in the kit. Magnetic pieces are the bright
-bevelled panels the boots stick to. Lethal pieces are orange; the landing marker shows them in
+bevelled panels the boots stick to. Lethal pieces are shadowed voids (black, with darkness rising a few metres above them); the landing marker shows them in
 red, and from Phase 2 they'll kill.
 
 ### Curves
@@ -77,7 +77,9 @@ through the spawns in order while playing. That's handy for testing the far end 
 ### Death, checkpoints and the exit
 - **Kill Volume:** an invisible box (red outline in the Scene view) that kills on entry. Fill
   the bottom of pits with one so falls end quickly. Resize it with its face dots like a block.
-  Orange **Lethal** surfaces kill on touch too. Falling far outside the chamber kills anyway,
+  **Lethal** surfaces (the black voids at the bottom of pits) kill on touch too. Making a block
+  Lethal adds the darkness above it; if you move or resize it afterwards, make it Lethal again to
+  refit the darkness. Falling far outside the chamber kills anyway,
   but slowly.
 - **Checkpoint:** a round machinery pad, glowing blue, that turns green when walked through. Dying puts you back on the most
   recent one. Turn it onto a wall or ceiling with the 90° buttons and you respawn there with

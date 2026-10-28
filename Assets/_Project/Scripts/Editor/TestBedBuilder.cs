@@ -88,6 +88,8 @@ namespace GravBoots.Editor
             // The Boots Gym is wide enough to fill slot 7 as well.
             BuildCheckpointRun(Area(areas, "Checkpoint Run", 8), palette);
             SpawnPoint newest = BuildElevators(Area(areas, "Elevators", 9), palette);
+            Physics.SyncTransforms();
+            VoidFloor.ApplyAll();
 
             var player = (GameObject)PrefabUtility.InstantiatePrefab(playerPrefab);
             player.transform.SetPositionAndRotation(new Vector3(0f, 0.05f, -2f), Quaternion.identity);

@@ -112,7 +112,7 @@ namespace GravBoots.Editor
                     at.y = Mathf.Max(at.y, 0f) + 1f;
                     break;
                 case Piece.LethalFloor:
-                    go = TestBedBuilder.Box(root, "Lethal Floor", Vector3.zero, new Vector3(4f, 0.5f, 4f), palette.Orange);
+                    go = TestBedBuilder.Box(root, "Lethal Floor", Vector3.zero, new Vector3(4f, 0.5f, 4f), VoidFloor.FloorMaterial());
                     go.tag = Layers.LethalTag;
                     at.y -= 0.25f;
                     break;
@@ -175,6 +175,8 @@ namespace GravBoots.Editor
                     break;
             }
             go.transform.position = at;
+            if (piece == Piece.LethalFloor)
+                VoidFloor.Apply(go.GetComponent<Renderer>());
             Undo.RegisterCreatedObjectUndo(go, $"Add {piece}");
             Selection.activeGameObject = go;
             return go;
@@ -327,7 +329,7 @@ namespace GravBoots.Editor
 
         public static void MakePlain(GameObject go) => SetSurface(go, 0, TestBedBuilder.EnsureMaterials().Wall, "Untagged");
 
-        public static void MakeLethal(GameObject go) => SetSurface(go, 0, TestBedBuilder.EnsureMaterials().Orange, Layers.LethalTag);
+        public static void MakeLethal(GameObject go) => SetSurface(go, 0, VoidFloor.FloorMaterial(), Layers.LethalTag);
 
         static void SetSurface(GameObject go, int layer, Material material, string tag)
         {
@@ -338,6 +340,16 @@ namespace GravBoots.Editor
             go.layer = layer;
             go.tag = tag;
             renderer.sharedMaterial = material;
+            // Lethal surfaces are shadowed voids; anything else loses the darkness.
+            if (tag == Layers.LethalTag)
+            {
+                Physics.SyncTransforms();
+                VoidFloor.Apply(renderer);
+            }
+            else if (go.transform.Find("Void") is Transform darkness)
+            {
+                Undo.DestroyObjectImmediate(darkness.gameObject);
+            }
         }
 
         /// <summary>Turns the object 90° about a world axis through its own position.</summary>
