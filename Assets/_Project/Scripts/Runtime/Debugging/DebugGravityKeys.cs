@@ -10,7 +10,8 @@ namespace GravBoots.Debugging
     /// Stand-in for the boots while testing the motor and camera (Phase 1A): keys set the
     /// player's up to any axis or to the face under the crosshair, cycle test areas and switch
     /// camera modes. Bindings live in the "Debug" map of the input actions asset. N sends the
-    /// player to the next spawn point by making it the session's checkpoint.
+    /// player to the next spawn point by making it the session's checkpoint. Editor only: in a
+    /// build it switches itself off, so players can't skip puzzles with it.
     /// </summary>
     public class DebugGravityKeys : MonoBehaviour
     {
@@ -28,6 +29,12 @@ namespace GravBoots.Debugging
 
         public bool Blend { get; private set; }
         public SpawnPoint CurrentSpawn => session != null ? session.Checkpoint : null;
+
+        void Awake()
+        {
+            if (!Application.isEditor)
+                enabled = false;
+        }
 
         void Start()
         {

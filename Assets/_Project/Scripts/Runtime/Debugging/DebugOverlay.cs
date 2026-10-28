@@ -5,7 +5,10 @@ using UnityEngine;
 
 namespace GravBoots.Debugging
 {
-    /// <summary>Text readout of the motor and camera state, plus vector rays in the Scene view.</summary>
+    /// <summary>
+    /// Text readout of the motor and camera state, plus vector rays in the Scene view. Hidden
+    /// at start unless <see cref="visibleAtStart"/> is set; F3 (DebugGravityKeys) toggles it.
+    /// </summary>
     public class DebugOverlay : MonoBehaviour
     {
         [SerializeField] PlayerMotor motor;
@@ -15,9 +18,16 @@ namespace GravBoots.Debugging
         [SerializeField] CameraPopProbe popProbe;
         [SerializeField] MagneticBoots boots;
         [SerializeField] bool showHelp = true;
+        [SerializeField] bool visibleAtStart;
 
         readonly StringBuilder text = new StringBuilder();
         GUIStyle style;
+
+        void Awake()
+        {
+            if (!visibleAtStart)
+                enabled = false;
+        }
 
         void Update()
         {
