@@ -280,9 +280,9 @@ Supporting pieces:
 review the records in the Scene view.
 
 ### Onboarding chamber (built: `Levels/Chamber_04.unity`)
-A longer level that introduces one idea per room, then combines them. Eleven rooms are joined by
-short corridors, each with a checkpoint.
-1. **Walk:** a 2 m jump over a shallow, safe pit, with steps back out.
+A longer level that introduces one idea per room, then combines them. Fourteen rooms and the
+exit are joined by short corridors, each with a checkpoint.
+1. **Walk:** a 2 m jump over a shallow, safe pit (1.2 m deep, so a jump gets you back out).
 2. **Boots:** switch on at a magnetic patch; the gap after it needs the boots off to jump.
 3. **First curve:** a ledge, half with a quarter-pipe and half with a sharp corner that can't
    be climbed.
@@ -298,8 +298,21 @@ short corridors, each with a checkpoint.
 10. **Stomp:** a sentry guards the floor; drop on it from the ceiling, using the gold marker.
 11. **Finale:** a ceiling shuttle and a patrolling sentry share a 12 s cycle, so the stomp lines
     up. Then a ferry to the exit.
+12. **Corkscrew:** floor, east wall, ceiling, west wall. The west wall meets the floor at a sharp
+    corner, so the only way onto it is over the ceiling. Then along it over a pit and a drop
+    from the wall onto the sentry guarding the far landing (landing anywhere else on it is in
+    its plane).
+13. **Diving board:** up and over a full-width block, out along a narrow board, and off its end
+    onto a ferry waiting just beyond it. Walking off at either speed lands on the 5 m deck
+    (16.4 m to 19.3 m along the room); jumping off overshoots.
+14. **Gauntlet (challenge):** onto the ceiling, then two upside-down shuttles that meet only in a
+    shared 2 s pause (both 12 s cycles, offset 6 s). From the second, drop onto the sentry on an
+    island in the pit; missing it lands you in its plane. Then a running jump off the island
+    onto the sentry guarding the exit landing: taking off in the island's last metre lands on
+    it, earlier hits its body.
+15. **Exit:** the exit elevator.
 
-A scripted run gets through every room without dying, in about 130 s of game time.
+A scripted run gets through every room without dying, in about 225 s of game time.
 
 **Still missing:** a way to tell the player the controls in the early rooms, for example signs
 or a key prompt. Rooms 1 and 2 assume they know Space jumps and E toggles the boots.
