@@ -164,6 +164,26 @@ namespace GravBoots.Tests
         }
 
         [Test]
+        public void StandingStillOnAMovingPlatformDoesNotAnimateAsWalking([ValueSource(nameof(Orientations))] Vector3 up)
+        {
+            BuildFrame(up);
+            Mover(new[] { Vector3.zero, new Vector3(10f, 0f, 0f) }, speed: 4f);
+            SpawnPlayer(Vector3.zero);
+            Run(0.3f);
+            float fastest = 0f, carried = 0f;
+
+            Run(2f, eachStep: () =>
+            {
+                fastest = Mathf.Max(fastest, PlayerAnimation.GroundSpeed(motor));
+                carried = Mathf.Max(carried, motor.PlatformVelocity.magnitude);
+            });
+
+            Assert.That(motor.IsGrounded, Is.True);
+            Assert.That(carried, Is.GreaterThan(3f), "the platform carried the player");
+            Assert.That(fastest, Is.LessThan(0.2f), "the walk/run blend reads the player as standing");
+        }
+
+        [Test]
         public void RidesAnElevatorUpAndDown([ValueSource(nameof(Orientations))] Vector3 up)
         {
             BuildFrame(up);

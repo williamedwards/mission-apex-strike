@@ -18,6 +18,8 @@ namespace GravBoots.Player
         [SerializeField] Animator animator;
         [Tooltip("Ground speed (m/s) of the run clip; faster than this plays it faster.")]
         [SerializeField] float runClipSpeed = 3.5f;
+        [Tooltip("Seconds to ease the blend between idle, walk and run when speed changes.")]
+        [SerializeField] float speedDamping = 0.12f;
         [Tooltip("Jump clip times (s): takeoff, peak and falling poses of its first hop.")]
         [SerializeField] Vector3 airPoseTimes = new Vector3(0.08f, 0.25f, 0.33f);
         [SerializeField] float jumpClipLength = 2.208f;
@@ -26,10 +28,11 @@ namespace GravBoots.Player
 
         float airTime;
 
-        public void Bind(PlayerMotor playerMotor, Animator playerAnimator)
+        public void Bind(PlayerMotor playerMotor, Animator playerAnimator, float runClipGroundSpeed)
         {
             motor = playerMotor;
             animator = playerAnimator;
+            runClipSpeed = runClipGroundSpeed;
         }
 
         void Update()
@@ -37,9 +40,9 @@ namespace GravBoots.Player
             if (motor == null || animator == null)
                 return;
             Vector3 up = motor.BodyUp;
-            Vector3 velocity = motor.Velocity - motor.PlatformVelocity;
-            float speed = Vector3.ProjectOnPlane(velocity, up).magnitude;
-            animator.SetFloat(SpeedId, speed);
+            Vector3 velocity = motor.Velocity;
+            float speed = GroundSpeed(motor);
+            animator.SetFloat(SpeedId, speed, speedDamping, Time.deltaTime);
             animator.SetFloat(MoveScaleId, Mathf.Max(1f, speed / runClipSpeed));
             float vertical = Vector3.Dot(velocity, up);
             // A jump leaves the ground rising fast; show that at once, but let small drops pass.
@@ -48,6 +51,12 @@ namespace GravBoots.Player
             float jumpSpeed = motor.Settings != null ? motor.Settings.JumpSpeed : 8f;
             animator.SetFloat(AirPhaseId, AirPoseTime(vertical, jumpSpeed, airPoseTimes) / jumpClipLength);
         }
+
+        /// <summary>
+        /// How fast the player moves along the surface under their own power. The motor's velocity
+        /// is already relative to a platform being ridden, so standing on a moving one reads as 0.
+        /// </summary>
+        public static float GroundSpeed(PlayerMotor motor) => Vector3.ProjectOnPlane(motor.Velocity, motor.BodyUp).magnitude;
 
         /// <summary>
         /// Which jump-clip time to hold while airborne: the takeoff pose at full jump speed,

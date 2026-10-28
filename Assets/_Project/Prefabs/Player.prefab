@@ -27,8 +27,8 @@ Transform:
   m_GameObject: {fileID: 540728241367857975}
   serializedVersion: 2
   m_LocalRotation: {x: -0.3014668, y: 0.41764227, z: 0.8440627, w: 0.14916755}
-  m_LocalPosition: {x: 0.022932349, y: 0.11350617, z: -0.028007995}
-  m_LocalScale: {x: 0.14999796, y: 0.049999956, z: 0.33654824}
+  m_LocalPosition: {x: 0.030423466, y: 0.14064112, z: -0.037157267}
+  m_LocalScale: {x: 0.14999796, y: 0.049999956, z: 0.36534417}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8449583010327311798}
@@ -294,7 +294,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: GravBoots.Runtime::GravBoots.Player.PlayerAnimation
   motor: {fileID: 6908118646038307660}
   animator: {fileID: 6732144763454862911}
-  runClipSpeed: 3.5
+  runClipSpeed: 3.847951
+  speedDamping: 0.12
   airPoseTimes: {x: 0.08, y: 0.25, z: 0.33}
   jumpClipLength: 2.208
   airDelay: 0.1
@@ -342,9 +343,9 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6380466786363569230}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.40519443, y: 0.26996526, z: 0.86424327, w: 0.12656894}
-  m_LocalPosition: {x: 0.023148281, y: 0.13226718, z: -0.01926038}
-  m_LocalScale: {x: 0.14999849, y: 0.05, z: 0.3010544}
+  m_LocalRotation: {x: -0.405194, y: 0.26996514, z: 0.8642435, w: 0.12656908}
+  m_LocalPosition: {x: 0.030336678, y: 0.16449483, z: -0.025241325}
+  m_LocalScale: {x: 0.14999847, y: 0.049999993, z: 0.32236543}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3463376190296265928}
@@ -720,11 +721,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6060806385407736488, guid: 2f08fb562154e7741991692e3a8d1967, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.10841735
+      value: -0.108417355
       objectReference: {fileID: 0}
     - target: {fileID: 6060806385407736488, guid: 2f08fb562154e7741991692e3a8d1967, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.021066219
+      value: -0.02106622
       objectReference: {fileID: 0}
     - target: {fileID: 6386480451222621022, guid: 2f08fb562154e7741991692e3a8d1967, type: 3}
       propertyPath: m_Layer

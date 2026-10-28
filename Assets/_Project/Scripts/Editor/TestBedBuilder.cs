@@ -260,10 +260,11 @@ namespace GravBoots.Editor
                 var character = (GameObject)PrefabUtility.InstantiatePrefab(model, visual);
                 character.name = "Character";
                 var animator = character.GetComponent<Animator>();
-                animator.runtimeAnimatorController = BuildPlayerAnimator(PlayerModelPath);
+                animator.Rebind();
+                animator.runtimeAnimatorController = BuildPlayerAnimator(PlayerModelPath, animator.humanScale, out float runClipSpeed);
                 animator.applyRootMotion = false;
                 animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-                root.AddComponent<PlayerAnimation>().Bind(motor, animator);
+                root.AddComponent<PlayerAnimation>().Bind(motor, animator, runClipSpeed);
                 // Glowing soles under the boots stand in for the old boot blocks.
                 bootL = Sole(animator, HumanBodyBones.LeftFoot, HumanBodyBones.LeftToes, "Sole_L", palette.BootsOff);
                 bootR = Sole(animator, HumanBodyBones.RightFoot, HumanBodyBones.RightToes, "Sole_R", palette.BootsOff);
@@ -317,7 +318,8 @@ namespace GravBoots.Editor
         /// The player's Animator: a Move blend tree (idle, walk, run by ground speed, run sped up
         /// past its own pace) and an Air state that holds a jump pose picked by AirPhase.
         /// </summary>
-        static RuntimeAnimatorController BuildPlayerAnimator(string modelPath)
+        /// <remarks>Humanoid clip speeds are per unit of body size; <paramref name="humanScale"/> turns them into m/s.</remarks>
+        static RuntimeAnimatorController BuildPlayerAnimator(string modelPath, float humanScale, out float runClipSpeed)
         {
             AnimationClip Clip(string clipName)
             {
@@ -340,8 +342,9 @@ namespace GravBoots.Editor
             tree.useAutomaticThresholds = false;
             AnimationClip walk = Clip("Walk"), run = Clip("Run");
             tree.AddChild(Clip("Idle"), 0f);
-            tree.AddChild(walk, walk.averageSpeed.magnitude);
-            tree.AddChild(run, run.averageSpeed.magnitude);
+            runClipSpeed = run.averageSpeed.magnitude * humanScale;
+            tree.AddChild(walk, walk.averageSpeed.magnitude * humanScale);
+            tree.AddChild(run, runClipSpeed);
             move.speedParameterActive = true;
             move.speedParameter = "MoveScale";
 
@@ -352,11 +355,11 @@ namespace GravBoots.Editor
 
             AnimatorStateTransition leave = move.AddTransition(air);
             leave.hasExitTime = false;
-            leave.duration = 0.1f;
+            leave.duration = 0.15f;
             leave.AddCondition(AnimatorConditionMode.IfNot, 0f, "Grounded");
             AnimatorStateTransition land = air.AddTransition(move);
             land.hasExitTime = false;
-            land.duration = 0.08f;
+            land.duration = 0.15f;
             land.AddCondition(AnimatorConditionMode.If, 0f, "Grounded");
             machine.defaultState = move;
             AssetDatabase.SaveAssets();
