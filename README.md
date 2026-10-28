@@ -127,9 +127,9 @@ every prompt and reply.
 | :--- | :--- | :--- |
 | Claude Code (Claude desktop app) | Claude Opus 5.5 | All code, tests, level building, shader, audio wiring, UI, builds, documentation |
 | Codex CLI (invoked by Claude Code) | GPT-6 Astra with the built-in `image_gen` tool (OpenAI GPT Image) | 17 concept images used as Tripo inputs |
-| Tripo Studio | [model version] | Player character, rig and 8 animation clips; sentry; tube elevator; checkpoint pad; two platform decks |
-| ElevenLabs Sound Effects API | `eleven_text_to_sound_v2` | 13 in-game sound effects (723 credits over 31 generations) |
-| ElevenLabs music | [Eleven Music version] | Two background tracks |
+| Tripo Studio (Pro plan) | [model version] | Player character, rig and 8 animation clips; sentry; tube elevator; checkpoint pad; two platform decks |
+| ElevenLabs Sound Effects API (Creator plan) | `eleven_text_to_sound_v2` | 13 in-game sound effects (723 credits over 31 generations) |
+| ElevenLabs (Creator plan) | Eleven Music | Two background tracks |
 | Unity 6000.5.9f1 | URP, Cinemachine, Input System, ProBuilder | Engine |
 | [Trailer tool] | [model] | [Trailer] |
 
@@ -154,10 +154,10 @@ every prompt and reply.
 The full **Asset Attribution Sheet** (every asset, its tool, license and prompt) is
 [section 8 of the master prompt log](PROMPT_LOG.md#8-asset-attribution--licensing). In brief:
 
-- **3D models and animations: Tripo** (tripo3d.ai). [Plan used.] Models generated on Tripo's
-  **free plan are public**, published under CC BY 4.0, and Tripo grants commercial rights only
-  on paid plans.
-- **Sound effects and music: ElevenLabs.** Sound effects on a paid plan may be used without
+- **3D models and animations: Tripo** (tripo3d.ai), generated on the paid **Pro plan**: private
+  models with commercial rights, about 750 credits in all. (Models generated on Tripo's
+  **free plan are public**, published under CC BY 4.0, without commercial rights.)
+- **Sound effects and music: ElevenLabs, Creator plan.** Sound effects may be used without
   attribution. Eleven Music's self-serve terms restrict commercial video games; this is a
   non-commercial class project.
 - **Concept images: OpenAI image generation** via the Codex CLI; used as Tripo inputs.

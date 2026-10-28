@@ -10006,3 +10006,68 @@ Sources:
 - [Eleven Music terms](https://elevenlabs.io/ja/eleven-music-v1-terms)
 ```
 
+
+## 2026-10-28T21:02:45.592Z — claude — 67ea22d38741
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:988b053f-7ca3-499c-a386-1af05a0c8a7b`
+
+### Prompt
+
+```text
+Commit it
+```
+
+### Saved assistant responses
+
+```text
+I committed the documentation as `9dc5a27`. That covers the README, the master prompt log, its template and builder script, the screenshots, and the updated logging notes. As usual, I left out the ProBuilder settings file and the orphan `Model2.meta`.
+
+I rebuilt the log just before committing. It doesn't include your "Commit it" yet; the capture hasn't saved it. After you fill in the placeholders, run `python3 scripts/build_master_log.py` once more to bring the appendix up to date. Nothing is pushed: graders see the GitHub repository, so push when you're ready.
+```
+
+
+## 2026-10-28T21:10:08.454Z — claude — f7d7b8705bdf
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:3863ba87-dda9-4e07-aaff-cb166b8d596a`
+
+### Prompt
+
+```text
+The plans are ElevenLabs, "Creator plan", Tripo3D Pro.  An elevenlabs prompt you don't have is the prompt I used for the background music "Dark ambient background music with unsettling, sparse texture. Starts soft and gets slightly louder but remains subdued, suitable for use in a tense puzzle solving game."  Tripo credits was aproximately 3250 down to 2500 over all generations.  Unfortuantely I'm not sure I still have Tripo animation prompts so we'll have to leave those out for now.
+```
+
+### Saved assistant responses
+
+```text
+I'll fill those in. The plan details change the licence notes:
+
+- **Tripo Pro** is paid, so your models are private, with commercial rights. The "free plan is public" note stays only as the context the assignment asks for.
+- **ElevenLabs Creator** means sound effects need no attribution.
+```
+
+```text
+Rebuilding, and listing what's still bracketed:
+```
+
+```text
+I've updated both documents and rebuilt the log, but nothing is committed yet.
+
+**What changed:**
+- **Plans:** Tripo Pro and ElevenLabs Creator now appear in the tool inventory, the README and the attribution sheet.
+- **Licence notes:**
+  - Your Tripo models are private, with commercial rights. The note that free-plan models are public under CC BY 4.0 stays, as context the assignment asks for.
+  - Sound effects need no attribution on Creator.
+  - Eleven Music's self-serve terms, Creator included, restrict commercial video games, so the sheet still calls this a non-commercial project.
+- **Tripo credits:** about 3,250 down to 2,500, roughly 750 in all. The log says they weren't tracked per asset, so I removed the per-asset credits column.
+- **Music:** your prompt is quoted exactly, with both tracks listed as generated from it. If only one track came from that prompt, tell me and I'll split them.
+- **Animation prompts:** I removed the "full prompt" column. The log now says the full prompts weren't kept, and shows the first 63 characters Tripo saved in each file.
+
+**Still bracketed for you, all optional:**
+- The assignment title.
+- The Tripo model version, and the route per asset, such as whether you used multiview.
+- The trailer section.
+- Your ElevenLabs balance before and after.
+- Any extra references or moodboard links in the README.
+- The reflection.
+```
+

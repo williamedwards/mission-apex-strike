@@ -34,9 +34,9 @@ playtested each step.
 | Logic & debugging agent | Claude Code | Claude Opus 5.5 | Player motor, boots, camera, hazards, movers, level building, audio wiring, UI, fixes |
 | Engine automation | Unity CLI and Pipeline package (driven by Claude Code) | Unity 6000.5.9f1, URP | Running tests, driving the open Editor, captures, headless builds |
 | Concept / reference images | Codex CLI, invoked by Claude Code | GPT-6 Astra, built-in `image_gen` tool (OpenAI GPT Image; exact image model not recorded) | Front and back turnarounds as Tripo inputs (17 images) |
-| 3D models & animation | Tripo Studio (tripo3d.ai), used by the author | [Tripo model version] | Image-to-3D models, auto-rigging, preset and text-to-animation clips |
-| Sound effects | ElevenLabs Sound Effects API, called by Claude Code | `eleven_text_to_sound_v2` | 13 in-game effects, from 31 generations |
-| Music | ElevenLabs, used by the author | [Eleven Music version] | Two background tracks |
+| 3D models & animation | Tripo Studio (tripo3d.ai, Pro plan), used by the author | [Tripo model version] | Image-to-3D models, auto-rigging, preset and text-to-animation clips |
+| Sound effects | ElevenLabs Sound Effects API (Creator plan), called by Claude Code | `eleven_text_to_sound_v2` | 13 in-game effects, from 31 generations |
+| Music | ElevenLabs (Creator plan), used by the author | Eleven Music | Two background tracks |
 | Audio and mesh analysis (non-generative) | ffmpeg, NumPy, Blender (headless) | — | Loudness and spectrum checks, cutting footsteps, inspecting FBX files |
 | Trailer | [tool] | [model] | [trailer shots] |
 
@@ -298,17 +298,18 @@ Every model in the game came from the same pipeline:
 4. **Integration** — Claude Code inspected each FBX (Blender, headless) and fitted it in Unity:
    scale, pivots, splitting parts, materials, and builders that apply the model across levels.
 
-**Tripo credits:** balance before [ ] · after [ ] · plan [Free / Professional / …].
+**Tripo credits:** about 3,250 before and 2,500 after, so roughly **750 credits** for every generation
+below, including drafts and retries (Pro plan; not tracked per asset).
 
-| Asset | Reference images | Tripo route | Credits | In the project |
-| :--- | :--- | :--- | :--- | :--- |
-| Player character | `player_ref_02_front.png`, `player_ref_02_back.png` | [image-to-3D, multiview?] → auto-rig → animation | [ ] | `Art/Characters/Player/Model/tripo_convert_b0228436…fbx` |
-| Player animations | — | Preset clips (Idle, Walk, Run, Jump) and text-to-animation (4 clips) | [ ] | `Art/Characters/Player/Animations/*/` |
-| Sentry | `sentry_ref_02_front.png`, `sentry_ref_02_back.png` | [image-to-3D] with auto-segmentation (40 parts) | [ ] | `Art/Hazards/Sentry/Model/spherical+robot+3d+model/` |
-| Tube elevator | `elevator_ref_04_front.png`, `elevator_ref_04_back.png` | [image-to-3D] | [ ] | `Art/Level/Elevator/Model/futuristic portal 3d model/` |
-| Checkpoint pad | `checkpoint_ref_01.png` | [image-to-3D] | [ ] | `Art/Level/Checkpoint/Model/futuristic platform 3d model/` |
-| Dark platform deck | `platform_dark_ref_02.png` | [image-to-3D] | [ ] | `Art/Level/Platform/Model_Dark_Platform/` |
-| Light (magnetic) platform deck | `platform_magnetic_ref_02.png` | [image-to-3D] | [ ] | `Art/Level/Platform/Model_Light_Platform/` |
+| Asset | Reference images | Tripo route | In the project |
+| :--- | :--- | :--- | :--- |
+| Player character | `player_ref_02_front.png`, `player_ref_02_back.png` | [image-to-3D, multiview?] → auto-rig → animation | `Art/Characters/Player/Model/tripo_convert_b0228436…fbx` |
+| Player animations | — | Preset clips (Idle, Walk, Run, Jump) and text-to-animation (4 clips) | `Art/Characters/Player/Animations/*/` |
+| Sentry | `sentry_ref_02_front.png`, `sentry_ref_02_back.png` | [image-to-3D] with auto-segmentation (40 parts) | `Art/Hazards/Sentry/Model/spherical+robot+3d+model/` |
+| Tube elevator | `elevator_ref_04_front.png`, `elevator_ref_04_back.png` | [image-to-3D] | `Art/Level/Elevator/Model/futuristic portal 3d model/` |
+| Checkpoint pad | `checkpoint_ref_01.png` | [image-to-3D] | `Art/Level/Checkpoint/Model/futuristic platform 3d model/` |
+| Dark platform deck | `platform_dark_ref_02.png` | [image-to-3D] | `Art/Level/Platform/Model_Dark_Platform/` |
+| Light (magnetic) platform deck | `platform_magnetic_ref_02.png` | [image-to-3D] | `Art/Level/Platform/Model_Light_Platform/` |
 
 (Paths are under `Assets/_Project/`. Tripo's export names were kept; the folders say what each is.)
 
@@ -413,15 +414,15 @@ walking).
 #### Text-to-animation clips
 
 Four clips came from Tripo's text-to-animation: three tries at a heavier magnetized walk,
-chosen between by playtesting in game, and the death fall. Tripo stores only the first 63
-characters of an animation prompt in the FBX, so the full prompts need adding here.
+chosen between by playtesting in game, and the death fall. The full animation prompts weren't
+kept; Tripo stores the first 63 characters of each in the exported FBX, recovered here.
 
-| Clip | Prompt (start, as stored in the FBX) | Full prompt | Used? |
-| :--- | :--- | :--- | :--- |
-| DeliberateWalk | "Heavy, deliberate walk with careful foot placement and boots th…" | [full prompt] | No: too slow at 1.5 m/s |
-| PurposefulWalk | "Steady, purposeful walk at a normal to brisk walking pace, but …" | [full prompt] | No: legs over-reached |
-| PurposefulWalk2 | "Steady, purposeful walk at a normal to brisk walking pace." | [full prompt] | Yes: magnetized walk at 3 m/s |
-| FallingProne | "Falling prone after a sudden injury." | [full prompt] | Yes: every death |
+| Clip | Prompt (start, as stored in the FBX) | Used? |
+| :--- | :--- | :--- |
+| DeliberateWalk | "Heavy, deliberate walk with careful foot placement and boots th…" | No: too slow at 1.5 m/s |
+| PurposefulWalk | "Steady, purposeful walk at a normal to brisk walking pace, but …" | No: legs over-reached |
+| PurposefulWalk2 | "Steady, purposeful walk at a normal to brisk walking pace." | Yes: magnetized walk at 3 m/s |
+| FallingProne | "Falling prone after a sudden injury." | Yes: every death |
 
 **Date:** 2026-10-28 07:11 UTC · **Agent:** Claude Code · **Appendix:** #068
 
@@ -811,12 +812,17 @@ Let's try sentry activation A, platform stop A, and platform movement B.
 
 ### 4.3 Background Music
 
-Two tracks generated by the author in ElevenLabs, crossfaded in order:
+Two tracks generated by the author with Eleven Music (Creator plan), from this prompt, and
+crossfaded in order in the game:
 
-| Track | File | Prompt | Settings |
-| :--- | :--- | :--- | :--- |
-| Hidden Chamber | `Audio/Background/Draft/Hidden_Chamber_2026-10-28T103908.mp3` (3:00) | [prompt] | [model, settings] |
-| Silent Chamber | `Audio/Background/Draft/Silent_Chamber_2026-10-28T103908.mp3` (2:54) | [prompt] | [model, settings] |
+```text
+Dark ambient background music with unsettling, sparse texture. Starts soft and gets slightly louder but remains subdued, suitable for use in a tense puzzle solving game.
+```
+
+| Track | File | Length |
+| :--- | :--- | :--- |
+| Hidden Chamber | `Audio/Background/Draft/Hidden_Chamber_2026-10-28T103908.mp3` | 3:00 |
+| Silent Chamber | `Audio/Background/Draft/Silent_Chamber_2026-10-28T103908.mp3` | 2:54 |
 
 ---
 
@@ -1000,16 +1006,16 @@ division of labour compared to PG2.]
 
 **Terms in brief** (check each against your plan before publishing):
 
-* **Tripo:** Models made on the free plan are public and published under CC BY 4.0 (others may
-  reuse them with attribution). Tripo's help centre says free-plan users aren't granted
-  commercial use, and paid plans give commercial rights and private models. Plan used:
-  [confirm]. If it was the free plan, these models are public and the game should credit
-  Tripo. Sources: [Tripo: how to use Tripo models commercially](https://www.tripo3d.ai/help/privacy-policy/how-to-use-tripo-models-commercially)
+* **Tripo (Pro plan):** Every model and animation here was generated on Tripo's paid Pro plan,
+  whose outputs are private and come with commercial rights. Note for comparison: models
+  generated on Tripo's **free plan are public**, published under CC BY 4.0 so others may reuse
+  them with attribution, and Tripo's help centre says free-plan users aren't granted
+  commercial use. Sources: [Tripo: how to use Tripo models commercially](https://www.tripo3d.ai/help/privacy-policy/how-to-use-tripo-models-commercially)
   and Tripo's Terms of Service (section 5.2).
-* **ElevenLabs sound effects:** Paid plans may be used in commercial projects without
-  attribution; the free plan requires crediting elevenlabs.io. Plan used: [confirm].
+* **ElevenLabs sound effects (Creator plan):** Paid plans may be used in commercial projects
+  without attribution; the free plan requires crediting elevenlabs.io.
   Source: [ElevenLabs sound effects](https://elevenlabs.io/sound-effects/music).
-* **Eleven Music:** Self-serve plans restrict use in commercial video games (prior approval or
+* **Eleven Music (Creator plan):** Self-serve plans, Creator included, restrict use in commercial video games (prior approval or
   Enterprise needed). This is a non-commercial class project. Source:
   [Eleven Music terms](https://elevenlabs.io/eleven-music-v1-terms).
 * **OpenAI image generation (via Codex):** As between the user and OpenAI, the user owns the
@@ -1022,17 +1028,17 @@ division of labour compared to PG2.]
 
 | Asset | Type | AI model / source tool | License / terms | Prompt / origin |
 | :--- | :--- | :--- | :--- | :--- |
-| `Art/Characters/Player/Model/tripo_convert_b0228436…fbx` (+ texture) | Rigged character, 4 preset clips | Tripo Studio | Tripo terms, [plan] | §3.1; references `player_ref_02_*` |
-| `Art/Characters/Player/Animations/{Deliberate_Walk, Purposeful_Walk, Purposeful_Walk2, Falling_Prone}/` | Animation clips | Tripo Studio (text-to-animation) | Tripo terms, [plan] | §3.1 clip table |
-| `Art/Hazards/Sentry/Model/spherical+robot+3d+model/` | Segmented model, 40 parts | Tripo Studio | Tripo terms, [plan] | §3.2; references `sentry_ref_02_*` |
-| `Art/Level/Elevator/Model/futuristic portal 3d model/` | Model | Tripo Studio | Tripo terms, [plan] | §3.3; references `elevator_ref_04_*` |
-| `Art/Level/Checkpoint/Model/futuristic platform 3d model/` | Model | Tripo Studio | Tripo terms, [plan] | §3.4; reference `checkpoint_ref_01` |
-| `Art/Level/Platform/Model_Dark_Platform/`, `Model_Light_Platform/` | Models | Tripo Studio | Tripo terms, [plan] | §3.4; references `platform_*_ref_02` |
+| `Art/Characters/Player/Model/tripo_convert_b0228436…fbx` (+ texture) | Rigged character, 4 preset clips | Tripo Studio | Tripo terms, Pro plan (private, commercial rights) | §3.1; references `player_ref_02_*` |
+| `Art/Characters/Player/Animations/{Deliberate_Walk, Purposeful_Walk, Purposeful_Walk2, Falling_Prone}/` | Animation clips | Tripo Studio (text-to-animation) | Tripo terms, Pro plan (private, commercial rights) | §3.1 clip table |
+| `Art/Hazards/Sentry/Model/spherical+robot+3d+model/` | Segmented model, 40 parts | Tripo Studio | Tripo terms, Pro plan (private, commercial rights) | §3.2; references `sentry_ref_02_*` |
+| `Art/Level/Elevator/Model/futuristic portal 3d model/` | Model | Tripo Studio | Tripo terms, Pro plan (private, commercial rights) | §3.3; references `elevator_ref_04_*` |
+| `Art/Level/Checkpoint/Model/futuristic platform 3d model/` | Model | Tripo Studio | Tripo terms, Pro plan (private, commercial rights) | §3.4; reference `checkpoint_ref_01` |
+| `Art/Level/Platform/Model_Dark_Platform/`, `Model_Light_Platform/` | Models | Tripo Studio | Tripo terms, Pro plan (private, commercial rights) | §3.4; references `platform_*_ref_02` |
 | `Art/**/Reference/*.png` (17 images) | Concept / reference images | Codex CLI, built-in `image_gen` (OpenAI) | User-owned output, OpenAI terms | §3, exact prompts quoted |
 | `Art/Level/Curve/*.png`, `Art/Level/Checkpoint/Generated/*`, `Art/GreyboxGrid.png`, `Art/MagneticPanel.png`, boot effect textures | Textures | Drawn by code written with Claude Code | Original | §3.5 |
 | `Shaders/VoidFog.shader` | Shader | Written with Claude Code | Original | §2.5 |
-| `Audio/SFX/Draft/*` (13 effects in use) | Sound effects | ElevenLabs `eleven_text_to_sound_v2` | ElevenLabs terms, [plan] | §4.1–4.2 |
-| `Audio/Background/Draft/*.mp3` | Music | ElevenLabs [Eleven Music] | Eleven Music terms, [plan] | §4.3 |
+| `Audio/SFX/Draft/*` (13 effects in use) | Sound effects | ElevenLabs `eleven_text_to_sound_v2` | ElevenLabs terms, Creator plan (commercial use, no attribution) | §4.1–4.2 |
+| `Audio/Background/Draft/*.mp3` | Music | Eleven Music | Eleven Music terms, Creator plan (non-commercial project) | §4.3 |
 | `Scripts/**`, `Tests/**`, `Editor/**` | Code | Claude Code (Claude Opus 5.5) | User-owned output | §2, §9 |
 | UI text | Font | Unity's built-in default font | Unity terms | — |
 
@@ -1042,7 +1048,7 @@ division of labour compared to PG2.]
 
 ## 9. Complete Prompt List (Chronological)
 
-All 166 prompts captured from the local Claude Code and Codex transcripts, in order (times UTC). Duplicates that a continued session copies into its new transcript are removed (90 of 256 records). Codex entries are the image prompts Claude Code sent to the Codex CLI. Each summary is the first sentence of the agent's final reply, as reported. The raw capture, with every saved reply, is [docs/prompt-log.md](docs/prompt-log.md).
+All 168 prompts captured from the local Claude Code and Codex transcripts, in order (times UTC). Duplicates that a continued session copies into its new transcript are removed (90 of 258 records). Codex entries are the image prompts Claude Code sent to the Codex CLI. Each summary is the first sentence of the agent's final reply, as reported. The raw capture, with every saved reply, is [docs/prompt-log.md](docs/prompt-log.md).
 
 Not captured by the logger: messages sent while the agent was mid-turn. One such prompt, sent during the title-screen work (after prompt 158), was: *“Actually, I changed my mind, let's go with the name "Mission: Apex Strike"”*.
 
@@ -2838,4 +2844,24 @@ Web build looks good from my perspective, I'll work on getting up on to itch.io,
 *Attachments: 1 image(s).*
 
 **Response summary (reported):** I've written both documents and used the itch.io link in each.
+
+### 167. 2026-10-28 21:02 — Claude Code
+
+**Exact prompt:**
+
+```
+Commit it
+```
+
+**Response summary (reported):** I committed the documentation as 9dc5a27.
+
+### 168. 2026-10-28 21:10 — Claude Code
+
+**Exact prompt:**
+
+```
+The plans are ElevenLabs, "Creator plan", Tripo3D Pro.  An elevenlabs prompt you don't have is the prompt I used for the background music "Dark ambient background music with unsettling, sparse texture. Starts soft and gets slightly louder but remains subdued, suitable for use in a tense puzzle solving game."  Tripo credits was aproximately 3250 down to 2500 over all generations.  Unfortuantely I'm not sure I still have Tripo animation prompts so we'll have to leave those out for now.
+```
+
+**Response summary (reported):** I've updated both documents and rebuilt the log, but nothing is committed yet.
 
