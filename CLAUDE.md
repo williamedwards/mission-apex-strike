@@ -13,6 +13,11 @@ Magnetic-boots 3D puzzle and obstacle course. Design and roadmap: `docs/PLAN.md`
 - Real levels ("chambers") are hand-edited scenes in `Assets/_Project/Levels/`, built with the Level Kit (`Editor/LevelKit.cs`, window under GravBoots → Level Kit; guide in `docs/LEVEL_EDITING.md`). Never regenerate or overwrite them; edit them through the live Editor.
 - The test bed scene and Player prefab are generated: menu **GravBoots → Build Camera Test Bed**, or headless with `unity run . -- -executeMethod GravBoots.Editor.TestBedBuilder.Build` (no `-quit`; the CLI adds it). Change the builder rather than hand-editing the generated scene.
 
+## Web build (itch.io)
+- Menu **GravBoots → Build for Web (itch.io)**, or headless with the Editor closed: `unity run . -- -executeMethod GravBoots.Editor.WebBuild.Build -logFile Logs/web-build-batch.log`. Output: `Builds/WebGL`, zipped to `Builds/MissionApexStrike-web.zip`; the outcome goes to `Logs/web-build.txt`. About 10 minutes.
+- Build headless with the Editor closed: on this 14 GB machine a build from the open Editor was killed for running out of memory. It also needs several GB free on disk.
+- A crashed build can leave `Assets/Resources/PerformanceTestRun*.json` and the Input System actions asset in `preloadedAssets` (ProjectSettings); remove both.
+
 ## Driving the open Editor (Pipeline package)
 - Command names are `<group> <name>` as two words, e.g. `unity command editor set_auto_tick`, `unity command script eval '<C#>'`, `unity command console get -- --level error --tail 20`, `unity command runtime simulate_key -- --key W --action down`. Put command parameters after `--`. Check names with `unity command <group>` (for example `editor`, `editor.playmode`, `capture`, `console`, `script`, `runtime`).
 - If every main-thread command times out, look for a modal dialog in the Editor (`xdotool search --pid <pid>` lists window titles). The Editor's main loop doesn't run while a modal is open.

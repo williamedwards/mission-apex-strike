@@ -117,3 +117,6 @@ docs/.prompt-log/watcher.lock
 docs/.prompt-log/*.tmp
 docs/prompt-log.md.tmp
 scripts/__pycache__/
+
+# Burst writes its WebGL intermediates here during a web build
+/Data/

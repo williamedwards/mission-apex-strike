@@ -3,6 +3,7 @@ using GravBoots.Debugging;
 using GravBoots.Level;
 using GravBoots.Player;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 namespace GravBoots.UI
@@ -11,7 +12,7 @@ namespace GravBoots.UI
     /// The title screen before the first run and the end screen after the exit: the game's name
     /// over slow camera moves through the chamber's rooms (<see cref="PanoramaShot"/>), with
     /// the HUD hidden. The title holds the <see cref="LevelSession"/> until the player presses
-    /// Jump; the end screen follows the exit ride and shows the run's time and deaths (Jump
+    /// Jump or clicks; the end screen follows the exit ride and shows the run's time and deaths (Jump
     /// plays again, as before). Added at runtime to any scene with a session and at least two
     /// rooms, so no scene needs editing; the title shows once per session of the game.
     /// </summary>
@@ -212,7 +213,9 @@ namespace GravBoots.UI
                 case Mode.Title:
                 case Mode.End:
                     AdvanceShot(dt);
-                    if (mode == Mode.Title && modeTime > PromptDelay && input != null && input.JumpPressed)
+                    // A click starts too: in a browser page the first click is what gives the game the keyboard.
+                    if (mode == Mode.Title && modeTime > PromptDelay
+                        && ((input != null && input.JumpPressed) || (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)))
                     {
                         mode = Mode.Leaving;
                         modeTime = 0f;
@@ -316,7 +319,7 @@ namespace GravBoots.UI
                 {
                     float pulse = 0.55f + 0.45f * Mathf.Sin((modeTime - PromptDelay) * 2.5f);
                     Label(new Rect(0f, h - 70f * unit, w, 30f * unit),
-                        end ? "PRESS  SPACE  TO  PLAY  AGAIN" : "PRESS  SPACE  TO  BEGIN", prompt, Color.white, pulse * textAlpha, unit);
+                        end ? "PRESS  SPACE  TO  PLAY  AGAIN" : "CLICK  OR  PRESS  SPACE  TO  BEGIN", prompt, Color.white, pulse * textAlpha, unit);
                 }
             }
 

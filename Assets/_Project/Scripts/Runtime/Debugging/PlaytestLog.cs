@@ -64,6 +64,12 @@ namespace GravBoots.Debugging
 
         void OnEnable()
         {
+            // Nowhere useful to keep records in a web build.
+            if (Application.platform == RuntimePlatform.WebGLPlayer)
+            {
+                enabled = false;
+                return;
+            }
             if (session == null)
                 return;
             session.CheckpointChanged += OnCheckpoint;

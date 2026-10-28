@@ -303,6 +303,9 @@ namespace GravBoots.Cameras
 
         void UpdateCursor()
         {
+            // A browser releases the pointer itself (Esc), without telling us.
+            if (cursorLocked && Cursor.lockState != CursorLockMode.Locked)
+                SetCursorLocked(false);
             if (input != null && input.PausePressed)
                 SetCursorLocked(false);
             else if (!cursorLocked && Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)

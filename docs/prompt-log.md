@@ -9703,3 +9703,147 @@ I've removed the health bar. It's not committed yet.
 **One oddity:** in one Play run, the player ran through the first room on their own a few seconds after the title. I checked straight afterwards and no movement key was held or stuck. It was most likely real keyboard input reaching the Editor at that moment, not a bug. If you ever see the character move without input, tell me.
 ```
 
+
+## 2026-10-28T20:07:13.202Z — claude — 48ec58aaf788
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:f8ae3e78-9d39-43ed-b1b5-b6d971b064ef`
+
+### Prompt
+
+```text
+Alright, looks good.  The movement was actually me, I was in the editor when the test popped up and I pressed the forward button without thinking.  Go ahead and commit everything, then next I'd like to prepare a build for web export, with the goal of publishing on itch.io
+```
+
+### Saved assistant responses
+
+```text
+Committing first. I'll still leave out the ProBuilder settings file and the orphan `Model2.meta`, per your standing rule. Then I'll check the Unity install for WebGL support and look at the current build settings.
+```
+
+```text
+The camera edit applied; the title file was left untouched because one doc-comment line didn't match. Checking its exact wording:
+```
+
+```text
+Compiling first:
+```
+
+```text
+It compiles cleanly. Running both test suites before the long build:
+```
+
+```text
+The server config is ready. Waiting for the build to finish.
+```
+
+```text
+The build is still running in the background. I'll pick up as soon as it reports.
+```
+
+```text
+The build is still going: the data file is written, and it's now compiling the code to WebAssembly, the slow part. Waiting longer:
+```
+
+```text
+The build is still compiling to WebAssembly in the background. I'll test it in the browser as soon as it finishes.
+```
+
+
+## 2026-10-28T20:25:15.821Z — claude — 1f6b6b0724be
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:ec2e4c4e-c696-45fc-8b44-e04b04de0ab3`
+
+### Prompt
+
+```text
+I think the unity editor crashed part way through the web export, I've restarted my computer and have fewer other programs running.  Can you check the status and see if you can try again?
+```
+
+### Saved assistant responses
+
+```text
+The setting exists in this version's WebGL tools, but the exact type name isn't certain from the binary. I'll set it by reflection, so the script compiles either way and reports what it did:
+```
+
+```text
+I haven't retried the build yet, because the disk is nearly full. I found why it crashed and prepared the retry.
+
+**Why it crashed:** Linux killed Unity for running out of memory at 13:18, about seven minutes into the build. That's in the system log. The build had reached the stage where IL2CPP converts the game's code to C++.
+
+**Cleanup from the crash.** None of these are the game's own files, and a normal build removes or rewrites most of them itself:
+- Two temporary files from the performance-testing package in `Assets/Resources`: deleted.
+- The Input System actions asset, which a build adds to the preloaded assets and should remove afterwards: taken back out.
+- The render-pipeline settings that a build recomputes, and two broken sample-effect references Unity pruned: kept.
+
+**To use less memory on the retry:**
+- I'll build headless with the Editor closed. It's closed now, so its memory is free.
+- The build script now sets WebGL code optimization to "Disk Size", which skips link-time optimization. That's the most memory-hungry step, and skipping it also gives a smaller download.
+
+**Blocker: disk space.** Your drive is 99% full, with 4.6 GB free, and a WebGL build writes several GB of intermediate files. Two Editor log files in this project's `Logs` folder take 6.2 GB between them: `Editor-prev.log` (3.7 GB) and `Editor.log` (2.8 GB). They're plain logs that Unity starts fresh each session, and git ignores them. I'd rather you OK deleting them than delete them myself.
+
+**Why the logs are so big:** the Game view's resolution is set larger than this system allows. Unity logs the warning "GameView reduced to a reasonable size for this system" on every repaint, with a full stack trace, about 50,000 times per stretch I sampled. Setting the Game view's resolution dropdown to **Free Aspect** or **1920x1080** stops it. Otherwise the logs will fill the disk again.
+```
+
+
+## 2026-10-28T20:28:16.437Z — claude — b8f9e31c6409
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:cca0df62-5fb6-4763-a5cb-d92c2bb88895`
+
+### Prompt
+
+```text
+Delete them
+```
+
+### Saved assistant responses
+
+```text
+11 GB free now. Starting the headless build in the background, with its log in `Logs/web-build-batch.log`:
+```
+
+```text
+The build is running headless in the background, with a 50-minute cap. I'll check the result in the browser once it reports.
+```
+
+```text
+It's loading. The pane is narrower than the 1280×720 canvas, so the page scrolls; that's only the test pane. Waiting for the load:
+```
+
+```text
+A clean build left nothing behind in `Assets/Resources` or the preloaded assets. There is a new `Data/` folder at the project root, though, which I'll inspect:
+```
+
+```text
+That's an intermediate from Burst's WebGL compile, regenerated on every build. I'll delete it and add it to `.gitignore`:
+```
+
+```text
+The web build worked this time. With the logs deleted there was 11 GB free, and building headless with the Editor closed finished in about 10 minutes with no errors. Nothing is committed yet.
+
+**The upload file:** `Builds/MissionApexStrike-web.zip`, 43 MB.
+- `index.html` is at the root, which is what itch.io needs.
+- It's compressed in a mode that decompresses in the player's browser, so it works without the server settings itch.io doesn't provide.
+
+**Not yet played in a browser.** The app's built-in browser pane has no WebGL, so the game couldn't start there. I did check that all four build files download correctly from a local server, as they would from itch.io. The server is still running, so you can try it in your own browser at **http://localhost:8765**. The canvas is 1280×720.
+
+**To publish on itch.io:**
+1. Create a new project and set **Kind of project** to **HTML**.
+2. Upload the zip and tick **This file will be played in the browser**.
+3. Set the viewport to **1280 × 720**, and turn on the **Fullscreen button**.
+4. Players click once to start, which also captures the mouse and gives the game keyboard focus. Esc releases the mouse.
+
+**What changed for the web:**
+- The product name is now "Mission: Apex Strike", and the canvas is 1280×720.
+- The web build uses the "PC" quality level, because the void darkness needs the depth texture, which the default Mobile level lacks.
+- Clicking also starts the game from the title. The prompt now reads "CLICK OR PRESS SPACE TO BEGIN".
+- The camera notices when the browser releases the mouse on Esc.
+- The playtest log is off in web builds.
+- There's a new menu item, **GravBoots → Build for Web (itch.io)**, which also runs headless. I added notes on it to `CLAUDE.md`, including building with the Editor closed.
+- Burst leaves a `Data/` folder of WebGL intermediates at the project root; I deleted it and added it to `.gitignore`.
+
+**Worth knowing:**
+- **The "Made with Unity" splash shows at the start,** because this Unity licence can't turn it off.
+- **The Game view resolution is still set too large.** Until you switch it to **Free Aspect** or **1920x1080**, Unity will keep filling the log with that warning, and the disk will fill again.
+- The disk is 98% full even after deleting the logs, with about 10 GB free.
+```
+
