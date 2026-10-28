@@ -8854,4 +8854,33 @@ Commit the draft, but some notes.  Footsteps and boot hum are barely audible, br
 
 ### Saved assistant responses
 
-No response imported yet.
+```text
+Committed. Now the loudness of the clips themselves.
+```
+
+```text
+Footsteps 3 and 4 are pure silence, so half of all steps played nothing, and step 1 peaks 11 dB below step 2. The split was faulty. Looking at the source take:
+```
+
+```text
+I committed the draft, then made fixes for your notes. The fixes aren't committed yet, and I can't listen to them, so they need your ear.
+
+**Footsteps had a real bug, not just low volume.** When I cut the steps out of the original recording, two of the four clips came out completely silent. So half your steps made no sound, and one of the other two was about 11 dB quieter than the last. That recording only contains three clean steps, so I:
+- Recut those three and matched their loudness. On average they're about 13 dB louder than the one step that played well before.
+- Dropped the fourth slot. Each step still gets a random pitch shift, so three should be enough variety.
+
+**Volume changes, in `Assets/_Project/Resources/SoundBank`:**
+
+| Sound | Before | Now | Change |
+|---|---|---|---|
+| Boot hum | 0.06 | 0.16 | about 8.5 dB louder |
+| Breathing | 0.9 | 0.4 | about 7 dB quieter |
+| Footsteps | 0.55 | 0.6 | louder clips plus a small bump |
+
+Every volume can also be changed in the Inspector while playing.
+
+If the breathing still distracts at a lower volume, it may be the steady loop itself rather than how loud it is. I could make it play only now and then, or only after a long fall or a near-death, or we could drop it entirely.
+
+The Editor reloaded the clips with no console errors, and Chamber_04 is still clean.
+```
+

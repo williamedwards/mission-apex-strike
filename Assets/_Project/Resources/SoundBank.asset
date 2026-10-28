@@ -16,11 +16,10 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 696f7d6364963636ba06b189936507e5, type: 3}
   - {fileID: 8300000, guid: 7287a97dbc21bcfa1a1269ce4936b803, type: 3}
   - {fileID: 8300000, guid: 2ee74d439ff6e73ce95c8be9e928445f, type: 3}
-  - {fileID: 8300000, guid: ab1d0f26abb71c25984d90a0467f88bd, type: 3}
-  footstepVolume: 0.55
+  footstepVolume: 0.6
   breathing:
     clip: {fileID: 8300000, guid: 47794602f38dfc4fba3bb30c18e24f3b, type: 3}
-    volume: 0.9
+    volume: 0.4
   bootsOn:
     clip: {fileID: 8300000, guid: ddb3d1e337cac1138b5796f74999077f, type: 3}
     volume: 0.9
@@ -29,7 +28,7 @@ MonoBehaviour:
     volume: 0.7
   bootsHum:
     clip: {fileID: 8300000, guid: 87271e140f86ace6191495fb66aa1b0b, type: 3}
-    volume: 0.06
+    volume: 0.16
   deathGroan:
     clip: {fileID: 8300000, guid: cb0df27b648ebad33b6a410269406823, type: 3}
     volume: 0.6
