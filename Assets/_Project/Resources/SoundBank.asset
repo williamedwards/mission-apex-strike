@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe39d74925da727059508dae15e24c53, type: 3}
+  m_Name: SoundBank
+  m_EditorClassIdentifier: GravBoots.Runtime::GravBoots.Audio.SoundBank
+  footsteps:
+  - {fileID: 8300000, guid: 696f7d6364963636ba06b189936507e5, type: 3}
+  - {fileID: 8300000, guid: 7287a97dbc21bcfa1a1269ce4936b803, type: 3}
+  - {fileID: 8300000, guid: 2ee74d439ff6e73ce95c8be9e928445f, type: 3}
+  - {fileID: 8300000, guid: ab1d0f26abb71c25984d90a0467f88bd, type: 3}
+  footstepVolume: 0.55
+  breathing:
+    clip: {fileID: 8300000, guid: 47794602f38dfc4fba3bb30c18e24f3b, type: 3}
+    volume: 0.9
+  bootsOn:
+    clip: {fileID: 8300000, guid: ddb3d1e337cac1138b5796f74999077f, type: 3}
+    volume: 0.9
+  bootsOff:
+    clip: {fileID: 8300000, guid: abc798af3f60937cc848f12b33ae0cf8, type: 3}
+    volume: 0.7
+  bootsHum:
+    clip: {fileID: 8300000, guid: 87271e140f86ace6191495fb66aa1b0b, type: 3}
+    volume: 0.06
+  deathGroan:
+    clip: {fileID: 8300000, guid: cb0df27b648ebad33b6a410269406823, type: 3}
+    volume: 0.6
+  sentryAlert:
+    clip: {fileID: 8300000, guid: babeef022b908596383fd3359c867cf4, type: 3}
+    volume: 0.6
+  sentryFire:
+    clip: {fileID: 8300000, guid: a3e0edafb302fe4b1bc77fcab9cb14d6, type: 3}
+    volume: 0.7
+  sentryDestroyed:
+    clip: {fileID: 8300000, guid: 92173b8941eef013d92a21d861217e9f, type: 3}
+    volume: 0.8
+  elevatorLoop:
+    clip: {fileID: 8300000, guid: a4895ebf8a6be69988ebecc133bae6e1, type: 3}
+    volume: 0.35
+  elevatorStop:
+    clip: {fileID: 8300000, guid: c774e99c11379a52293bafc4d4eb6a72, type: 3}
+    volume: 0.6
