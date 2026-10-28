@@ -9200,3 +9200,126 @@ This covers elevators and sentries on tracks too, since they all use `KinematicM
 Tests pass: EditMode 50 of 50, PlayMode 282 of 282. My playtest records and the capture files are cleaned up, and Chamber_04 is clean.
 ```
 
+
+## 2026-10-28T18:10:18.352Z — claude — 20de18467fe0
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:35523abc-f1db-4fa8-a50c-0cbd07208405`
+
+### Prompt
+
+```text
+Okay, that's good commit those.  Please now add some legible control hints that pop at the appropriate intervals WASD to Move, Space to Jump, and E to magnetize/demagnetize.  The magentize hint should show up if the player has paused next to a ramp, and the demagnetize hint should show up if they have paused while attached to a magnetic surface.
+```
+
+### Saved assistant responses
+
+```text
+The HUD is placeholder IMGUI drawn by components, so hints fit that style. Next, the boots' activation rules and the input bindings:
+```
+
+```text
+Jumping is blocked while magnetized, so the jump hint will only ever show with boots off. Writing the rules:
+```
+
+```text
+Now the component: detection, display and runtime attachment:
+```
+
+```text
+EditMode passes, 57 of 57, including 7 new hint tests. Now the real thing in Chamber_04: I'll enter Play mode and capture the hint once the ride ends.
+```
+
+```text
+The Move hint is legible and sits above the boots status. Next, walking forward should retire it and bring up the one-time Jump hint:
+```
+
+```text
+The player walked into the first room's pit and stopped at its wall, so "Jump" is the right prompt there. I'll check the ledge detector registered this wall specifically, not just the one-time intro:
+```
+
+```text
+The ledge detector fired on that wall. Next, magnetize: I'll stand the player just in front of the first magnetic curve, in "03 First Curve", and wait past the pause time.
+```
+
+```text
+Shown at the ramp, in boots-blue. Next I'll press E to magnetize, then stand still:
+```
+
+```text
+The rule now restarts the timer, with a test. Here's the Demagnetize hint as it renders:
+```
+
+```text
+I committed the graphics fixes as `21d8538` and added the control hints, which aren't committed yet. Each hint is a key cap plus a word, on a dark panel just above the boots status, sized to the screen and fading in and out. The two boots hints use the boots' blue.
+
+**When each appears:**
+- **WASD Move:** once the opening elevator ride ends, until you've walked about 2 m.
+- **SPACE Jump:**
+  - Right after you've learned to move, for up to 5 seconds or until your first jump.
+  - Again whenever you've stopped for a second at a ledge you could jump onto: something at knee height ahead with clear space at jump height above it.
+  - Only with boots off, since jumping is blocked while magnetized.
+- **E Magnetize boots:** after a 1.5 s pause within reach of a magnetic curve, with boots off.
+- **E Demagnetize boots:** after a 1.5 s pause while magnetized.
+
+The pause is measured on your own speed, so standing still on a moving platform still counts. It restarts whenever the boots switch, so the Demagnetize hint doesn't pop up the moment you magnetize. What you've learned carries over between chambers and respawns, so the Move hint only shows once per session.
+
+**How it's built:**
+- `HintRules` holds the rules as plain logic, with 8 EditMode tests.
+- `ControlHints` detects the situations and draws the hints. It attaches to the player at runtime, so no chamber scene was edited.
+
+**Seen in Chamber_04:**
+- Move after the ride.
+- Jump at the wall of the first room's pit, where the ledge detector registered the wall.
+- Magnetize at the first magnetic curve.
+- Demagnetize after pressing E there.
+
+That last check showed Demagnetize arriving too soon, because the pause timer carried over from standing at the ramp. That's what led to the restart-on-switch rule. The rule is tested, but I haven't re-checked it in game.
+
+**Tests:** EditMode 58 of 58 and PlayMode 282 of 282 pass. My playtest record and captures are cleaned up, and Chamber_04 is clean.
+
+One limitation: the magnetize hint shows near any magnetic curve, even if the floor you're standing on isn't magnetic. Pressing E there gives the existing "NO MAGNETIC SURFACE UNDERFOOT" message. In Chamber_04 the floor in front of the first curve is magnetic, so it works as you'd expect there.
+```
+
+
+## 2026-10-28T18:18:59.090Z — claude — cc21577a42d5
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:841005da-8ac5-44de-8756-2a42d4c49530`
+
+### Prompt
+
+```text
+I think I'm not seeing the first magnetize hint.
+```
+
+### Saved assistant responses
+
+```text
+Looking at what the first boots room contains, since the ramp list from my check started at room 03:
+```
+
+```text
+The rules are updated, with a new test. Recompiling and running EditMode, then checking room 02 in Play mode:
+```
+
+```text
+EditMode passes, 59 of 59. Now in Play mode: I'll put the player at the start of room 02's patch and hold W to walk across it, sampling the hint as they go.
+```
+
+```text
+Crossing the patch now brings up Magnetize, which hands over to Jump at the gap after it. Cleaning up and running PlayMode:
+```
+
+```text
+The first Magnetize hint now shows up in room 02, where it belongs. It's fixed but not yet committed.
+
+**Why you missed it:** room 02 ("Boots") is where the level first asks you to switch the boots on, but it has a magnetic floor patch, not a curve. My rule only looked for curves, so nothing happened there. Your playtest record shows you then pressed E at room 03's curve within about a second of arriving, before the 1.5 s pause could bring the hint up.
+
+**The new rule for Magnetize:**
+- **The first time:** as soon as you step onto any magnetic surface with boots off, the hint shows, even while walking. It keeps showing each time you're on one until you've magnetized once.
+- **After that:** it shows after a 1.5 s pause on a magnetic surface or next to a magnetic curve, as before.
+
+**Checked:** in Chamber_04, walking across room 02's patch showed "E Magnetize boots" on the patch. It switched to "SPACE Jump" at the gap after it, which needs the boots off.
+
+**Tests:** I added a test for the first-time behaviour. EditMode passes 59 of 59 and PlayMode 282 of 282. My playtest record is deleted, and Chamber_04 is clean.
+```
+
