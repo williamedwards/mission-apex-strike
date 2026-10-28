@@ -9135,3 +9135,68 @@ Both tracks are in the game and ready to try, but nothing is committed yet.
 My playtest record is deleted, and Chamber_04 is clean.
 ```
 
+
+## 2026-10-28T17:56:24.544Z — claude — c6d5381d2942
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:7b8fb656-b67a-4830-b3fd-bcbc74e961fe`
+
+### Prompt
+
+```text
+Commit these, now for a couple of graphics bugs I noticed.  I am seeing some z-fighting when the elevator rises in the beginning, and some jitter as the player is riding the platform throughout.
+```
+
+### Saved assistant responses
+
+```text
+Coplanar rings are a guess until I see it. I'll capture the game view during the opening ride, which starts as soon as Play begins:
+```
+
+```text
+They landed under `Assets/Logs`; I'll move them out once I've looked.
+```
+
+```text
+Builder fixed. Now the jitter. I'll check whether `LevelClock` syncs physics after moving platforms, which matters if platforms are also moved during rendering:
+```
+
+```text
+Next, the same fix in Chamber_04's existing shaft, through the Editor. I'll check the Editor state and how the walls are built first:
+```
+
+```text
+The walls are mesh-sized greybox boxes, not scaled cubes. I'll look for the Level Kit's resize helper so the mesh, collider and UVs stay consistent:
+```
+
+```text
+The scene edit is minimal: the four walls are 5 mm inset and 5 mm lower, and the scene is saved. The shaft has no light bands here. Recompiling for the mover and builder changes:
+```
+
+```text
+The scene reads as changed after the recompile, which hadn't happened before. I'll find which objects changed before touching anything:
+```
+
+```text
+The striping is gone: the shaft wall at y = −2.5 now renders as a clean grid. I'll stop Play mode, clean up, and run both test suites:
+```
+
+```text
+I committed the music as `5a98200` and fixed both graphics bugs. The fixes aren't committed yet.
+
+**Z-fighting in the start shaft**
+- **Cause:** the chamber floor around the shaft is 1.2 m thick, and the elevator builder cut its opening exactly as wide as the shaft. The floor's cut edges therefore sat in exactly the same planes as the shaft walls' inner faces. For the top 1.2 m of the ride, two surfaces competed and flickered as stripes; my capture at that height showed them clearly. The wall tops were also level with the floor surface.
+- **Fix:** the shaft walls now sit 5 mm in front of the floor's cut edges, and their tops are 5 mm below the floor surface.
+  - In Chamber_04, I made that change through the Editor and saved; the scene diff touches only those four walls.
+  - `ElevatorBuilder` now builds shafts that way, so future elevators won't have the problem.
+  - A capture at the same height now shows clean walls.
+
+**Jitter while riding platforms**
+- **Cause:** the player is drawn with Unity's built-in smoothing between physics steps, but platforms snapped to each new physics position. The two were drawn at slightly different moments, so the player appeared to jiggle on the deck.
+- **Fix:** `KinematicMover` now draws platforms between physics steps the same way the player is drawn. Each platform returns to its exact position at the start of every physics step, before anything collides with it, so riding, collisions and the tests don't change.
+- **Check:** with the player standing on a moving ferry, the drawn gap between player and deck now holds at exactly 2 cm every frame. Under the old drawing it swung between 2.0 and 3.5 cm.
+
+This covers elevators and sentries on tracks too, since they all use `KinematicMover`.
+
+Tests pass: EditMode 50 of 50, PlayMode 282 of 282. My playtest records and the capture files are cleaned up, and Chamber_04 is clean.
+```
+

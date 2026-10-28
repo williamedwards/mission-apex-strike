@@ -32,6 +32,10 @@ namespace GravBoots.Level
         float[] cumulative;
         float triggerTime = -1f;
         float lastTime = float.NaN, lastDistance;
+        // The poses at the last two ticks, to draw the platform between them (see LateUpdate).
+        Vector3 tickPosition, previousTickPosition;
+        Quaternion tickRotation = Quaternion.identity, previousTickRotation = Quaternion.identity;
+        bool hasTick;
         PlayerMotor rider;
 
         public float Length => cumulative != null && cumulative.Length > 0 ? cumulative[cumulative.Length - 1] : 0f;
@@ -64,6 +68,24 @@ namespace GravBoots.Level
                 CachePath();
                 Evaluate(0f);
             }
+        }
+
+        /// <summary>
+        /// Draws the platform between its last two ticks, as Unity draws the player's interpolated
+        /// rigidbody, so a rider and the platform move together instead of the platform stepping
+        /// at the physics rate under a smoothly drawn player. The next tick puts the platform back
+        /// at its true pose before anything collides with it.
+        /// </summary>
+        void LateUpdate()
+        {
+            if (!Application.isPlaying || !hasTick || platform == null
+                || LevelClock.Instance == null || !LevelClock.Instance.AutoSimulate)
+                return;
+            float t = Mathf.Clamp01((Time.time - Time.fixedTime) / Time.fixedDeltaTime);
+            Vector3 position = Vector3.Lerp(previousTickPosition, tickPosition, t);
+            Quaternion rotation = Quaternion.Slerp(previousTickRotation, tickRotation, t);
+            if (platform.position != position || platform.rotation != rotation)
+                platform.SetPositionAndRotation(position, rotation);
         }
 
         /// <summary>Reads the points' poses (they're static during play).</summary>
@@ -103,6 +125,11 @@ namespace GravBoots.Level
             AtEnd = Length > 0f && distance >= Length - 1e-4f;
             TrackSpeed(time, distance);
             MoverPath.Sample(positions, rotations, cumulative, distance, out Vector3 position, out Quaternion rotation);
+            previousTickPosition = hasTick ? tickPosition : position;
+            previousTickRotation = hasTick ? tickRotation : rotation;
+            tickPosition = position;
+            tickRotation = rotation;
+            hasTick = true;
             // Only when it changes, so the editor doesn't keep marking the scene modified.
             if (platform.position != position || platform.rotation != rotation)
                 platform.SetPositionAndRotation(position, rotation);
@@ -130,6 +157,8 @@ namespace GravBoots.Level
         {
             if (triggerTime > time)
                 triggerTime = -1f;
+            // A jump, not a move: don't draw the platform sweeping there.
+            hasTick = false;
         }
 
         bool RiderOnPlatform()

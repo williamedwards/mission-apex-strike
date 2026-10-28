@@ -62,6 +62,7 @@ namespace GravBoots.Editor
 
         /// <summary>The square opening a start elevator's shaft needs in the floor round it.</summary>
         public static float ShaftOpening => 2f * Current.PlatformRadius + 0.1f;
+        const float ShaftInset = 0.005f;
 
         /// <summary>
         /// An elevator standing on a floor at <paramref name="localPosition"/>, its doorway facing
@@ -217,7 +218,12 @@ namespace GravBoots.Editor
             TestBedBuilder.Palette palette)
         {
             var shaft = Child(root, name, Vector3.zero);
-            float inner = halfWidth * 2f, t = 0.3f, height = to - from, y = (from + to) * 0.5f;
+            // The floor's opening is exactly the shaft's width: inset the walls a little in front
+            // of its cut faces, and (below a floor) keep their tops under its surface, so no two
+            // faces share a plane and flicker.
+            if (closedBelow)
+                to -= ShaftInset;
+            float inner = halfWidth * 2f - 2f * ShaftInset, t = 0.3f, height = to - from, y = (from + to) * 0.5f;
             TestBedBuilder.Box(shaft, "Wall +X", new Vector3((inner + t) * 0.5f, y, 0f), new Vector3(t, height, inner + 2f * t), palette.Dark);
             TestBedBuilder.Box(shaft, "Wall -X", new Vector3(-(inner + t) * 0.5f, y, 0f), new Vector3(t, height, inner + 2f * t), palette.Dark);
             TestBedBuilder.Box(shaft, "Wall +Z", new Vector3(0f, y, (inner + t) * 0.5f), new Vector3(inner, height, t), palette.Dark);
@@ -235,7 +241,7 @@ namespace GravBoots.Editor
                     Object.DestroyImmediate(strip.GetComponent<Collider>());
                     strip.transform.SetParent(shaft, false);
                     Quaternion turn = Quaternion.Euler(0f, side * 90f, 0f);
-                    strip.transform.localPosition = turn * new Vector3(0f, 0f, halfWidth - 0.01f) + Vector3.up * band;
+                    strip.transform.localPosition = turn * new Vector3(0f, 0f, halfWidth - ShaftInset - 0.01f) + Vector3.up * band;
                     strip.transform.localRotation = turn;
                     strip.transform.localScale = new Vector3(inner * 0.8f, 0.06f, 0.03f);
                     strip.GetComponent<MeshRenderer>().sharedMaterial = palette.BootsOn;

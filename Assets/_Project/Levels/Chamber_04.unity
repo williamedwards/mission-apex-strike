@@ -11211,7 +11211,7 @@ Transform:
   m_GameObject: {fileID: 507145662}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -3.01, z: -1.03}
+  m_LocalPosition: {x: 0, y: -3.0125, z: -1.025}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11229,7 +11229,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a36a47e5f699b1308512ca7aa70ff87, type: 3}
   m_Name: 
   m_EditorClassIdentifier: GravBoots.Runtime::GravBoots.Level.GreyboxBox
-  size: {x: 1.76, y: 6.02, z: 0.3}
+  size: {x: 1.75, y: 6.015, z: 0.3}
 --- !u!65 &507145665
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -11249,7 +11249,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.76, y: 6.02, z: 0.3}
+  m_Size: {x: 1.75, y: 6.015, z: 0.3}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &507145666
 MeshRenderer:
@@ -26208,7 +26208,7 @@ Transform:
   m_GameObject: {fileID: 1195413264}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.03, y: -3.01, z: 0}
+  m_LocalPosition: {x: -1.025, y: -3.0125, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -26226,7 +26226,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a36a47e5f699b1308512ca7aa70ff87, type: 3}
   m_Name: 
   m_EditorClassIdentifier: GravBoots.Runtime::GravBoots.Level.GreyboxBox
-  size: {x: 0.3, y: 6.02, z: 2.3600001}
+  size: {x: 0.3, y: 6.015, z: 2.3500001}
 --- !u!65 &1195413267
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -26246,7 +26246,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.3, y: 6.02, z: 2.3600001}
+  m_Size: {x: 0.3, y: 6.015, z: 2.3500001}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &1195413268
 MeshRenderer:
@@ -44898,7 +44898,7 @@ Transform:
   m_GameObject: {fileID: 1915117531}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -3.01, z: 1.03}
+  m_LocalPosition: {x: 0, y: -3.0125, z: 1.025}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -44916,7 +44916,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a36a47e5f699b1308512ca7aa70ff87, type: 3}
   m_Name: 
   m_EditorClassIdentifier: GravBoots.Runtime::GravBoots.Level.GreyboxBox
-  size: {x: 1.76, y: 6.02, z: 0.3}
+  size: {x: 1.75, y: 6.015, z: 0.3}
 --- !u!65 &1915117534
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -44936,7 +44936,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.76, y: 6.02, z: 0.3}
+  m_Size: {x: 1.75, y: 6.015, z: 0.3}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &1915117535
 MeshRenderer:
@@ -46570,7 +46570,7 @@ Transform:
   m_GameObject: {fileID: 1959620126}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.03, y: -3.01, z: 0}
+  m_LocalPosition: {x: 1.025, y: -3.0125, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -46588,7 +46588,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a36a47e5f699b1308512ca7aa70ff87, type: 3}
   m_Name: 
   m_EditorClassIdentifier: GravBoots.Runtime::GravBoots.Level.GreyboxBox
-  size: {x: 0.3, y: 6.02, z: 2.3600001}
+  size: {x: 0.3, y: 6.015, z: 2.3500001}
 --- !u!65 &1959620129
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -46608,7 +46608,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.3, y: 6.02, z: 2.3600001}
+  m_Size: {x: 0.3, y: 6.015, z: 2.3500001}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &1959620130
 MeshRenderer:
