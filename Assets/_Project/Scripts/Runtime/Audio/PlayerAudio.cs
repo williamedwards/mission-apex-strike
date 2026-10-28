@@ -11,8 +11,6 @@ namespace GravBoots.Audio
     /// </summary>
     public class PlayerAudio : MonoBehaviour
     {
-        /// <summary>A foot this close to the body's base (along its up) is down; it must rise past the second height to step again.</summary>
-        const float DownHeight = 0.2f, UpHeight = 0.26f;
         const float HumFadeSeconds = 0.25f;
 
         SoundBank bank;
@@ -22,7 +20,7 @@ namespace GravBoots.Audio
         Animator animator;
         Transform leftFoot, rightFoot;
         AudioSource effects, steps, breathing, hum;
-        bool leftDown = true, rightDown = true;
+        FootfallDetector leftFall, rightFall;
         int lastStep = -1;
 
         public void Bind(SoundBank soundBank)
@@ -79,23 +77,17 @@ namespace GravBoots.Audio
             bool walking = motor.IsGrounded && Vector3.ProjectOnPlane(motor.Velocity, motor.BodyUp).magnitude > 0.3f
                 && (health == null || !health.IsDead);
             if (leftFoot != null)
-                Step(leftFoot, ref leftDown, walking);
+                Step(leftFoot, ref leftFall, walking);
             if (rightFoot != null)
-                Step(rightFoot, ref rightDown, walking);
+                Step(rightFoot, ref rightFall, walking);
         }
 
-        /// <summary>A footstep when this foot comes down (with a little hysteresis so it fires once per step).</summary>
-        void Step(Transform foot, ref bool down, bool walking)
+        /// <summary>A footstep as this foot plants.</summary>
+        void Step(Transform foot, ref FootfallDetector fall, bool walking)
         {
             float height = Vector3.Dot(foot.position - motor.Position, motor.BodyUp);
-            if (down && height > UpHeight)
-                down = false;
-            else if (!down && height < DownHeight)
-            {
-                down = true;
-                if (walking)
-                    PlayStep();
-            }
+            if (fall.Update(height, Time.deltaTime) && walking)
+                PlayStep();
         }
 
         void PlayStep()

@@ -8884,3 +8884,116 @@ If the breathing still distracts at a lower volume, it may be the steady loop it
 The Editor reloaded the clips with no console errors, and Chamber_04 is still clean.
 ```
 
+
+## 2026-10-28T17:21:11.048Z — claude — 56186d2e7234
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:68186ab4-fe3c-4fc3-9ac1-27a0e82b736c`
+
+### Prompt
+
+```text
+Commit this, but boot hum is still inaudible, and the footsteps and boot activation sounds are a bit off.  Could you generate several new options each for footstep sound and  boot activation sound?
+```
+
+### Saved assistant responses
+
+```text
+Committed. Now the hum: at -5 dB mean loudness and volume 0.16 it should be audible, so I suspect its frequency content.
+```
+
+```text
+I committed the footstep recut and volume changes, then generated new options. They're all on the listening page above, matched to the same peak so only the character differs, with the current version of each included for comparison. They cost 230 credits, bringing the total to **534**.
+
+**Why the hum is inaudible:** I checked its frequency content, and all of its energy sits below 60 Hz. Most headphones and laptop speakers can barely reproduce that, so turning it up couldn't help. I generated two new hum options along with the options you asked for. The current footsteps have the same problem in milder form: nothing above 400 Hz, which is likely why they sound dull and off.
+
+**Options:**
+- **Footsteps:**
+  - A, steel deck: a clank on top of a thud, but the steps are unevenly spaced.
+  - B, metal grate: bright and rattly.
+  - C, magnetic: clean, regular steps, but all low end again.
+  - D, tactical: a crisp heel-toe at a quicker pace.
+- **Boot activation:**
+  - A: a rising whine and a magnetic snap.
+  - B: a bright charge chirp, then a clamp.
+  - C: a relay click, a buzz and a thump.
+  - D: latch clicks and an energy whoosh.
+- **Hum:**
+  - A, coil: a midrange buzz with a high shimmer. This is the one that should actually be heard.
+  - B, field: came out mostly sub-bass again, so it probably has the current hum's problem.
+
+Each footstep option is one raw recording of several steps. Once you pick one, I'll cut it into single steps and wire your picks into the SoundBank.
+
+The page is saved at `Logs/sfx_options.html`, which git ignores.
+```
+
+
+## 2026-10-28T17:25:43.995Z — claude — 357119f2a545
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:16004b37-d95e-4aa5-ba20-02abf26160fc`
+
+### Prompt
+
+```text
+Let's try with footstep D, boot activation A, and boot hum B.
+```
+
+### Saved assistant responses
+
+```text
+Your three picks are now in the game, but I haven't heard them in a playtest, and nothing is committed yet.
+
+- **Footstep D:** I cut the take into six single heel-toe steps and matched their loudness. Each foot plant plays one at random. Footstep volume went from 0.6 to 0.8, because these are crisper but have less body than the old thuds.
+- **Boot activation A:** it replaces `boots_on.mp3`. This take is about 10 dB louder than the old one, so I lowered its volume from 0.9 to 0.5 to keep it at a similar level.
+- **Boot hum B:** it replaces `boots_hum_loop.mp3`, with volume raised from 0.16 to 0.3. Most of it is still deep bass below 400 Hz, so if it's still hard to hear on your speakers or headphones, hum A (the midrange coil) is a quick swap.
+
+The Editor reloaded everything with no errors, and Chamber_04 is still clean. All volumes can be changed in `Assets/_Project/Resources/SoundBank`, including while playing.
+```
+
+
+## 2026-10-28T17:29:47.858Z — claude — a1664ee0871a
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:d9ce0c0b-52c9-44ba-b6ec-56c19e1e140d`
+
+### Prompt
+
+```text
+Hmm, that's definitely more audible, but footstep timing feels slightly off.  I think it might be either slightly ahead or behind the player's visible footfalls, but it is hard to tell which direction.
+```
+
+### Saved assistant responses
+
+```text
+Now a test built on the sampled clip heights:
+```
+
+```text
+EditMode tests pass, 50 of 50, including the 3 new footfall tests. I'm checking for leftover temporary test scenes, then wrapping up.
+```
+
+```text
+The steps were **ahead** of the footfalls. I've moved them to when the heel actually lands, but haven't heard it in game yet.
+
+**What was wrong:** a step fired as soon as the foot dropped below 20 cm. I measured the run and walk animations frame by frame, and at that point the heel still had a way to go:
+
+| Animation | How early the step fired |
+|---|---|
+| Run | about 0.10 s |
+| Normal walk | about 0.05 s |
+| Magnetized walk | about 0.07 s before the heel, though the toe touches down right at the old trigger |
+
+The new heel-toe sound makes it a little worse, because its louder second click comes about 40 ms into the clip.
+
+**The fix:** in all three animations, the foot slows sharply in the instant it plants. Each step now fires on the frame the foot stops coming down: below 20 cm and moving down slower than 0.3 m/s. That lands on the heel settling instead of partway through the descent. If the frame rate is too low to catch that frame, the step plays a frame or so later as the foot starts to lift, so it can't be skipped. The logic is in a small new class, `FootfallDetector`.
+
+**Tests:** three new EditMode tests use foot heights sampled from the run and magnetized-walk clips. They check that:
+- The step fires on the settling frame.
+- At 30 fps it still fires within a frame or two of landing.
+- A step fires exactly once per stride, and never while standing.
+
+EditMode passes 50 of 50 with no console errors. I didn't rerun PlayMode, since only the audio code changed.
+
+If the steps now feel slightly late, the 40 ms in the clip before the heel click is the likely cause, and I can trim it.
+
+Nothing is committed yet. That covers footstep D, boot-on A, hum B and this timing fix.
+```
+
