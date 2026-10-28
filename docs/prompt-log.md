@@ -9847,3 +9847,162 @@ The web build worked this time. With the logs deleted there was 11 GB free, and 
 - The disk is 98% full even after deleting the logs, with about 10 GB free.
 ```
 
+
+## 2026-10-28T20:47:21.067Z — claude — f248ef3abdb8
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:c71dfdd2-4583-482e-9e69-b335e71125d8`
+
+### Prompt
+
+```text
+Commit it
+```
+
+### Saved assistant responses
+
+```text
+I've committed the web build setup as `5794e54`. As usual, I left out the ProBuilder settings file and the orphan `Model2.meta`.
+
+The commit covers:
+- The build script and its menu item.
+- The web player and quality settings.
+- The three browser fixes: click to start, the camera noticing when the browser frees the mouse, and no playtest log on the web.
+- The render settings the build recomputed.
+- The `.gitignore` entry, the local test server config, and the `CLAUDE.md` notes.
+
+The build output in `Builds/` isn't in git, which is deliberate since that folder is ignored. The zip is ready to upload at `Builds/MissionApexStrike-web.zip`.
+```
+
+
+## 2026-10-28T20:52:26.982Z — claude — 84ca5cacbb93
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:dc5284bf-9579-4959-961f-5379c0df49cc`
+
+### Prompt
+
+```text
+Web build looks good from my perspective, I'll work on getting up on to itch.io, while I am doing that I would like you to work on the project documentation.  I need a README and prompt log which satisfy the requirements listed in the attached screenshot.  For the prompt log format inspect what was done in ~/proj/space-jumper/docs/ looking at the LOG_TEMPLATE.md and master-prompt-log.md files.  As you can, see the master prompt log pulls selected prompts covering major development decisions error recovery and asset generation, with the full prompt log as an appendix at the end.  Instead of focusing on selected prompts for the audio assets we will focus on the 3D Tripo assets here.  The reflection memo is something for me to write, so just put a placeholder there for now.  Let me know if you have any questions about how to set things up.
+```
+
+Image attachment present in source transcript; image data is not exported.
+
+### Saved assistant responses
+
+```text
+Codex ran on **GPT-6 Astra** and generated the images with its built-in `image_gen` tool. The session doesn't record which image model sits behind that tool. Printing the full image prompts:
+```
+
+```text
+Those are all the image prompts. Listing what each Tripo folder contains, so the attribution sheet can map files to assets:
+```
+
+```text
+Checking which animation clips came with the base character model, from its import settings:
+```
+
+```text
+I have the material for the incidents. Two quick checks: whether the repo has a GitHub remote yet (for the README links), and that the engine `.gitignore` covers the folders the assignment names:
+```
+
+```text
+The note about the missed message hard-codes a prompt number. I'll have the script compute it from the title-screen prompt instead:
+```
+
+```text
+Next I'll run the script against a stub, to get the appendix numbers I'll cross-reference from the curated sections:
+```
+
+```text
+It builds: every marker matched, and the appendix now has 166 prompts, including this documentation request. Spot-checking the output:
+```
+
+```text
+The structure is right. Checking that each curated marker resolved to the prompt I intended:
+```
+
+```text
+Most captures carry the debug overlay in the top-left corner. I'll use the clean ones and crop the overlay off two gameplay shots, saving them as JPEGs in `docs/images/` to keep the repo small:
+```
+
+```text
+The crops work. Next I'll check the controls in the input actions asset, gamepad included, so the README's table is exact:
+```
+
+```text
+Next, the repository layout for the README:
+```
+
+```text
+A few wording fixes, then I'll rebuild the log and document the builder in `docs/prompt-logging.md`, where the capture script is described:
+```
+
+```text
+Builds cleanly. I'll read through the Tripo section of the generated file as a reader would see it:
+```
+
+```text
+Two wording problems. The Codex note landed under step 3 instead of step 2. And the animation paragraph says four walk clips, when it's three walk clips plus the death fall. Fixing both:
+```
+
+```text
+Now the check against the assignment list. Here are all the placeholders left for you to fill in:
+```
+
+```text
+I've written both documents and used the itch.io link in each. Nothing is committed yet.
+
+**[PROMPT_LOG.md](PROMPT_LOG.md)** follows the space-jumper master log's structure:
+1. **Tool inventory:** Claude Code on Claude Opus 5.5, Codex CLI with its image tool, Tripo Studio, the ElevenLabs API, and Unity.
+2. **Code development prompts:** scaffolding, the boots and curves, reward/damage/end, level design, polish, audio wiring, and the web build.
+3. **Tripo 3D assets, the main focus:**
+   - The pipeline from concept to reference images to Tripo to Unity.
+   - A table per asset with its reference images, Tripo route, credits and files.
+   - All 17 image prompts, verbatim.
+   - The prompts where you and I worked out each model.
+   - The four animation clips with what's recoverable of their Tripo prompts.
+4. **Audio:** all 13 in-game sound effects with their exact prompts and credits, the three rounds of options you chose between, and the music.
+5. **Trailer:** a placeholder.
+6. **Ten error-recovery incidents,** each with the prompt where you reported it, the cause and the fix.
+7. **Reflection:** a placeholder for you.
+8. **Asset attribution sheet,** with licence notes.
+9. **Appendix:** all 166 unique prompts in order, each with a one-line summary.
+
+**How it's built:** the curated sections live in `docs/master-prompt-log.template.md`. A new script, `scripts/build_master_log.py`, fills each quoted prompt verbatim from the captured log, so no prompt was retyped by hand. **Edit the template, not `PROMPT_LOG.md`, then run `python3 scripts/build_master_log.py`.** Do that once more just before you submit, to pick up the latest prompts.
+
+**Two quirks of the raw capture:**
+- It held 255 records, but 90 were duplicates: a continued session copies earlier prompts into its new transcript file. The appendix drops them.
+- Your mid-turn message renaming the game to "Mission: Apex Strike" was never captured, because messages sent while I'm working arrive differently. The appendix adds it as a note.
+
+**[README.md](README.md)** covers:
+- The play link, five screenshots and the controls, including gamepad.
+- How the game works and the chamber layout.
+- How to open, test and build the project.
+- The repository layout, explaining that each Tripo asset has a `Reference/` folder and a `Model/` folder with Tripo's original file names.
+- The AI tools inventory, reference items, and an attribution summary linking to the full sheet.
+
+**What you need to fill in, all marked with square brackets:**
+- **Tripo:**
+  - Your plan.
+  - Credits before and after, and per asset.
+  - The model version and route for each asset, such as multiview.
+  - The four full animation prompts. Tripo only kept the first 63 characters in the files.
+- **ElevenLabs:**
+  - Your plan.
+  - Your account balance before and after. I tracked 723 credits from the API, but the key can't read the balance.
+  - The music prompts and settings.
+- **Course:** the assignment title, and the trailer section.
+- **README:** any other references and moodboard links.
+- **The reflection.**
+
+**Licences worth reading:** Tripo's free plan makes your models public, under CC BY 4.0, and Tripo's help page reportedly says free-plan users don't get commercial rights. That page blocked my request, so the sheet attributes this and asks you to confirm your plan. Eleven Music's self-serve terms restrict use in commercial video games, so the sheet describes this as a non-commercial class project.
+
+**Optional:** the assignment mentions a GitHub Release as one way to provide the build. If you'd like that alongside itch.io, attach `Builds/MissionApexStrike-web.zip` to a release on GitHub.
+
+Sources:
+- [Tripo: how to use Tripo models commercially](https://www.tripo3d.ai/help/privacy-policy/how-to-use-tripo-models-commercially)
+- [Tripo: commercial use of AI 3D models](https://www.tripo3d.ai/blog/commercial-use-ai-3d-models)
+- [Tripo AI pricing (CostBench)](https://costbench.com/software/ai-3d-generation/tripo-ai/)
+- [ElevenLabs sound effects](https://elevenlabs.io/sound-effects/music)
+- [Eleven Music terms](https://elevenlabs.io/ja/eleven-music-v1-terms)
+```
+

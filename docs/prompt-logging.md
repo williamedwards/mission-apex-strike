@@ -22,3 +22,15 @@ Sources: Claude transcripts under `~/.claude/projects` and Codex sessions under
 `~/.codex`, for chats whose working directory is this checkout. Other worktrees
 and cloud-only chats are not included. Review the log before publishing, since
 it keeps exactly what you typed.
+
+## The master prompt log
+
+`PROMPT_LOG.md` at the repository root is the curated log for submission. Edit
+`docs/master-prompt-log.template.md`, then rebuild with
+`python3 scripts/build_master_log.py`. In the template, a `{{prompt:…}}`
+marker is replaced by the verbatim prompt containing that phrase, with its date
+and appendix number, so quotes can't drift from the record. The appendix lists
+every prompt once (copies a continued session carries into its new transcript
+are dropped), each with the first sentence of the agent's final reply. Rebuild
+after the last prompt you want included. Messages sent while the agent is
+mid-turn aren't captured; the template notes the one that matters.
