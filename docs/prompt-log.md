@@ -9081,3 +9081,57 @@ Your three picks are in the game, but I haven't heard them in a playtest, and no
 The stop clunk is mostly deep bass below 60 Hz. If you can't hear it on your speakers, platform stop B (the latch) is an easy swap.
 ```
 
+
+## 2026-10-28T17:46:35.698Z — claude — 629cb1a3ebc6
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:8c9babe9-50c3-4cec-9f2f-9529984690e0`
+
+### Prompt
+
+```text
+Alright, go ahead and commit these.
+```
+
+### Saved assistant responses
+
+```text
+Committed as `ed9b0b4`: the platform glide and stop sounds, the new sentry growl, and `KinematicMover`'s new `PathSpeed`. As usual, the ProBuilder settings file and the orphan `Model2.meta` are left out.
+```
+
+
+## 2026-10-28T17:49:09.928Z — claude — 3f751d672b5c
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:f7eed6cd-9b55-49e6-bec9-2eefffa7522a`
+
+### Prompt
+
+```text
+I now have two background music tracks (also generated in ElevenLabs), which I've placed in Audio/Background/Draft.  Could try experiencing those in the game?
+```
+
+### Saved assistant responses
+
+```text
+Both tracks are imported as streaming and listed in the bank. Next I'll check in Play mode that music starts and that Next Track crossfades:
+```
+
+```text
+Both tracks are in the game and ready to try, but nothing is committed yet.
+
+**How it plays:**
+- Music starts with the first scene you enter and keeps playing when you move between chambers, without restarting.
+- The tracks play in order, Hidden Chamber then Silent Chamber, repeating. Each crossfades into the next over 3 seconds near its end.
+- Both are set to stream from disk, so neither three-minute track sits fully in memory.
+
+**Switching tracks to compare them:** while playing, select the **Music** object under DontDestroyOnLoad in the Hierarchy. Right-click its MusicPlayer component in the Inspector and choose **Next Track** to crossfade to the other one straight away.
+
+**Settings:** the volume is 0.35, which sits the music under the sound effects. It's `musicVolume` in `Assets/_Project/Resources/SoundBank`. The order is the `music` list just above it: reorder it to start with the other track, or remove one to hear only that.
+
+**Checked in Chamber_04:**
+- Hidden Chamber started at full volume.
+- Next Track faded it out while Silent Chamber faded in to 0.35 over a few seconds.
+- Tests pass: EditMode 50 of 50, PlayMode 282 of 282. No console errors.
+
+My playtest record is deleted, and Chamber_04 is clean.
+```
+

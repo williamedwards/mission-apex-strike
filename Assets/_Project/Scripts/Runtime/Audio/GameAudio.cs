@@ -8,7 +8,8 @@ namespace GravBoots.Audio
 {
     /// <summary>
     /// Gives each scene its sound when it loads: the player, every sentry, elevator and moving
-    /// platform get their audio component, playing clips from the <see cref="SoundBank"/>.
+    /// platform get their audio component, playing clips from the <see cref="SoundBank"/>, and
+    /// the <see cref="MusicPlayer"/> starts with the first scene.
     /// Nothing is saved into scenes, so every chamber (and the test bed) sounds the same without
     /// editing them.
     /// </summary>
@@ -33,6 +34,7 @@ namespace GravBoots.Audio
             SoundBank bank = SoundBank.Load();
             if (bank == null)
                 return;
+            MusicPlayer.Ensure(bank);
             foreach (PlayerMotor motor in Object.FindObjectsByType<PlayerMotor>(FindObjectsSortMode.None))
                 if (!motor.TryGetComponent(out PlayerAudio _))
                     motor.gameObject.AddComponent<PlayerAudio>().Bind(bank);

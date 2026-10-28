@@ -45,6 +45,11 @@ namespace GravBoots.Audio
         [Tooltip("Plays as a platform comes to rest at an end.")]
         public Sound platformStop;
 
+        [Header("Music")]
+        [Tooltip("Played in order, crossfading from one to the next, across scene loads.")]
+        public AudioClip[] music = Array.Empty<AudioClip>();
+        [Range(0f, 1f)] public float musicVolume = 0.35f;
+
         public static SoundBank Load() => Resources.Load<SoundBank>("SoundBank");
     }
 }

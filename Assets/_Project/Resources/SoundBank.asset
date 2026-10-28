@@ -56,3 +56,7 @@ MonoBehaviour:
   platformStop:
     clip: {fileID: 8300000, guid: 7bf0a33c1a004800f80f567164e39a8b, type: 3}
     volume: 0.6
+  music:
+  - {fileID: 8300000, guid: 19b7b13c97254c670966672118118c7c, type: 3}
+  - {fileID: 8300000, guid: a1d371fdb1be41b8f8c55fa2984063da, type: 3}
+  musicVolume: 0.35
