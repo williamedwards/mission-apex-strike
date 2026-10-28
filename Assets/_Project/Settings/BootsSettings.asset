@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: GravBoots.Runtime::GravBoots.Player.BootsSettings
   followDegreesPerSecond: 300
   followMaxAngle: 45
-  magnetizedMoveSpeed: 1.5
-  magnetizedAcceleration: 10
+  magnetizedMoveSpeed: 3
+  magnetizedAcceleration: 20
   contactGrace: 0.12
   jumpWhileMagnetized: 0
   pushOffSpeed: 1.5

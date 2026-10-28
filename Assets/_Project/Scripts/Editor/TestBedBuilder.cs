@@ -34,7 +34,7 @@ namespace GravBoots.Editor
         const string EffectsFolder = Root + "/Art/Characters/Player/Effects";
         const string AnimationsFolder = Root + "/Art/Characters/Player/Animations";
         /// <summary>A clip anywhere under <see cref="AnimationsFolder"/> with this name drives the magnetized walk.</summary>
-        const string MagnetizedWalkClip = "DeliberateWalk";
+        const string MagnetizedWalkClip = "PurposefulWalk2";
         const string GridTexturePath = Root + "/Art/GreyboxGrid.png";
         const string PanelTexturePath = Root + "/Art/MagneticPanel.png";
         const string MaterialFolder = Root + "/Materials";
@@ -269,7 +269,10 @@ namespace GravBoots.Editor
                 animator.applyRootMotion = false;
                 animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
                 root.AddComponent<PlayerAnimation>().Bind(motor, animator, boots, magnetizedWalkSpeed, runClipSpeed);
-                character.AddComponent<FootPlanting>().Bind(motor, boots, animator);
+                // Off for now: pinning fought the walk cycle. Tick it on in play to compare.
+                var planting = character.AddComponent<FootPlanting>();
+                planting.Bind(motor, boots, animator);
+                planting.enabled = false;
                 BuildBootsGlow(root, boots, animator);
                 foreach (Transform t in root.GetComponentsInChildren<Transform>())
                     t.gameObject.layer = PlayerLayer;
@@ -502,7 +505,7 @@ namespace GravBoots.Editor
 
         /// <summary>
         /// The player's Animator: a Move blend tree (idle, walk, run by ground speed, run sped up
-        /// past its own pace), a MagnetizedMove one (idle and a walk, the deliberate walk from
+        /// past its own pace), a MagnetizedMove one (idle and a walk, the purposeful walk from
         /// <see cref="AnimationsFolder"/> if there is one, paced to keep stride with the ground), and an Air state that holds a jump pose picked by AirPhase.
         /// IK is on so <see cref="FootPlanting"/> can pin feet while magnetized.
         /// </summary>

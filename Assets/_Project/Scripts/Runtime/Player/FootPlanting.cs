@@ -50,9 +50,19 @@ namespace GravBoots.Player
         /// <summary>Whether the left (or right) foot is pinned now; for tests and debugging.</summary>
         public bool IsPinned(bool leftFoot) => (leftFoot ? left : right).Pinned;
 
+        void OnDisable()
+        {
+            // Animator IK weights reset each frame, so the feet return to the animation on their own.
+            foreach (Foot foot in new[] { left, right })
+            {
+                foot.Pinned = false;
+                foot.Weight = 0f;
+            }
+        }
+
         void OnAnimatorIK(int layerIndex)
         {
-            if (motor == null || animator == null)
+            if (!enabled || motor == null || animator == null)
                 return;
             bool active = boots != null && boots.IsMagnetized && motor.IsGrounded;
             Transform ground = motor.GroundCollider != null ? motor.GroundCollider.transform : null;
