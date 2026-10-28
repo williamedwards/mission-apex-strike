@@ -34,7 +34,7 @@ playtested each step.
 | Logic & debugging agent | Claude Code | Claude Opus 5.5 | Player motor, boots, camera, hazards, movers, level building, audio wiring, UI, fixes |
 | Engine automation | Unity CLI and Pipeline package (driven by Claude Code) | Unity 6000.5.9f1, URP | Running tests, driving the open Editor, captures, headless builds |
 | Concept / reference images | Codex CLI, invoked by Claude Code | GPT-6 Astra, built-in `image_gen` tool (OpenAI GPT Image; exact image model not recorded) | Front and back turnarounds as Tripo inputs (17 images) |
-| 3D models & animation | Tripo Studio (tripo3d.ai, Pro plan), used by the author | [Tripo model version] | Image-to-3D models, auto-rigging, preset and text-to-animation clips |
+| 3D models & animation | Tripo Studio (tripo3d.ai, Pro plan), used by the author | P2.0 | Image-to-3D models, auto-rigging, preset and text-to-animation clips |
 | Sound effects | ElevenLabs Sound Effects API (Creator plan), called by Claude Code | `eleven_text_to_sound_v2` | 13 in-game effects, from 31 generations |
 | Music | ElevenLabs (Creator plan), used by the author | Eleven Music | Two background tracks |
 | Audio and mesh analysis (non-generative) | ffmpeg, NumPy, Blender (headless) | — | Loudness and spectrum checks, cutting footsteps, inspecting FBX files |
@@ -210,13 +210,13 @@ below, including drafts and retries (Pro plan; not tracked per asset).
 
 | Asset | Reference images | Tripo route | In the project |
 | :--- | :--- | :--- | :--- |
-| Player character | `player_ref_02_front.png`, `player_ref_02_back.png` | [image-to-3D, multiview?] → auto-rig → animation | `Art/Characters/Player/Model/tripo_convert_b0228436…fbx` |
+| Player character | `player_ref_02_front.png`, `player_ref_02_back.png` | Image-to-3D from front and back views → auto-rig → animation | `Art/Characters/Player/Model/tripo_convert_b0228436…fbx` |
 | Player animations | — | Preset clips (Idle, Walk, Run, Jump) and text-to-animation (4 clips) | `Art/Characters/Player/Animations/*/` |
-| Sentry | `sentry_ref_02_front.png`, `sentry_ref_02_back.png` | [image-to-3D] with auto-segmentation (40 parts) | `Art/Hazards/Sentry/Model/spherical+robot+3d+model/` |
-| Tube elevator | `elevator_ref_04_front.png`, `elevator_ref_04_back.png` | [image-to-3D] | `Art/Level/Elevator/Model/futuristic portal 3d model/` |
-| Checkpoint pad | `checkpoint_ref_01.png` | [image-to-3D] | `Art/Level/Checkpoint/Model/futuristic platform 3d model/` |
-| Dark platform deck | `platform_dark_ref_02.png` | [image-to-3D] | `Art/Level/Platform/Model_Dark_Platform/` |
-| Light (magnetic) platform deck | `platform_magnetic_ref_02.png` | [image-to-3D] | `Art/Level/Platform/Model_Light_Platform/` |
+| Sentry | `sentry_ref_02_front.png`, `sentry_ref_02_back.png` | Image-to-3D from front and back views, auto-segmented (40 parts) | `Art/Hazards/Sentry/Model/spherical+robot+3d+model/` |
+| Tube elevator | `elevator_ref_04_front.png`, `elevator_ref_04_back.png` | Image-to-3D from front and back views | `Art/Level/Elevator/Model/futuristic portal 3d model/` |
+| Checkpoint pad | `checkpoint_ref_01.png` | Image-to-3D from one view | `Art/Level/Checkpoint/Model/futuristic platform 3d model/` |
+| Dark platform deck | `platform_dark_ref_02.png` | Image-to-3D from one view | `Art/Level/Platform/Model_Dark_Platform/` |
+| Light (magnetic) platform deck | `platform_magnetic_ref_02.png` | Image-to-3D from one view | `Art/Level/Platform/Model_Light_Platform/` |
 
 (Paths are under `Assets/_Project/`. Tripo's export names were kept; the folders say what each is.)
 
@@ -375,7 +375,6 @@ Claude Code generated every sound effect through the ElevenLabs API
 without printing it, and played options on a listening page. Every round was playtested in the
 game before the author chose. Credits came from the per-request cost header (the key couldn't
 read the account balance): **723 credits in total** over 31 generations.
-**Account balance:** before [ ] · after [ ].
 
 {{prompt:I'd like to generate sound effects to go with the game}}
 
@@ -589,8 +588,7 @@ Dark ambient background music with unsettling, sparse texture. Starts soft and g
 
 ## 6. Human-in-the-Loop Curation & Analytical Reflection
 
-[Reflection, 200–300 words: what the AI did, what you did, and where the engine changed the
-division of labour compared to PG2.]
+The game "Mission: Apex Strike" is a Unity game developed by human-AI collaboration using Claude Opus for planning and software development, ChatGPT Codex for reference image generation, Tripo AI for 3D asset generation, and ElevenLabs for music and sound effect generation.  As with the previous assignment, this game was developed via a highly iterative and conversational process.  My prompts guided the creation of the game mechanics, refined timing, animation, and mechanics for play feel, shaped level design at a high level, established an aesthetic starting point for reference art creation, and guided art refinement after initial drafts.  My playtesting surfaced issues that the AI couldn’t spot, including unnatural animations, difficult jump timing, and inaudible or inappropriate sounds, while the AI did the heavy lifting in code generation and level layout, with numerous automated tests created to ensure the mechanics were working smoothly and all the puzzles remained solvable.  I found the tests to be comprehensive and helpful, and was pleasantly surprised to find the level design to be quite usable.  One idea I explored, but did not end up incorporating into the final game, was using an AI-created level kit to manually place elements within the Unity Editor.  The level kit worked well, and I was able to build some very simple test environments using it, but I did not have time to build complex puzzle layouts suitable for in-game use.  Overall, the process of using Claude Code with Unity was mostly seamless, with Claude effectively driving the editor via CLI, running its own tests, and presenting scenes for feedback.  Although I suspect this project only scratched the surface of what a frontier engine like Unity can do, I feel empowered to explore its capabilities more deeply using agentic AI assistance in the future.
 
 ---
 

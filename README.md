@@ -1,7 +1,8 @@
 # Mission: Apex Strike
 
 **[Play in your browser on itch.io](https://aembear.itch.io/mission-apex-strike)** ·
-**[Master AI Prompt Log & Workflow Analysis](PROMPT_LOG.md)**
+**[Master AI Prompt Log & Workflow Analysis](PROMPT_LOG.md)** ·
+**Presentation: [PDF](presentations/Mission-Apex-Strike-Development.pdf) · [PowerPoint](presentations/Mission-Apex-Strike-Development.pptx)**
 
 ![Title screen: "MISSION: APEX STRIKE" over a test chamber with a sentry on a raised landing](docs/images/title-screen.jpg)
 
@@ -13,6 +14,15 @@ laser sentry, the only way to destroy one.
 
 Created by **William Edwards** for *AME 294: Games and AI*, built in Unity 6 with Claude Code,
 Tripo and ElevenLabs.
+
+## Presentation
+
+A 7–10 minute talk on the game's mechanics and how it was built: the 3D asset workflow from
+prompt to concept image to Tripo model, the problems human playtesting caught, and the
+"Human First, AI in the Middle, Human Last" workflow. Speaker notes are in the PowerPoint.
+
+- **[PDF slides](presentations/Mission-Apex-Strike-Development.pdf)**
+- **[PowerPoint slides](presentations/Mission-Apex-Strike-Development.pptx)**, with speaker notes
 
 ## Play
 
@@ -127,7 +137,7 @@ every prompt and reply.
 | :--- | :--- | :--- |
 | Claude Code (Claude desktop app) | Claude Opus 5.5 | All code, tests, level building, shader, audio wiring, UI, builds, documentation |
 | Codex CLI (invoked by Claude Code) | GPT-6 Astra with the built-in `image_gen` tool (OpenAI GPT Image) | 17 concept images used as Tripo inputs |
-| Tripo Studio (Pro plan) | [model version] | Player character, rig and 8 animation clips; sentry; tube elevator; checkpoint pad; two platform decks |
+| Tripo Studio (Pro plan) | P2.0 | Player character, rig and 8 animation clips; sentry; tube elevator; checkpoint pad; two platform decks |
 | ElevenLabs Sound Effects API (Creator plan) | `eleven_text_to_sound_v2` | 13 in-game sound effects (723 credits over 31 generations) |
 | ElevenLabs (Creator plan) | Eleven Music | Two background tracks |
 | Unity 6000.5.9f1 | URP, Cinemachine, Input System, ProBuilder | Engine |
@@ -139,14 +149,14 @@ every prompt and reply.
   enemies and moving elements that need precise timing. From the original brief: "3d with an
   over the shoulder view of the scene, the aesthetic is sci-fi/Portal style."
 - **Gameplay references:** *Portal*'s test chambers (one idea per room, then combinations, and
-  a clean, readable space); [add other references].
+  a clean, readable space).
 - **Target look:** bright white panelled test chambers with dark machinery and glowing blue
   accents; magnetic surfaces as bright bevelled panels, curves marked by chevrons; red for
   danger (sentry lines, the lethal landing marker) and shadowed voids for pits.
 - **Target sound:** subtle mechanical sci-fi: heel-toe footsteps on metal decks, a magnetic snap
   and hum for the boots, low and menacing sentries, quiet atmospheric music.
 - **Moodboard:** the concept images in each asset's `Reference/` folder under
-  `Assets/_Project/Art/`; [add any other moodboard images or links].
+  `Assets/_Project/Art/`.
 
 ## Asset attribution
 
