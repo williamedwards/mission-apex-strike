@@ -8469,4 +8469,76 @@ Commit
 
 ### Saved assistant responses
 
+```text
+I've committed it as `a3c85a8`. That includes the checkpoint model, its generated materials, all 18 chamber checkpoints, the builder change, the docs and the platform reference images.
+
+As before, I left out the ProBuilder settings file. The only other leftover is `Art/Hazards/Sentry/Model2.meta`. You seem to have deleted the duplicate `Model2` folder, so that `.meta` file is orphaned; it's safe to delete, and Unity will usually clean it up on its own next time it refreshes.
+
+Send the platform models over when they're ready.
+```
+
+
+## 2026-10-28T11:10:53.094Z — claude — 9713a0dbe0d0
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:55abd412-8ecc-4aec-ab55-7b8cf5dcf635`
+
+### Prompt
+
+```text
+Platform models are available now.
+```
+
+### Saved assistant responses
+
+```text
+Now the builder hook, used by both the test bed and the Level Kit's Moving Platform piece. Then compile.
+```
+
+```text
+It compiles. Next, swapping the seven decks in Chamber_03 and Chamber_04 through the Editor, with the usual unsaved-changes checks.
+```
+
+```text
+Chamber_04 now reloads clean and stays clean. Back to the in-game look.
+```
+
+```text
+Tests pass: EditMode 47 of 47 and PlayMode 282 of 282. One oddity: git doesn't list your platform model folders as new. Let me check where they stand.
+```
+
+```text
+Your platform models are on all the moving platforms. All tests pass: EditMode 47 of 47 and PlayMode 282 of 282.
+
+**What fits where:** every deck in use is square: two 3 m lifts, three 4 m ferries and three 4 m ceiling shuttles. The models went on as they are:
+- **Fit:** each model is stretched to its deck's width and flattened to the deck's 0.3 m, which is barely noticeable on a slab this thin. The tops are flat (the light one to within half a centimetre), and the corner blocks don't stand proud.
+- **Dark or light:** plain decks get the dark model and magnetic decks the light one, so you can tell at a glance which you can stick to.
+- **Collision:** unchanged. The deck's existing box, with its magnetic layer, still does it; its plain look is just hidden. Riding, sticking and the tests behave exactly as before.
+
+**How:**
+- **`DeckSkin`:** a small new component that keeps the model fitted to its deck, including when you resize a deck with the Level Kit's handles.
+- **`PlatformModel`:** an editor helper that puts the right model on each deck. The builder uses it, so new Moving Platform pieces get it too.
+- **Chambers:** I swapped all eight decks through the Editor, three in Chamber_03 and five in Chamber_04, and both scenes saved clean.
+
+**A bug I made and fixed:** the first version of `DeckSkin` re-hid the deck's plain look every time the scene loaded. Unity counts that as an edit, so Chamber_04 showed unsaved changes straight after saving. I caught it before entering Play mode. It now only changes what actually differs. I reloaded Chamber_04 from disk, since the save already had everything, and it stays clean.
+
+**Checked:**
+- **In game:** I stood on a ferry in Chamber_04. It shows the dark plated deck, and the game reports the player standing on it as before. My playtest records are deleted.
+- **Ceiling shuttle:** my in-game shot didn't work, because the floor under it is a lethal pit. Instead I rendered a copy of a shuttle beside a ferry: its light panels face down, the side you walk on upside down, with the trim round the edge.
+
+**Already committed:** your two platform model files went in with the checkpoint commit (`a3c85a8`), as I mentioned. They were already in the folder I added. What's left to commit is the swap itself: the two scenes, the two new scripts, the builder change and a note in `LEVEL_EDITING.md`.
+```
+
+
+## 2026-10-28T11:22:59.009Z — claude — fa48d5e746b3
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:b7b93bb5-5f67-4916-8a36-6edb5f8c2416`
+
+### Prompt
+
+```text
+Excellent, commit it.  Next step is I'd like to retexture the quarter-pipe segments so they look different from the regular magnetic wall.  I'm thinking darker grey with glowing blue arrow isignias indicating direction of motion.  Is tripo the best way for this, or do you think you could just retexture them by drawing with code?
+```
+
+### Saved assistant responses
+
 No response imported yet.

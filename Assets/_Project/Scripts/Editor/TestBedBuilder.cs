@@ -1295,10 +1295,11 @@ namespace GravBoots.Editor
             KinematicMover mover = Track(parent, name, localStart, localRotation, offsets, null, mode, speed, wait);
             var platform = new GameObject("Platform").transform;
             platform.SetParent(mover.transform, false);
-            if (magnetic)
-                MagBox(platform, "Deck", new Vector3(0f, -size.y * 0.5f, 0f), size, palette);
-            else
-                Box(platform, "Deck", new Vector3(0f, -size.y * 0.5f, 0f), size, palette.Blue);
+            GameObject deck = magnetic
+                ? MagBox(platform, "Deck", new Vector3(0f, -size.y * 0.5f, 0f), size, palette)
+                : Box(platform, "Deck", new Vector3(0f, -size.y * 0.5f, 0f), size, palette.Blue);
+            if (PlatformModel.Available)
+                PlatformModel.Apply(deck.GetComponent<GreyboxBox>());
             mover.platform = platform;
             mover.CachePath();
             mover.Evaluate(0f);

@@ -152,6 +152,8 @@ through the spawns in order while playing. That's handy for testing the far end 
 ### Moving platforms and tracks
 - **Moving Platform:** a deck that travels along a path of **Points**. The points are the
   mover's children, joined by a blue line in the Scene view.
+  - It looks like a machinery slab: dark plates for a plain deck, light panels for a magnetic
+    one. The look stretches to the deck's size when you resize it; square decks look best.
   - Move or rotate a point to reshape the path. The short line at each point is the platform's
     up there.
   - A platform whose points face down hangs from the ceiling. With magnetic decks, you can ride
