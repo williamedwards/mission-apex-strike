@@ -223,6 +223,26 @@ namespace GravBoots.Tests
         }
 
         [Test]
+        public void APlatformComingDownStepsThePlayerAside([ValueSource(nameof(Orientations))] Vector3 up)
+        {
+            // Standing under an elevator as it descends: never squeezed through the floor.
+            BuildFrame(up);
+            Box(frame, new Vector3(0f, -0.5f, 0f), new Vector3(40f, 1f, 40f));
+            KinematicMover mover = Mover(new[] { new Vector3(0f, 5f, 0f), new Vector3(0f, 0.3f, 0f) }, speed: 2f, wait: 0.5f);
+            SpawnPlayer(new Vector3(0.5f, 0f, 0.5f));
+            float lowest = float.MaxValue;
+
+            // 0.5 s pause, then 2.35 s down: at the bottom from 2.85 s to 3.35 s.
+            Run(3.1f, default, () => lowest = Mathf.Min(lowest, Local(motor.Position).y));
+
+            Assert.That(Local(mover.platform.position).y, Is.LessThan(0.35f), "the platform came all the way down");
+            Assert.That(lowest, Is.GreaterThan(-0.1f), "never pushed into the floor");
+            Assert.That(motor.IsGrounded, Is.True);
+            Vector3 local = Local(motor.Position);
+            Assert.That(Mathf.Max(Mathf.Abs(local.x), Mathf.Abs(local.z)), Is.GreaterThan(2f), "stepped out from under it");
+        }
+
+        [Test]
         public void JumpingOffKeepsThePlatformsVelocity([ValueSource(nameof(Orientations))] Vector3 up)
         {
             BuildFrame(up);

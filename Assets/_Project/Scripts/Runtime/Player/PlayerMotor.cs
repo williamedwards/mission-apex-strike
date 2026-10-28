@@ -41,6 +41,7 @@ namespace GravBoots.Player
 
         readonly RaycastHit[] hits = new RaycastHit[16];
         readonly Collider[] overlaps = new Collider[16];
+        readonly Collider[] sideStepOverlaps = new Collider[16];
 
         public MotorSettings Settings { get => settings; set => settings = value; }
         public LayerMask CollisionMask { get => collisionMask; set => collisionMask = value; }
@@ -447,6 +448,14 @@ namespace GravBoots.Player
                             other, other.transform.position, other.transform.rotation,
                             out Vector3 direction, out float distance))
                     {
+                        // Pushed down into what we stand on (a platform coming down on us): step
+                        // out from under it instead of being squeezed through the floor.
+                        if (Vector3.Dot(direction, gravity.Up) < -0.3f && TrySideStep(other, out Vector3 sideStep))
+                        {
+                            position += sideStep;
+                            moved = true;
+                            continue;
+                        }
                         position += direction * (distance + 0.001f);
                         if (Vector3.Dot(velocity, direction) < 0f)
                             velocity = Vector3.ProjectOnPlane(velocity, direction);
@@ -456,6 +465,47 @@ namespace GravBoots.Player
                 if (!moved)
                     break;
             }
+        }
+
+        /// <summary>
+        /// The shortest move across Up (in eight directions, out to 3 m) that clears
+        /// <paramref name="other"/> without ending up inside anything else.
+        /// </summary>
+        bool TrySideStep(Collider other, out Vector3 offset)
+        {
+            offset = Vector3.zero;
+            Vector3 up = gravity.Up;
+            Vector3 across = Vector3.ProjectOnPlane(rotation * Vector3.forward, up);
+            if (across.sqrMagnitude < 1e-4f)
+                across = Vector3.ProjectOnPlane(rotation * Vector3.right, up);
+            across.Normalize();
+            const float stepSize = 0.2f, maxDistance = 3f;
+            for (float d = stepSize; d <= maxDistance + 1e-3f; d += stepSize)
+            {
+                for (int k = 0; k < 8; k++)
+                {
+                    Vector3 candidate = Quaternion.AngleAxis(45f * k, up) * across * d;
+                    Vector3 at = position + candidate;
+                    if (Physics.ComputePenetration(capsule, at, rotation, other, other.transform.position, other.transform.rotation, out _, out _))
+                        continue;
+                    if (OverlapsAnything(at))
+                        continue;
+                    offset = candidate;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        bool OverlapsAnything(Vector3 at)
+        {
+            GetCapsule(at, out Vector3 top, out Vector3 bottom, out float radius);
+            int count = Physics.OverlapCapsuleNonAlloc(top, bottom, radius - settings.skinWidth, sideStepOverlaps, collisionMask,
+                QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < count; i++)
+                if (sideStepOverlaps[i] != capsule)
+                    return true;
+            return false;
         }
 
         void GetCapsule(Vector3 atPosition, out Vector3 top, out Vector3 bottom, out float radius)
