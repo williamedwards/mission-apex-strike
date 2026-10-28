@@ -67,7 +67,13 @@ namespace GravBoots.Hazards
         /// <paramref name="aimPoint"/> is where to aim, in the plane, to hit the capsule.
         /// </summary>
         public static bool CapsuleInSlab(Vector3 foot, Vector3 up, float height, float radius,
-            Vector3 planePoint, Vector3 planeNormal, float halfThickness, out Vector3 aimPoint)
+            Vector3 planePoint, Vector3 planeNormal, float halfThickness, out Vector3 aimPoint) =>
+            CapsuleInSlab(foot, up, height, radius, planePoint, planeNormal, halfThickness, out aimPoint, out _);
+
+        /// <inheritdoc cref="CapsuleInSlab(Vector3, Vector3, float, float, Vector3, Vector3, float, out Vector3)"/>
+        /// <param name="bodyPoint">The point on the capsule's axis nearest the plane (for line of sight to the body itself).</param>
+        public static bool CapsuleInSlab(Vector3 foot, Vector3 up, float height, float radius,
+            Vector3 planePoint, Vector3 planeNormal, float halfThickness, out Vector3 aimPoint, out Vector3 bodyPoint)
         {
             Vector3 a = foot + up * radius;
             Vector3 b = foot + up * Mathf.Max(radius, height - radius);
@@ -93,6 +99,7 @@ namespace GravBoots.Hazards
                 nearest = aCloser ? a : b;
                 distance = Mathf.Abs(aCloser ? sa : sb);
             }
+            bodyPoint = nearest;
             aimPoint = nearest - planeNormal * Vector3.Dot(nearest - planePoint, planeNormal);
             return distance <= radius + halfThickness;
         }

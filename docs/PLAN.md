@@ -262,8 +262,13 @@ the boots and readability here.
 Supporting pieces:
 - `Hazards/Sentry.cs` (it replaced the 3D-aiming turret in the chamber):
   - It sees and shoots only in the plane parallel to its surface, 1 m up.
-  - States: Idle → Lock (it notices you anywhere in its plane and turns to face you) → Charge,
-    with the aim locking for the last 0.2 s → Fire, which kills in one hit → Cooldown.
+  - States: Idle → Lock (it notices you within 1.2 m of its plane, all round, and turns to
+    face you) → Charge, then it holds → Fire, the instant your body is in the plane; one hit
+    kills → Cooldown.
+  - Charged while you're near the plane, so stepping, falling or jumping into it is an instant
+    shot. Walking in from out of view takes about 0.25 s, and it keeps its charge for 0.6 s
+    after losing you. The design intent is that the player never enters its plane, and speed
+    is no escape.
   - A stomp from a drop destroys it for good. It crumbles into rubble round a stump
     (`SentryWreck`, `DebrisChunk`).
 - `Hazards/Turret.cs`: the earlier placeholder. It aims in 3D and does 50 damage per hit. It

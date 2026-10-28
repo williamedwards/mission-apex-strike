@@ -175,30 +175,90 @@ namespace GravBoots.Tests
 
             Run(0.1f);
             Assert.That(sentry.State, Is.EqualTo(SentryState.Lock), "notices anyone in its plane, all round");
-            Run(sentry.LockTime);
-            Assert.That(sentry.State, Is.EqualTo(SentryState.Lock), "still turning round");
             Assert.That(health.IsDead, Is.False);
 
-            Run(1.5f);
-            Assert.That(health.IsDead, Is.True);
+            Run(0.8f);
+            Assert.That(health.IsDead, Is.True, "turns round and fires within a second");
         }
 
         [Test]
-        public void SteppingAsideDuringTheAimLockDodges([ValueSource(nameof(Orientations))] Vector3 up)
+        public void RunningAcrossItsPlaneDoesNotEscape([ValueSource(nameof(Orientations))] Vector3 up)
         {
+            // Sprinting sideways at full speed, 4 m in front of it: it tracks and still hits.
             BuildFrame(up);
             Floor();
-            SpawnPlayer(new Vector3(0f, 0f, 10f));
+            SpawnPlayer(new Vector3(-3f, 0f, 4f));
             PlaceSentry(Vector3.zero, Vector3.forward);
             bool? hit = null;
             sentry.Fired += h => hit = h;
 
-            Run(TimeToShot - sentry.AimLockTime + Dt);
-            Assert.That(sentry.State, Is.EqualTo(SentryState.Charge));
-            Run(sentry.AimLockTime + 0.05f, Vector2.right);
+            Run(1f, Vector2.right);
 
-            Assert.That(hit, Is.False);
-            Assert.That(health.IsDead, Is.False);
+            Assert.That(hit, Is.True);
+            Assert.That(health.IsDead, Is.True);
+        }
+
+        [Test]
+        public void KillsWithinHalfASecondOfEnteringItsPlane([ValueSource(nameof(Orientations))] Vector3 up)
+        {
+            BuildFrame(up);
+            Floor();
+            SpawnPlayer(new Vector3(0f, 0f, 8f));
+            PlaceSentry(Vector3.zero, Vector3.forward);
+            float time = 0f;
+            while (!health.IsDead && time < 2f)
+            {
+                Run(Dt);
+                time += Dt;
+            }
+            Assert.That(health.IsDead, Is.True);
+            Assert.That(time, Is.LessThan(0.35f));
+        }
+
+        [Test]
+        public void JumpingInAndOutOfItsPlaneDoesNotShakeIt([ValueSource(nameof(Orientations))] Vector3 up)
+        {
+            BuildFrame(up);
+            Floor();
+            SpawnPlayer(new Vector3(0f, 0f, 6f));
+            PlaceSentry(Vector3.zero, Vector3.forward);
+
+            for (int i = 0; i < 120 && !health.IsDead; i++)
+            {
+                if (motor.IsGrounded)
+                    motor.RequestJump();
+                Run(Dt);
+            }
+
+            Assert.That(health.IsDead, Is.True);
+        }
+
+        [Test]
+        public void ChargesWhileYouAreNearItsPlaneAndFiresTheMomentYouEnter([ValueSource(nameof(Orientations))] Vector3 up)
+        {
+            // On a ledge just above the plane: tracked and charged, but not shot. Step off
+            // into the plane and the shot is immediate.
+            BuildFrame(up);
+            Floor();
+            Box(new Vector3(0f, 0.95f, 7f), new Vector3(4f, 1.9f, 4f));
+            SpawnPlayer(new Vector3(0f, 1.9f, 6f));
+            PlaceSentry(Vector3.zero, Vector3.forward);
+
+            Run(1.5f);
+            Assert.That(health.IsDead, Is.False, "near the plane is safe");
+            Assert.That(sentry.State, Is.EqualTo(SentryState.Charge), "but it's tracking you, charged");
+
+            float inPlaneFor = -1f;
+            for (int i = 0; i < 120 && !health.IsDead; i++)
+            {
+                Run(Dt, Vector2.down);
+                bool inPlane = BeamMath.CapsuleInSlab(motor.Position, motor.BodyUp, 1.8f, 0.35f,
+                    sentry.Eye, sentry.transform.up, 0.15f, out _);
+                if (inPlane || inPlaneFor >= 0f)
+                    inPlaneFor = Mathf.Max(0f, inPlaneFor) + Dt;
+            }
+            Assert.That(health.IsDead, Is.True);
+            Assert.That(inPlaneFor, Is.LessThan(0.05f), "shot as soon as it entered the plane");
         }
 
         [Test]

@@ -90,9 +90,18 @@ through the spawns in order while playing. That's handy for testing the far end 
   stands on.
 - It stands still until your body reaches into its plane, in range and in line of sight, from
   any direction. Then it turns to face you, charges and fires. One hit kills.
-- It charges only once it's facing you, so being behind it buys a moment.
-- In the last fifth of a second of the charge the light turns white and stops aiming: step
-  aside or leave the plane.
+- **It notices you before you reach the plane:** anywhere within 1.2 m of it (**Alert Half
+  Thickness**), in range and in sight.
+  - It turns, locks on and charges, then holds.
+  - The instant any part of you enters the plane, it fires. Stepping off a ledge into it,
+    falling into it or jumping in and out all mean an instant shot.
+- **From out of its view:** walking straight into its plane takes about a quarter of a second
+  to the shot.
+- **No escape by speed:** it keeps its charge for 0.6 s after losing you, so ducking in and
+  out doesn't help.
+- **Design rule:** treat the red line as somewhere the player must never be. Being near it is
+  safe, though the sentry tracks you with its sight, which makes for good tension on a
+  walkway just above one.
 - The red line traced round the room is where its plane meets surfaces. The same line shows in
   the Scene view while you edit, so you can see what it covers.
 - **Counterplay is changing surface.** Climb a wall above the line, or walk the ceiling over it.
@@ -112,8 +121,12 @@ through the spawns in order while playing. That's handy for testing the far end 
 - In the Inspector:
   - **Range** (14 m): how far its plane reaches.
   - **Lock Degrees Per Second**: how fast it turns to face you.
-  - **Charge Time** and **Aim Lock Time**: the warning before a shot, and the last part of it,
-    when the aim is frozen and stepping aside dodges.
+  - **Lock Time** (0.1 s), **Lock Degrees Per Second** (1080) and **Charge Time** (0.15 s): how
+    quickly it's ready.
+  - **Alert Half Thickness** (1.2 m): how far either side of the plane it notices you.
+  - **Lose Sight Grace** (0.6 s): how long it keeps its charge after losing you.
+  - **Aim Lock Time** (0): above 0, it stops tracking for the end of the charge and fires
+    then, wherever you are. That gives a dodge window, for a gentler variant.
 
 ### Moving platforms and tracks
 - **Moving Platform:** a deck that travels along a path of **Points**. The points are the

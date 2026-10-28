@@ -2188,6 +2188,7 @@ MonoBehaviour:
   targetColor: {r: 1, g: 0.8, b: 0.15, a: 1}
   minimumTilt: 20
   maxDistance: 200
+  targetSearchRadius: 1.2
 --- !u!4 &694536926
 Transform:
   m_ObjectHideFlags: 0
@@ -4787,13 +4788,14 @@ MonoBehaviour:
   range: 11
   eyeHeight: 1
   planeHalfThickness: 0.15
-  lockTime: 0.35
-  lockDegreesPerSecond: 270
-  chargeTime: 0.6
-  aimLockTime: 0.2
+  alertHalfThickness: 1.2
+  lockTime: 0.1
+  lockDegreesPerSecond: 1080
+  chargeTime: 0.15
+  aimLockTime: 0
   fireTime: 0.15
   cooldownTime: 1
-  loseSightGrace: 0.2
+  loseSightGrace: 0.6
   beamRadius: 0.08
   headTop: 1.3
   stompRadius: 1.1
@@ -5501,13 +5503,14 @@ MonoBehaviour:
   range: 7
   eyeHeight: 1
   planeHalfThickness: 0.15
-  lockTime: 0.35
-  lockDegreesPerSecond: 270
-  chargeTime: 0.6
-  aimLockTime: 0.2
+  alertHalfThickness: 1.2
+  lockTime: 0.1
+  lockDegreesPerSecond: 1080
+  chargeTime: 0.15
+  aimLockTime: 0
   fireTime: 0.15
   cooldownTime: 1
-  loseSightGrace: 0.2
+  loseSightGrace: 0.6
   beamRadius: 0.08
   headTop: 1.3
   stompRadius: 1.1

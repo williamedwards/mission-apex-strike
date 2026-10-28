@@ -15,11 +15,15 @@ namespace GravBoots.Hazards
     /// The plane makes orientation the counterplay: on the same surface you're exposed, on a
     /// wall you're only exposed where the plane crosses it (a red line drawn round the room
     /// shows where), and on the ceiling above you're safe and in position to drop on it.
-    /// Idle until the player's body reaches into the plane, in range and line of sight,
-    /// anywhere around it. Lock (turns to face you; it only charges once facing you, so being
-    /// behind it buys time) → Charge (the sight flickers; for the last
-    /// <see cref="aimLockTime"/> it holds its aim on the point it locked and turns white, so
-    /// stepping aside or leaving the plane dodges) → Fire → Cooldown → Idle. A stomp sets off <see cref="SentryWreck"/>.
+    /// It notices you before you reach the plane: anywhere within <see cref="alertHalfThickness"/>
+    /// of it, in range and line of sight, all round. Lock (turns to face you, fast) → Charge
+    /// (the sight flickers) → charged, it holds and fires the instant your body is in the plane
+    /// → Fire → Cooldown → Idle. It keeps its charge for <see cref="loseSightGrace"/> after
+    /// losing you. So stepping, falling or jumping into the plane near it is met with an instant
+    /// shot, and even walking straight in from out of its view takes only about a quarter of a
+    /// second: the plane is somewhere the player should never be.
+    /// (<see cref="aimLockTime"/> above 0 freezes the aim, on a point, for the end of the
+    /// charge: a dodge window for a gentler variant.) A stomp sets off <see cref="SentryWreck"/>.
     /// A stomp needs the player landing on its head moving at least <see cref="stompSpeed"/>
     /// toward it, so walking onto it doesn't count. Drops fall to the world floor, so only
     /// floor sentries can be stomped. The stomp is checked on the player motor's
@@ -45,19 +49,24 @@ namespace GravBoots.Hazards
         [SerializeField] float range = 14f;
         [Tooltip("Height of the firing plane above the surface the sentry stands on.")]
         [SerializeField] float eyeHeight = 1f;
-        [Tooltip("Half the thickness of the plane it sees and shoots in.")]
+        [Tooltip("Half the thickness of the plane it shoots in (the red line).")]
         [SerializeField] float planeHalfThickness = 0.15f;
+        [Tooltip("How far either side of that plane it notices you: it locks on and charges while you're near the plane, so stepping, falling or jumping into it is met with an instant shot.")]
+        [SerializeField] float alertHalfThickness = 1.2f;
 
         [Header("Attack")]
         [Tooltip("Minimum time from noticing the player to charging.")]
-        [SerializeField] float lockTime = 0.35f;
+        [SerializeField] float lockTime = 0.1f;
         [Tooltip("How fast it turns to face the player; it charges only once facing them.")]
-        [SerializeField] float lockDegreesPerSecond = 270f;
-        [SerializeField] float chargeTime = 0.6f;
-        [SerializeField] float aimLockTime = 0.2f;
+        [SerializeField] float lockDegreesPerSecond = 1080f;
+        [Tooltip("Time to charge; once charged it fires the moment you're in its plane.")]
+        [SerializeField] float chargeTime = 0.15f;
+        [Tooltip("The end of the charge during which it stops tracking (a window to dodge). 0: it tracks until it fires, so only leaving its plane escapes.")]
+        [SerializeField] float aimLockTime = 0f;
         [SerializeField] float fireTime = 0.15f;
         [SerializeField] float cooldownTime = 1f;
-        [SerializeField] float loseSightGrace = 0.2f;
+        [Tooltip("How long it keeps its lock and charge after losing you (so ducking in and out doesn't reset it).")]
+        [SerializeField] float loseSightGrace = 0.6f;
         [SerializeField] float beamRadius = 0.08f;
 
         [Header("Stomp")]
@@ -183,7 +192,7 @@ namespace GravBoots.Hazards
             aimFrame = transform.rotation;
 
             stateTime += deltaTime;
-            bool sees = CanSee(out Vector3 toTarget);
+            bool sees = CanSee(out Vector3 toTarget, out bool inPlane);
             unseenTime = sees ? 0f : unseenTime + deltaTime;
             bool lost = unseenTime > loseSightGrace;
 
@@ -208,14 +217,17 @@ namespace GravBoots.Hazards
                         SetState(SentryState.Idle);
                     else
                     {
-                        if (stateTime < chargeTime - aimLockTime)
+                        bool aimFrozen = aimLockTime > 0f && stateTime >= chargeTime - aimLockTime;
+                        if (aimFrozen)
+                            AimAt(lockedPoint);
+                        else
                         {
                             TurnToward(toTarget, sees, deltaTime);
                             lockedPoint = Eye + aim * targetDistance;
                         }
-                        else
-                            AimAt(lockedPoint);
-                        if (stateTime >= chargeTime)
+                        // Charged: fire the moment you're in the plane (or, for the gentler
+                        // aim-lock variant, at the end of the charge wherever you are).
+                        if (stateTime >= chargeTime && (aimLockTime > 0f || sees && inPlane))
                         {
                             SetState(SentryState.Fire);
                             Shoot();
@@ -259,23 +271,33 @@ namespace GravBoots.Hazards
                 aim = Vector3.RotateTowards(aim, toTarget, lockDegreesPerSecond * Mathf.Deg2Rad * deltaTime, 0f).normalized;
         }
 
-        /// <summary>Whether the player's body reaches into the plane, in range and in line of sight; <paramref name="toTarget"/> lies in the plane.</summary>
-        bool CanSee(out Vector3 toTarget)
+        /// <summary>
+        /// Whether the player's body is near the plane (within the alert zone), in range and in
+        /// line of sight; <paramref name="inPlane"/> says whether it actually reaches into the
+        /// firing plane. <paramref name="toTarget"/> lies in the plane.
+        /// </summary>
+        bool CanSee(out Vector3 toTarget, out bool inPlane)
         {
             toTarget = aim;
+            inPlane = false;
             if (target == null || targetHealth != null && targetHealth.IsDead)
                 return false;
             Vector3 eye = Eye;
             if (!BeamMath.CapsuleInSlab(target.Position, target.BodyUp, capsuleHeight, capsuleRadius,
-                    eye, transform.up, planeHalfThickness, out Vector3 aimPoint))
+                    eye, transform.up, Mathf.Max(alertHalfThickness, planeHalfThickness), out Vector3 aimPoint, out Vector3 bodyPoint))
                 return false;
+            inPlane = BeamMath.CapsuleInSlab(target.Position, target.BodyUp, capsuleHeight, capsuleRadius,
+                eye, transform.up, planeHalfThickness, out _);
             Vector3 offset = aimPoint - eye;
             float distance = offset.magnitude;
             if (distance > range || distance < 0.01f)
                 return false;
             toTarget = offset / distance;
             targetDistance = distance;
-            return ObstacleDistance(eye, toTarget, distance) >= distance - capsuleRadius;
+            // Line of sight to the body itself, which may be above or below the plane.
+            Vector3 toBody = bodyPoint - eye;
+            float bodyDistance = toBody.magnitude;
+            return bodyDistance < 0.01f || ObstacleDistance(eye, toBody / bodyDistance, bodyDistance) >= bodyDistance - capsuleRadius;
         }
 
         void Shoot()
