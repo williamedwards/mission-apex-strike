@@ -274,6 +274,31 @@ Supporting pieces:
 **To run the gate:** a first-time player plays without help; watch where they hesitate, then
 review the records in the Scene view.
 
+### Onboarding chamber (built: `Levels/Chamber_04.unity`)
+A longer level that introduces one idea per room, then combines them. Eleven rooms are joined by
+short corridors, each with a checkpoint.
+1. **Walk:** a 2 m jump over a shallow, safe pit, with steps back out.
+2. **Boots:** switch on at a magnetic patch; the gap after it needs the boots off to jump.
+3. **First curve:** a ledge, half with a quarter-pipe and half with a sharp corner that can't
+   be climbed.
+4. **Ceiling:** up onto the ceiling over a lethal floor, then the first drop. The marker shows
+   red over the lethal floor and blue over the landing.
+5. **Over the edge:** a block with rounded top edges: up, over and down the far side.
+6. **Drop with stakes:** a ceiling route to the only drop onto an island in a death pit, then a
+   climb to the exit.
+7. **Platforms:** an elevator, then a ferry over a pit.
+8. **Upside down:** a ceiling shuttle; drop off at the far end.
+9. **Meet a sentry:** a walkway above its plane. A gap forces a detour along the wall to stay
+   out of it.
+10. **Stomp:** a sentry guards the floor; drop on it from the ceiling, using the gold marker.
+11. **Finale:** a ceiling shuttle and a patrolling sentry share a 12 s cycle, so the stomp lines
+    up. Then a ferry to the exit.
+
+A scripted run gets through every room without dying, in about 130 s of game time.
+
+**Still missing:** a way to tell the player the controls in the early rooms, for example signs
+or a key prompt. Rooms 1 and 2 assume they know Space jumps and E toggles the boots.
+
 ### Phase 3: Moving elements and timing hazards (movers built; hazards to come)
 **Built:**
 - **`KinematicMover`:**
