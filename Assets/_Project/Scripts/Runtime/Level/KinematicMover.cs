@@ -31,12 +31,15 @@ namespace GravBoots.Level
         Quaternion[] rotations;
         float[] cumulative;
         float triggerTime = -1f;
+        float lastTime = float.NaN, lastDistance;
         PlayerMotor rider;
 
         public float Length => cumulative != null && cumulative.Length > 0 ? cumulative[cumulative.Length - 1] : 0f;
         public bool Triggered => triggerTime >= 0f;
         /// <summary>The platform is at the last point of its path (as of the last evaluation).</summary>
         public bool AtEnd { get; private set; }
+        /// <summary>Speed along the path (m/s) between the last two evaluations; 0 while paused.</summary>
+        public float PathSpeed { get; private set; }
 
         void OnEnable()
         {
@@ -98,10 +101,28 @@ namespace GravBoots.Level
             }
             float distance = MoverPath.Distance(local, Length, speed, wait, mode);
             AtEnd = Length > 0f && distance >= Length - 1e-4f;
+            TrackSpeed(time, distance);
             MoverPath.Sample(positions, rotations, cumulative, distance, out Vector3 position, out Quaternion rotation);
             // Only when it changes, so the editor doesn't keep marking the scene modified.
             if (platform.position != position || platform.rotation != rotation)
                 platform.SetPositionAndRotation(position, rotation);
+        }
+
+        void TrackSpeed(float time, float distance)
+        {
+            float dt = time - lastTime;
+            if (dt > 0f)
+            {
+                float moved = Mathf.Abs(distance - lastDistance);
+                // A loop wraps from its end back to its start, which is the same place.
+                if (mode == MoverMode.Loop)
+                    moved = Mathf.Min(moved, Length - moved);
+                PathSpeed = moved / dt;
+            }
+            else if (dt < 0f)
+                PathSpeed = 0f;
+            lastTime = time;
+            lastDistance = distance;
         }
 
         /// <summary>The clock went back to <paramref name="time"/>: forget a trigger that came later.</summary>

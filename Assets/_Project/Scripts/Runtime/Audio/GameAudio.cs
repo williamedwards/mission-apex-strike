@@ -7,9 +7,10 @@ using UnityEngine.SceneManagement;
 namespace GravBoots.Audio
 {
     /// <summary>
-    /// Gives each scene its sound when it loads: the player, every sentry and every elevator get
-    /// their audio component, playing clips from the <see cref="SoundBank"/>. Nothing is saved
-    /// into scenes, so every chamber (and the test bed) sounds the same without editing them.
+    /// Gives each scene its sound when it loads: the player, every sentry, elevator and moving
+    /// platform get their audio component, playing clips from the <see cref="SoundBank"/>.
+    /// Nothing is saved into scenes, so every chamber (and the test bed) sounds the same without
+    /// editing them.
     /// </summary>
     public static class GameAudio
     {
@@ -41,6 +42,20 @@ namespace GravBoots.Audio
             foreach (Elevator elevator in Object.FindObjectsByType<Elevator>(FindObjectsSortMode.None))
                 if (!elevator.TryGetComponent(out ElevatorAudio _))
                     elevator.gameObject.AddComponent<ElevatorAudio>().Bind(bank);
+            foreach (KinematicMover mover in Object.FindObjectsByType<KinematicMover>(FindObjectsSortMode.None))
+                if (IsPlatform(mover) && !mover.TryGetComponent(out PlatformAudio _))
+                    mover.gameObject.AddComponent<PlatformAudio>().Bind(bank);
+        }
+
+        /// <summary>A mover the player rides: not an elevator's (it has its own sounds), nor a sentry's track.</summary>
+        static bool IsPlatform(KinematicMover mover)
+        {
+            if (mover.platform == null || mover.platform.GetComponentInChildren<Sentry>() != null)
+                return false;
+            foreach (Elevator elevator in Object.FindObjectsByType<Elevator>(FindObjectsSortMode.None))
+                if (elevator.mover == mover)
+                    return false;
+            return true;
         }
 
         /// <summary>An audio source on <paramref name="host"/>: flat (2D) for the player's own sounds, positioned (3D) for things in the world.</summary>

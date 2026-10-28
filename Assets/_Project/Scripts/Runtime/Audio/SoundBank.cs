@@ -39,6 +39,12 @@ namespace GravBoots.Audio
         public Sound elevatorLoop;
         public Sound elevatorStop;
 
+        [Header("Moving platforms")]
+        [Tooltip("Loops while a platform moves, louder the faster it goes.")]
+        public Sound platformLoop;
+        [Tooltip("Plays as a platform comes to rest at an end.")]
+        public Sound platformStop;
+
         public static SoundBank Load() => Resources.Load<SoundBank>("SoundBank");
     }
 }

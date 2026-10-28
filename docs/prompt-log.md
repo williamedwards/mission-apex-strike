@@ -8997,3 +8997,87 @@ If the steps now feel slightly late, the 40 ms in the clip before the heel click
 Nothing is committed yet. That covers footstep D, boot-on A, hum B and this timing fix.
 ```
 
+
+## 2026-10-28T17:35:46.041Z — claude — b1be6ec2cd22
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:f17ee99c-c57e-4f8e-9de0-189bd1a14962`
+
+### Prompt
+
+```text
+Commit these.  Let's also try generating some mechanical/sliding sounds for the platforms as well as some more sentry activation options (may try some lower pitch, more menacing).
+```
+
+### Saved assistant responses
+
+```text
+Committed (`dcc8544`). Platforms ping-pong with a pause at each end, so I'm generating two kinds of sound: a sliding loop for while they move, and a stop clunk for each end.
+```
+
+```text
+Generated, for 189 credits. Next I'll check the frequency content, since "lower pitch" risks the same sub-bass problem the hum had:
+```
+
+```text
+I committed the new sounds and the footstep timing as `dcc8544`, then generated the new options. They're on the listening page above, with the current sentry sound included for comparison. This round cost 189 credits, bringing the total to **723**.
+
+**Platforms.** They move back and forth with a pause at each end, so there are two parts:
+- **Movement loop, while moving:**
+  - A, rail: a grinding glide with a servo whir, all mid and high frequencies.
+  - B, maglev: a levitation whoosh with a hum and hiss.
+  - C, track: a rhythmic roller clatter over a motor drone.
+- **Stop, at each end:**
+  - A, clunk: a deep clunk and hiss, but mostly below 60 Hz.
+  - B, latch: a servo wind-down and a latch click.
+
+**Sentry activation, lower and more menacing:**
+- A, growl: a deep mechanical growl into a low thrum.
+- B, drone: a swelling bass drone.
+- C, servo: a heavy servo turning, then a lock-on tone.
+- D, horn: a low distorted alarm blare.
+
+Two of these, sentry B and platform stop A, are mostly deep bass below 60 Hz, like the old hum, so they may vanish on headphones or laptop speakers. Sentry A and D are low but sit in a range most speakers reproduce.
+
+Once you pick, I'll add platform sound the same way the elevators work: it attaches at runtime with no scene edits.
+```
+
+
+## 2026-10-28T17:39:53.618Z — claude — c7f510afe801
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:38d244da-3d6b-43fe-a4b2-5888f02f6426`
+
+### Prompt
+
+```text
+Let's try sentry activation A, platform stop A, and platform movement B.
+```
+
+### Saved assistant responses
+
+```text
+Rewrapping that doc comment, then importing the clips:
+```
+
+```text
+Bank set. Now a check in Play mode in Chamber_04 (scene clean, not playing). First I'll find where playtest records go, so I can delete mine afterwards:
+```
+
+```text
+Your three picks are in the game, but I haven't heard them in a playtest, and nothing is committed yet.
+
+- **Sentry activation A (the growl):** it replaces the old alert at volume 0.45. That's lower than the old 0.6 because this clip is much louder.
+- **Platform movement B (maglev) and stop A (clunk):** a new `PlatformAudio` component attaches at runtime, the same way the elevator sound does. Both sounds play from the platform itself, so they fade with distance.
+  - The glide loop swells and fades with the platform's speed, following its ease in and out, with a slight pitch rise at full speed.
+  - The clunk plays when the platform comes to rest at each end.
+  - Each platform starts its loop at a random point, so several platforms don't drone in unison.
+- **How the platform sound knows the speed:** `KinematicMover` now reports a `PathSpeed`, measured between its fixed-rate ticks. A per-frame position check would flicker on and off.
+- **What gets platform sound:** elevators keep their own sounds, and sentry tracks are skipped. In Chamber_04 that means the two ceiling shuttles, the two ferries and the step-on lift.
+
+**Checks:**
+- In Play mode in Chamber_04, each loop's volume followed its platform's speed: 0.6 while cruising, partial while easing, and silent during the pauses.
+- Tests pass: EditMode 50 of 50, PlayMode 282 of 282. No console errors.
+- My playtest record is deleted, and Chamber_04 is clean.
+
+The stop clunk is mostly deep bass below 60 Hz. If you can't hear it on your speakers, platform stop B (the latch) is an easy swap.
+```
+

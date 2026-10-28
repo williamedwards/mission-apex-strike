@@ -37,7 +37,7 @@ MonoBehaviour:
     volume: 0.6
   sentryAlert:
     clip: {fileID: 8300000, guid: babeef022b908596383fd3359c867cf4, type: 3}
-    volume: 0.6
+    volume: 0.45
   sentryFire:
     clip: {fileID: 8300000, guid: a3e0edafb302fe4b1bc77fcab9cb14d6, type: 3}
     volume: 0.7
@@ -49,4 +49,10 @@ MonoBehaviour:
     volume: 0.35
   elevatorStop:
     clip: {fileID: 8300000, guid: c774e99c11379a52293bafc4d4eb6a72, type: 3}
+    volume: 0.6
+  platformLoop:
+    clip: {fileID: 8300000, guid: 2ecd1dd1b12bdeea8b6c7c92a8fff905, type: 3}
+    volume: 0.6
+  platformStop:
+    clip: {fileID: 8300000, guid: 7bf0a33c1a004800f80f567164e39a8b, type: 3}
     volume: 0.6
