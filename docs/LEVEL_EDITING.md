@@ -55,6 +55,8 @@ red, and from Phase 2 they'll kill.
 ### Curves
 - **Quarter-pipe:** an inside corner, like the example in a new chamber.
 - **Rounded edge:** an outside corner, for going over the top of a block.
+- Both are dark panels with glowing blue chevrons pointing both ways along the bend, so players
+  can tell at a glance where the boots will carry them round a corner.
 
 A new curve sits at the spot where it starts, on a surface, and bends in the direction of its
 blue (forward) arrow:

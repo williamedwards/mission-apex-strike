@@ -52,7 +52,7 @@ namespace GravBoots.Editor
         internal class Palette
         {
             public Material Floor, Wall, Ceiling, Dark, Orange, Blue, PlayerBody, Visor;
-            public Material Magnetic, BootsOff, BootsOn, Marker, Guide;
+            public Material Magnetic, Curve, BootsOff, BootsOn, Marker, Guide;
             public Material CheckpointIdle, CheckpointLit, Exit, TurretEye, SentryShell;
         }
 
@@ -172,6 +172,7 @@ namespace GravBoots.Editor
                 PlayerBody = EnsureMaterial("Player_Body", new Color(0.88f, 0.88f, 0.92f), null),
                 Visor = EnsureMaterial("Player_Visor", new Color(1f, 0.55f, 0.15f), null, emissive: true),
                 Magnetic = EnsureMaterial("Magnetic_Panel", new Color(0.9f, 0.95f, 1f), panel, smoothness: 0.45f),
+                Curve = CurvePanel.Ensure(),
                 BootsOff = EnsureMaterial("Boots_Off", new Color(0.22f, 0.24f, 0.27f), null),
                 BootsOn = EnsureMaterial("Boots_On", new Color(0.35f, 0.8f, 1f), null, emissive: true),
                 Marker = EnsureMaterial("Landing_Marker", Color.white, null, shader: "Universal Render Pipeline/Unlit"),
@@ -1400,7 +1401,7 @@ namespace GravBoots.Editor
             ramp.width = width;
             ramp.segments = Mathf.Max(8, Mathf.CeilToInt(radius * 8f));
             ramp.Rebuild();
-            go.GetComponent<MeshRenderer>().sharedMaterial = palette.Magnetic;
+            go.GetComponent<MeshRenderer>().sharedMaterial = palette.Curve;
             return go;
         }
 
