@@ -10,11 +10,13 @@ namespace GravBoots.Hazards
     public static class SentryWreck
     {
         const float StumpHeight = 0.35f;
-        const int ChunksX = 2, ChunksY = 3, ChunksZ = 2;
+        /// <summary>Roughly how big each rubble chunk is; bigger bodies break into more of them.</summary>
+        const float ChunkSize = 0.45f;
         const int Sparks = 14;
 
+        /// <param name="rubble">The stump and chunks' material; null for the body's own.</param>
         /// <param name="stomper">Where the player was standing; the head is thrown away from it.</param>
-        public static void Break(Sentry sentry, Transform body, Transform head, Material spark, Vector3 stomper)
+        public static void Break(Sentry sentry, Transform body, Transform head, Material spark, Material rubble, Vector3 stomper)
         {
             Transform root = sentry.transform;
             Vector3 up = root.up;
@@ -29,7 +31,7 @@ namespace GravBoots.Hazards
             if (body != null)
             {
                 var renderer = body.GetComponentInChildren<Renderer>();
-                Material shell = renderer != null ? renderer.sharedMaterial : null;
+                Material shell = rubble != null ? rubble : renderer != null ? renderer.sharedMaterial : null;
                 Bounds local = LocalBounds(body);
                 body.gameObject.SetActive(false);
 
@@ -42,11 +44,13 @@ namespace GravBoots.Hazards
                     stump.GetComponent<MeshRenderer>().sharedMaterial = shell;
 
                 // The rest of the body, cut into a grid of chunks that burst outward.
+                int Count(float size) => Mathf.Clamp(Mathf.RoundToInt(size / ChunkSize), 2, 4);
+                int chunksX = Count(local.size.x), chunksY = Count(local.max.y - StumpHeight) + 1, chunksZ = Count(local.size.z);
                 Vector3 min = new Vector3(local.min.x, StumpHeight, local.min.z);
-                Vector3 cell = new Vector3(local.size.x / ChunksX, (local.max.y - StumpHeight) / ChunksY, local.size.z / ChunksZ);
-                for (int x = 0; x < ChunksX; x++)
-                for (int y = 0; y < ChunksY; y++)
-                for (int z = 0; z < ChunksZ; z++)
+                Vector3 cell = new Vector3(local.size.x / chunksX, (local.max.y - StumpHeight) / chunksY, local.size.z / chunksZ);
+                for (int x = 0; x < chunksX; x++)
+                for (int y = 0; y < chunksY; y++)
+                for (int z = 0; z < chunksZ; z++)
                 {
                     Vector3 localCentre = min + Vector3.Scale(cell, new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                     Vector3 outward = new Vector3(localCentre.x, 0f, localCentre.z).normalized;
@@ -82,12 +86,17 @@ namespace GravBoots.Hazards
             new Vector3((float)random.NextDouble() * 2f - 1f, (float)random.NextDouble() * 2f - 1f, (float)random.NextDouble() * 2f - 1f);
 
         /// <summary>The body's renderer bounds, in the sentry's local space.</summary>
+        /// <summary>The body's solid extent in the sentry's own frame: its box, or its mesh collider's mesh.</summary>
         static Bounds LocalBounds(Transform body)
         {
-            var collider = body.GetComponent<BoxCollider>();
             Transform root = body.parent;
-            if (collider != null && root != null)
-                return new Bounds(root.InverseTransformPoint(body.TransformPoint(collider.center)), Vector3.Scale(collider.size, body.lossyScale));
+            if (root != null && body.TryGetComponent(out BoxCollider box))
+                return new Bounds(root.InverseTransformPoint(body.TransformPoint(box.center)), Vector3.Scale(box.size, body.lossyScale));
+            if (root != null && body.TryGetComponent(out MeshCollider hull) && hull.sharedMesh != null)
+            {
+                Bounds mesh = hull.sharedMesh.bounds;
+                return new Bounds(root.InverseTransformPoint(body.TransformPoint(mesh.center)), Vector3.Scale(mesh.size, body.lossyScale));
+            }
             return new Bounds(new Vector3(0f, 0.65f, 0f), new Vector3(0.9f, 1.3f, 0.9f));
         }
 

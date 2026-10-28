@@ -3807,4 +3807,384 @@ Commit please.
 
 ### Saved assistant responses
 
+```text
+I've committed the death animation and the 1.2 s respawn as `f3a16d3`. The commit includes:
+- **Clip:** the Falling_Prone clip and its Death state in the Animator, played on every death.
+- **Respawn delay:** 1.2 s in all four chambers, the code default and the test bed.
+- **Test and docs:** the updated respawn-timing test and `PLAN.md`.
+- **Prompt log:** synced.
+
+As before, I left out the ProBuilder settings file, which is now the only uncommitted change.
+```
+
+
+## 2026-10-28T08:40:32.053Z — claude — 6bb89abcfb49
+
+Source ID: `claude:0ce36e4a-7515-4833-aa65-efd7bc74ddb9:77bad975-9590-4023-bb26-467cf7da66ef`
+
+### Prompt
+
+```text
+Alright, next step is to do models for the sentries.  Any advice here, we may want to animate just the laser turret part, but not sure if Tripo understands that sort of rigging?
+```
+
+### Saved assistant responses
+
+```text
+Let me check how the sentry is put together in code first, since the model has to fit its moving parts and its kill plane.
+```
+
+```text
+You don't need Tripo's rigging for this. Its auto-rig is built for characters (humanoids and animals), and a turret has no skeleton to speak of. Our sentry already works the way you describe: the base is static, and the code turns a separate **head** about the sentry's up axis to aim. Locking on, firing and riding moving platforms all work that way. So the plan is two separate unrigged meshes, a **base** and a **head**. I'll put the head where the current one turns, and the code animates it as it does now.
+
+**Getting two parts out of Tripo:**
+- **Simplest:** generate the base and the head as two separate models, from references drawn in the same style. Matching style is the main risk, which is why a reference image per part helps.
+- **Alternative:** generate the whole sentry and split it in Blender. That only works if the head is a cleanly separate piece in the mesh, which is often not the case.
+- **Tripo's own option:** I believe Tripo has a part segmentation feature, but I'm not sure how well it handles this. It's worth a try if you see it.
+
+**Sizes the gameplay depends on:**
+- **Body:** 0.9 × 0.9 m footprint and 1.3 m tall overall. The collider is that box, and you stomp on the top at 1.3 m.
+- **Head pivot and laser:** at **1.0 m** up. That's the height of the sentry's firing plane, so the lens or emitter should sit at about 1 m on the front of the head, facing +Z.
+- **Top:** flat and readable as somewhere to land, like a hatch or plate. The gold landing marker shows there.
+- **Base:** sentries also mount on walls and ceilings, and ride tracks, so the base needs a flat underside and must look right at any angle. It doesn't rotate, so it shouldn't have an obvious front. The head does the facing, so a fairly round head turns convincingly through 360°.
+
+**Design for readability:**
+- **The firing plane:** a horizontal band, slit or ring round the head at the 1 m line would hint at how the sentry sees. That's the rule players most need to learn.
+- **Contrast:** keep it distinct from the player's blue. White or grey shell with red or orange accents works, since red already means danger in the game (the beams and the eye).
+- **Originality:** keep it clearly our own design rather than a familiar game turret; the plane-scanning head is a good distinguishing feature.
+
+**What stays in code, not the model:**
+- **The eye:** it changes colour as the sentry charges and fires. I'll keep a separate glowing lens object in front of the head, so the model just needs a socket for it.
+- **The crumble:** I'll keep generating the rubble chunks in code, tinted to the model's colours. No broken variant is needed from Tripo.
+- **Motion:** turning, plus any small extras like idle scanning or recoil, I'd do in code.
+
+**Mesh and texture:** about 5–15k triangles per part, one material each, exported as FBX with no rig.
+
+If you like, I can draft a GPT-Image prompt for the references, like we did for the player: front and side views of the base and of the head on a plain background.
+```
+
+
+## 2026-10-28T08:59:49.202Z — claude — 10f424e6092a
+
+Source ID: `claude:0ce36e4a-7515-4833-aa65-efd7bc74ddb9:a1f75040-4d83-4203-a1ba-7fe46628c2d3`
+
+### Prompt
+
+```text
+Alright yes, let's create a draft image using GPT: "Evil squat robot with four legs, a domed  head, with a single laser eye underneath.  Mostly shades of grey except for the red laser eye.  Front and back views, suitable for conversion to a 3D game asset."
+```
+
+### Saved assistant responses
+
+```text
+Codex generated it from your prompt word for word, using `gpt-6-astra` as before. It's saved as [sentry_ref_01.png](Assets/_Project/Art/Hazards/Sentry/Reference/sentry_ref_01.png).
+
+**What works well:**
+- **Readable threat:** the dome with the single red eye peering out from under its rim reads instantly as an enemy, and it's clearly our own design.
+- **A natural split:** the dome and eye can be the turning head, with the four legs as the fixed base. That matches how the code already works.
+- **The rim:** the dome's flat underside sits close to where the firing plane would be, which hints at how it sees.
+
+**What doesn't fit yet:**
+- **Height:** the eye sits at about 60% of the total height. The firing plane is at 1.0 m, so scaling the eye to 1 m makes the robot about 1.65 m tall, above the current 1.3 m stomp top. Either the legs get shorter and the dome sits lower, or I raise the stomp height to match. That's a per-sentry setting, so it's easy, but it makes the sentries taller to drop onto.
+- **Width:** the legs splay well past the 0.9 m body. Either the legs tuck in, or I widen the collider so the player can't walk through the feet.
+- **Stomp top:** the dome is rounded with no flat landing spot. It'll still work, since the stomp check doesn't care about shape, but a small flat cap on top would read better as a place to land.
+- **For Tripo:** the background is dark with heavy shadows, and both views are on one sheet. Like the player, separate views on a plain light background will convert more reliably.
+
+**On the legs:** they'll be static. The sentry slides along its tracks and never walks, so legs that never move might look odd on a moving sentry. They'd look fine on a stationary one. Animating them would be a bigger job: a rig or procedural legs.
+```
+
+
+## 2026-10-28T09:00:07.728Z — codex — 339b955c031a
+
+Source ID: `codex:01a181bc-f1cd-76d0-814c-b33a635938a7:msg_01a181bc-f8b0-7051-9383-340b3b6e50cc`
+
+### Prompt
+
+```text
+Use your built-in image generation tool to generate one image from exactly this prompt, without rewording it:
+
+"Evil squat robot with four legs, a domed  head, with a single laser eye underneath.  Mostly shades of grey except for the red laser eye.  Front and back views, suitable for conversion to a 3D game asset."
+
+Save the result as Assets/_Project/Art/Hazards/Sentry/Reference/sentry_ref_01.png (copy it there from wherever the tool writes it). Do not change any other files. Reply with the saved path.
+```
+
+### Saved assistant responses
+
+```text
+Assets/_Project/Art/Hazards/Sentry/Reference/sentry_ref_01.png
+```
+
+
+## 2026-10-28T09:03:22.899Z — claude — d7bc4a4bfb1b
+
+Source ID: `claude:0ce36e4a-7515-4833-aa65-efd7bc74ddb9:abc5f6fa-3432-4860-9b80-063133d8c14d`
+
+### Prompt
+
+```text
+Yes, show prompt
+```
+
+### Saved assistant responses
+
+```text
+Here are the two prompts, done the same way as the player. I'd generate the front first, then give Codex that image as a reference for the back, so they match.
+
+**Front:**
+> Evil squat four-legged robot sentry, front view only. A wide, low domed head with a single glowing red laser eye set under the front rim of the dome. Short, sturdy legs tucked in close beneath the dome, feet no wider than the dome itself. The eye sits about three quarters of the way up the robot's total height. A small flat circular hatch on the very top of the dome. Mostly shades of grey metal; the red laser eye is the only colour. Clear gap between the dome and the legs so the head reads as a separate part. Whole robot in frame with margin around it. Plain flat light-grey background, even studio lighting, no shadows, no text, no extra panels. Suitable for conversion to a 3D game asset.
+
+**Back:**
+> Back view of the same robot sentry as the reference image: the identical domed head, legs, proportions and grey metal, with no eye visible from behind. Same scale, framing and pose. Plain flat light-grey background, even studio lighting, no shadows, no text, no extra panels. Suitable for conversion to a 3D game asset.
+
+**What the changes are for:**
+- **"Three quarters of the way up":** puts the eye at 1 m when the robot is about 1.3 m tall, so the firing plane and stomp height both fit without changing the gameplay.
+- **"Legs tucked in…no wider than the dome":** keeps it inside the 0.9 m collider.
+- **"Flat circular hatch on top":** gives a readable landing spot.
+- **"Clear gap between the dome and the legs":** makes it easier to split off the head, whether Tripo segments it or it's done in Blender.
+- **Background, lighting and single view:** the same Tripo-friendly setup as the player references.
+
+Should I run these as written, or would you like to change any of the wording first?
+```
+
+
+## 2026-10-28T09:04:02.598Z — claude — 3a0faf5cbdaa
+
+Source ID: `claude:0ce36e4a-7515-4833-aa65-efd7bc74ddb9:6e31fcad-43c2-466e-a847-8ae2b4515f63`
+
+### Prompt
+
+```text
+Alright, let's go ahead with that.
+```
+
+### Saved assistant responses
+
+```text
+Both views are ready: [sentry_ref_02_front.png](Assets/_Project/Art/Hazards/Sentry/Reference/sentry_ref_02_front.png) and [sentry_ref_02_back.png](Assets/_Project/Art/Hazards/Sentry/Reference/sentry_ref_02_back.png).
+
+**How they fit the game:**
+- **Eye height:** about two thirds of the way up, a little under the three quarters asked for. Scaled so the eye sits at the 1 m firing plane, the sentry would be about 1.5 m tall, not 1.3. That's easy to absorb: I'd raise its stomp height to match, or scale it slightly smaller so it stays at 1.3 m.
+- **Head split:** there's a clear neck between the dome and the legs, so the dome and eye can be the turning head and the legs the fixed base.
+- **Footprint:** the feet stay roughly within the dome's width. The dome itself looks wider than it is tall, so I'll measure it against the 0.9 m collider once it's a mesh.
+- **Stomp top:** a flat hatch on top gives an obvious landing spot.
+- **Back view:** it matches the front closely, with the same dome panels, hatch and legs, and no eye.
+
+**For Tripo:**
+- **Views:** use these two in multi-view, front and back, like the player.
+- **Rigging:** skip it entirely; we only need a static mesh.
+- **Export:** FBX.
+- **Splitting the head:** if Tripo offers part segmentation, try separating the dome and eye from the legs. If it comes out as one piece, drop it in anyway and I'll see whether it can be split in Unity, or suggest Blender.
+```
+
+
+## 2026-10-28T09:04:13.617Z — codex — d9f2f96c63db
+
+Source ID: `codex:01a181c0-b2b4-78f0-b769-8706a9aa6270:msg_01a181c0-b931-7520-809a-5a0efa80c355`
+
+### Prompt
+
+```text
+Use your built-in image generation tool to generate one image from exactly this prompt, without rewording it:
+
+"Evil squat four-legged robot sentry, front view only. A wide, low domed head with a single glowing red laser eye set under the front rim of the dome. Short, sturdy legs tucked in close beneath the dome, feet no wider than the dome itself. The eye sits about three quarters of the way up the robot's total height. A small flat circular hatch on the very top of the dome. Mostly shades of grey metal; the red laser eye is the only colour. Clear gap between the dome and the legs so the head reads as a separate part. Whole robot in frame with margin around it. Plain flat light-grey background, even studio lighting, no shadows, no text, no extra panels. Suitable for conversion to a 3D game asset."
+
+Save the result as Assets/_Project/Art/Hazards/Sentry/Reference/sentry_ref_02_front.png (copy it there from wherever the tool writes it). Do not change any other files. Reply with the saved path.
+```
+
+### Saved assistant responses
+
+```text
+Assets/_Project/Art/Hazards/Sentry/Reference/sentry_ref_02_front.png
+```
+
+
+## 2026-10-28T09:05:20.091Z — codex — 31821b90d75a
+
+Source ID: `codex:01a181c1-b717-7290-911a-f4e5a4ccd104:msg_01a181c1-bcd3-7dc0-bdb8-631b29427922`
+
+### Prompt
+
+```text
+<image name=[Image #1] path="Assets/_Project/Art/Hazards/Sentry/Reference/sentry_ref_02_front.png">
+</image>
+Codex could not read the local image at `-`: No such file or directory (os error 2)
+The attached image is the front view of a game robot. Use your built-in image generation tool, with the attached image as the reference, to generate its back view from exactly this prompt, without rewording it:
+
+"Back view of the same robot sentry as the reference image: the identical domed head, legs, proportions and grey metal, with no eye visible from behind. Same scale, framing and pose. Plain flat light-grey background, even studio lighting, no shadows, no text, no extra panels. Suitable for conversion to a 3D game asset."
+
+Save the result as Assets/_Project/Art/Hazards/Sentry/Reference/sentry_ref_02_back.png (copy it there from wherever the tool writes it). Do not change any other files. Reply with the saved path.
+```
+
+Image attachment present in source transcript; image data is not exported.
+
+### Saved assistant responses
+
+```text
+Assets/_Project/Art/Hazards/Sentry/Reference/sentry_ref_02_back.png
+```
+
+
+## 2026-10-28T09:14:46.387Z — claude — 1d6f5822d848
+
+Source ID: `claude:0ce36e4a-7515-4833-aa65-efd7bc74ddb9:c9c2c750-6342-40ca-86d0-530392e042e9`
+
+### Prompt
+
+```text
+Alright, I've put the model into the directory.  It autosegmented into several pieces actually.  Hopefully you can identify a clean separation between the head and lower body.
+```
+
+### Saved assistant responses
+
+```text
+You're in Play mode, so I'll only read the model asset: no scene changes, no recompiles. Let me check whether Unity has imported it yet.
+```
+
+```text
+Blender is installed, so I can read the parts headlessly without touching Unity or the file.
+```
+
+```text
+I read the model in Blender without touching Unity, and there's a clean split.
+
+**The parts:** 40 pieces, about 10.5k triangles in total, each with its own small texture.
+- **Head (6 parts):** the dome shell, the red eye lens at the front rim, and four small brackets just under the dome. All of them sit above the legs, from 0.39 m up in the model's units.
+- **Base (34 parts):** a central hub (the neck the dome sits on), four legs and their joints, and the feet.
+- **Turning axis:** the hub and dome are both centred on the same vertical line, so the dome can spin on the hub without anything looking detached.
+
+**The catch is size.** Tripo made it squat and wide: 1.0 m across and 0.77 m tall, with the eye at 0.50 m. The current sentry is 0.9 m wide, 1.3 m tall, with the eye and firing plane at 1.0 m. No single scale fits both:
+
+| Scale to | Footprint | Height | Eye / firing plane |
+|---|---|---|---|
+| A. Eye at 1.0 m (gameplay unchanged) | 2.0 m | 1.53 m | 1.0 m |
+| B. Footprint 0.9 m (fits existing spaces) | 0.9 m | 0.69 m | 0.45 m |
+| C. In between (my pick) | 1.3 m | 1.0 m | 0.65 m |
+
+**A:** a big, menacing robot, twice the old width. It may crowd tracks, platforms and the island sentry in Chamber_03 and 04.
+
+**B:** a small robot, knee-high on the player. The firing plane drops to knee height, which changes how sentries read and how you approach them.
+
+**C:** waist-high on the player and noticeably bigger than now, which also makes it an easier stomp target. The firing plane drops from 1.0 to 0.65 m. Every sentry in the four chambers would need its eye and top heights updated, which I'd do through the Editor, and some sentry tests assume 1 m. I'd re-check room 9's gap and the ledge cases.
+
+**Draw calls:** 40 materials per sentry is wasteful but workable for a handful of sentries. If you regenerate it later, turning off segmentation should give one texture, and I'd use the segmented version only to decide the split.
+
+You're in Play mode, so nothing is imported or changed yet. Which scale do you want: A, B or C?
+```
+
+
+## 2026-10-28T09:16:06.964Z — claude — f01e5517600e
+
+Source ID: `claude:0ce36e4a-7515-4833-aa65-efd7bc74ddb9:937d8b0b-a354-45e2-a36a-28e4b62f92d6`
+
+### Prompt
+
+```text
+I've killed play mode if that helps.
+```
+
+### Saved assistant responses
+
+```text
+Thanks, that lets me import it. I'll bring it in as a static model with no rig and confirm the parts look the same in Unity. The scale choice still needs you.
+```
+
+```text
+The model is imported, and it matches what Blender showed: all 40 parts, on the same URP Lit shader as everything else. Its eye faces +Z, which is the sentry's forward in the game, so no rotation fix is needed. In Unity it measures 1.0 m wide, 0.77 m tall and 0.96 m deep, with the eye centred at 0.50 m. Chamber_04 is still open with no unsaved changes.
+
+**The split I'll use:**
+- **Head, which turns:** the dome, the eye lens and the four small brackets under the dome.
+- **Base, which stays put:** the hub, four legs, joints and feet.
+
+The dome and hub share the same centre line, so the head will spin cleanly.
+
+Nothing else is built yet. Once you pick a scale, I'll put the model on the sentry in place of the boxes. Then I'll set the eye, top height and collider to match, and update the chamber sentries and tests as needed.
+```
+
+
+## 2026-10-28T09:17:36.289Z — claude — 4e640c4a954d
+
+Source ID: `claude:0ce36e4a-7515-4833-aa65-efd7bc74ddb9:853b0ec4-feb1-4874-97fd-0bdd842153db`
+
+### Prompt
+
+```text
+A: eye at 1 m
+```
+
+### Saved assistant responses
+
+```text
+Going with A: the model scaled ×2, so the eye stays at 1.0 m and the firing plane doesn't move. The sentry becomes about 2 m across and 1.53 m tall. Before building, I need to see how the sentry code uses its body, head, eye and wreck, since the model replaces all of them.
+```
+
+```text
+Now the editor helper that builds a sentry's body and head from the model.
+```
+
+```text
+Now hook it into the builder's `SentryMount`. The test bed, the Level Kit's Sentry and Tracked Sentry pieces, and moving sentries all go through it.
+```
+
+```text
+Next, the unsaved-changes mystery. I'll reload Chamber_04 from disk, which drops nothing since it's saved, then watch whether it marks itself dirty while idle.
+```
+
+```text
+My Play-mode check matched its own command text and stopped early, so the recompile didn't run. The Editor isn't playing; running it now.
+```
+
+```text
+Now I'll rewrite the editor helper around two prefabs, plus its own eye and rubble materials.
+```
+
+```text
+That reads well: the body bursts into grey rubble, the dome flies off, and the player lands on the stump. Now the full test run.
+```
+
+```text
+All tests pass: EditMode 47 of 47 and PlayMode 263 of 263. Last, I'll check the docs for the old sentry size.
+```
+
+```text
+The sentries now use your Tripo model, at ×2 so the eye and firing plane stay at 1 m. Each one is about 2 m across and 1.53 m tall. All tests pass: EditMode 47 of 47 and PlayMode 263 of 263. Nothing is committed yet.
+
+**The split:** the head is the dome, the red lens and the four brackets under the dome; the base is the hub, legs and feet. The dome turns to aim on the same axis as the hub. Tripo's segmentation made the split clean.
+
+**How it's built:**
+- **Two prefabs:** `SentryBody` and `SentryHead` in `Art/Hazards/Sentry/`. Each sentry holds an instance of each, so changing the prefabs restyles every sentry. The scene files actually shrank: each sentry is now just two prefab references.
+- **Collision:** the body has a convex hull wrapped round the whole robot, so it stays solid whichever way the head faces.
+- **Eye:** the model's own lens texture with a red glow added.
+- **Stomp:** a landing counts anywhere within about 0.85 m of the dome's centre (`headTop` 1.45 m).
+- **Fallback:** if the model goes missing, the builder still makes the old box sentry.
+
+**Updated through the Editor:** all six sentries (one in Chamber_02, two in 03, three in 04). Each scene was clean before and after saving. The Level Kit's Sentry and Tracked Sentry pieces now make model sentries too.
+
+**Three bugs along the way, all fixed:**
+- **On its back:** my first version laid the robot on its back, because the file is Z-up and I'd dropped the rotation that stands it upright. A preview render caught it.
+- **Wreck error:** the wreck code threw an error with the new collider. I used a C# null check that doesn't work on Unity's fake-null components, so the stomp disabled the sentry but left its body solid.
+- **Rubble texture:** the rubble picked up the model's texture and looked like camouflage. It's plain grey now.
+
+**Checked in Chamber_04:** stomping a sentry throws the dome off, bursts the body into grey rubble, and lands you on the stump, with no errors. The `LEVEL_EDITING.md` guide now covers the size and the prefabs.
+
+**Not checked:** clearance for the moving sentries, the shuttle and track ones in Chamber_03 and 04. At twice the old width they may brush walls or overhang platforms. I also haven't watched one shoot in daylight, so to speak. My one close-up attempt got the player shot.
+
+**Housekeeping:**
+- **Unsaved changes:** Chamber_04's unsaved changes are discarded as you asked. Running Play mode in a chamber leaves my own playtest records, and I deleted all three.
+- **`Model2`:** that folder is a byte-for-byte duplicate of `Model`, textures included. Unless you meant something by it, it can be deleted. I haven't touched it.
+- **Draw calls:** each sentry still renders as 40 parts, each with its own texture, which is fine at this count.
+```
+
+
+## 2026-10-28T09:33:42.058Z — claude — bb74d91e6b06
+
+Source ID: `claude:0ce36e4a-7515-4833-aa65-efd7bc74ddb9:8125e1ce-aaaa-42cf-804f-29da02305cc5`
+
+### Prompt
+
+```text
+Alright, looks good, you can commit this.  I did add another model Sentry/Model2 which I believe I segmented to just two pieces.  This may be better for performance?
+```
+
+### Saved assistant responses
+
 No response imported yet.

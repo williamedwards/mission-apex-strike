@@ -43,6 +43,8 @@ namespace GravBoots.Hazards
         [SerializeField] LineRenderer dangerLine;
         [SerializeField] Renderer eye;
         [SerializeField] Material eyeOff;
+        [Tooltip("What the body crumbles into. Empty: the body's own material.")]
+        [SerializeField] Material rubble;
         [SerializeField] bool autoSimulate = true;
 
         [Header("Plane")]
@@ -358,7 +360,7 @@ namespace GravBoots.Hazards
             foreach (var mover in GetComponentsInParent<GravBoots.Level.KinematicMover>())
                 if (mover.platform == transform)
                     mover.enabled = false;
-            SentryWreck.Break(this, body, head, spark, target != null ? target.Position : transform.position);
+            SentryWreck.Break(this, body, head, spark, rubble, target != null ? target.Position : transform.position);
             Destroyed?.Invoke();
         }
 

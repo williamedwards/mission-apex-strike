@@ -88,6 +88,11 @@ through the spawns in order while playing. That's handy for testing the far end 
 ### Sentries
 - **Sentry:** a robot that sees and shoots only in one flat plane, 1 m above the surface it
   stands on.
+- **Size:** the four-legged dome robot is about 2 m across and 1.5 m tall, with its eye (and
+  plane) at 1 m. Leave room for it on tracks and platforms. Its dome is what you stomp.
+  - Its look comes from two prefabs, `Art/Hazards/Sentry/SentryBody` and `SentryHead`, which
+    the Level Kit uses for new sentries. To restyle every sentry, change those prefabs (or
+    run **GravBoots → Rebuild Sentry Model Prefabs** after changing the model).
 - It stands still until your body reaches into its plane, in range and in line of sight, from
   any direction. Then it turns to face you, charges and fires. One hit kills.
 - **It notices you before you reach the plane:** anywhere within 1.2 m of it (**Alert Half

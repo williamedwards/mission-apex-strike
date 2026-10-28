@@ -1210,13 +1210,24 @@ namespace GravBoots.Editor
             go.transform.localRotation = Quaternion.LookRotation(forward, up);
             var sentry = go.AddComponent<Sentry>();
 
-            // Solid up to the head's top (1.3 m), which is what a stomp lands on.
-            var body = Box(go.transform, "Body", new Vector3(0f, 0.65f, 0f), new Vector3(0.9f, 1.3f, 0.9f), palette.SentryShell);
-            var head = new GameObject("Head").transform;
-            head.SetParent(go.transform, false);
-            head.localPosition = new Vector3(0f, 1f, 0f);
-            Primitive(head, PrimitiveType.Cube, "Visor", new Vector3(0f, 0f, 0.42f), new Vector3(0.6f, 0.16f, 0.1f), palette.Dark);
-            var eye = Primitive(head, PrimitiveType.Sphere, "Eye", new Vector3(0f, 0f, 0.48f), Vector3.one * 0.14f, palette.TurretEye);
+            if (SentryModel.Available)
+            {
+                SentryModel.Apply(sentry, palette.Dark);
+            }
+            else
+            {
+                // Solid up to the head's top (1.3 m), which is what a stomp lands on.
+                var body = Box(go.transform, "Body", new Vector3(0f, 0.65f, 0f), new Vector3(0.9f, 1.3f, 0.9f), palette.SentryShell);
+                var head = new GameObject("Head").transform;
+                head.SetParent(go.transform, false);
+                head.localPosition = new Vector3(0f, 1f, 0f);
+                Primitive(head, PrimitiveType.Cube, "Visor", new Vector3(0f, 0f, 0.42f), new Vector3(0.6f, 0.16f, 0.1f), palette.Dark);
+                var eye = Primitive(head, PrimitiveType.Sphere, "Eye", new Vector3(0f, 0f, 0.48f), Vector3.one * 0.14f, palette.TurretEye);
+                Set(sentry, "head", head);
+                Set(sentry, "body", body.transform);
+                Set(sentry, "eye", eye.GetComponent<Renderer>());
+                Set(sentry, "eyeOff", palette.Dark);
+            }
 
             var sight = Line(go.transform, "Sight", palette);
             var danger = Line(go.transform, "Danger Line", palette);
@@ -1224,12 +1235,8 @@ namespace GravBoots.Editor
             danger.startColor = danger.endColor = new Color(1f, 0.2f, 0.1f, 0.6f);
             danger.enabled = true;
 
-            Set(sentry, "head", head);
-            Set(sentry, "body", body.transform);
             Set(sentry, "sight", sight);
             Set(sentry, "dangerLine", danger);
-            Set(sentry, "eye", eye.GetComponent<Renderer>());
-            Set(sentry, "eyeOff", palette.Dark);
             return sentry;
         }
 
