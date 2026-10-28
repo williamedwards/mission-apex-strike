@@ -104,8 +104,12 @@ namespace GravBoots.Editor
                 Ring(tube, "Base Ring", 0f, palette.Dark, dims.WallRadius + 0.05f);
                 Ring(tube, "Top Ring", tubeTop, palette.Dark, dims.WallRadius + 0.05f);
             }
+            float shaftHalf = model ? dims.PlatformRadius + 0.05f : dims.WallRadius + 0.125f;
             if (start)
-                Shaft(root, bottom, model ? dims.PlatformRadius + 0.05f : dims.WallRadius + 0.125f, palette);
+                Shaft(root, "Shaft", bottom - 0.5f, 0f, shaftHalf, true, palette);
+            else if (model)
+                // Up from the crown to above the top of the ride: the way out of the chamber.
+                Shaft(root, "Exit Shaft", dims.Scale, top + 2.4f, shaftHalf, false, palette);
 
             var mover = root.gameObject.AddComponent<KinematicMover>();
             var platform = Child(root, "Platform", Vector3.zero);
@@ -204,17 +208,40 @@ namespace GravBoots.Editor
             }
         }
 
-        /// <summary>The dark shaft under a start elevator: four walls and a floor.</summary>
-        static void Shaft(Transform root, float bottom, float halfWidth, TestBedBuilder.Palette palette)
+        /// <summary>
+        /// A dark square shaft from <paramref name="from"/> to <paramref name="to"/>: under a
+        /// start elevator (closed at the bottom) or above an exit elevator (closed at the top),
+        /// with a glowing band round it every 2 m so a ride reads as moving.
+        /// </summary>
+        static void Shaft(Transform root, string name, float from, float to, float halfWidth, bool closedBelow,
+            TestBedBuilder.Palette palette)
         {
-            var shaft = Child(root, "Shaft", Vector3.zero);
-            float inner = halfWidth * 2f, t = 0.3f, depth = -bottom + 0.5f;
-            float y = bottom + depth * 0.5f - 0.5f;
-            TestBedBuilder.Box(shaft, "Shaft +X", new Vector3((inner + t) * 0.5f, y, 0f), new Vector3(t, depth, inner + 2f * t), palette.Dark);
-            TestBedBuilder.Box(shaft, "Shaft -X", new Vector3(-(inner + t) * 0.5f, y, 0f), new Vector3(t, depth, inner + 2f * t), palette.Dark);
-            TestBedBuilder.Box(shaft, "Shaft +Z", new Vector3(0f, y, (inner + t) * 0.5f), new Vector3(inner, depth, t), palette.Dark);
-            TestBedBuilder.Box(shaft, "Shaft -Z", new Vector3(0f, y, -(inner + t) * 0.5f), new Vector3(inner, depth, t), palette.Dark);
-            TestBedBuilder.Box(shaft, "Shaft Floor", new Vector3(0f, bottom - 0.5f - t * 0.5f, 0f), new Vector3(inner + 2f * t, t, inner + 2f * t), palette.Dark);
+            var shaft = Child(root, name, Vector3.zero);
+            float inner = halfWidth * 2f, t = 0.3f, height = to - from, y = (from + to) * 0.5f;
+            TestBedBuilder.Box(shaft, "Wall +X", new Vector3((inner + t) * 0.5f, y, 0f), new Vector3(t, height, inner + 2f * t), palette.Dark);
+            TestBedBuilder.Box(shaft, "Wall -X", new Vector3(-(inner + t) * 0.5f, y, 0f), new Vector3(t, height, inner + 2f * t), palette.Dark);
+            TestBedBuilder.Box(shaft, "Wall +Z", new Vector3(0f, y, (inner + t) * 0.5f), new Vector3(inner, height, t), palette.Dark);
+            TestBedBuilder.Box(shaft, "Wall -Z", new Vector3(0f, y, -(inner + t) * 0.5f), new Vector3(inner, height, t), palette.Dark);
+            float capY = closedBelow ? from - t * 0.5f : to + t * 0.5f;
+            TestBedBuilder.Box(shaft, closedBelow ? "Floor" : "Cap", new Vector3(0f, capY, 0f), new Vector3(inner + 2f * t, t, inner + 2f * t), palette.Dark);
+
+            // Light bands just proud of the walls' inner faces (no colliders).
+            for (float band = from + 1f; band < to - 0.5f; band += 2f)
+            {
+                for (int side = 0; side < 4; side++)
+                {
+                    var strip = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    strip.name = "Light Band";
+                    Object.DestroyImmediate(strip.GetComponent<Collider>());
+                    strip.transform.SetParent(shaft, false);
+                    Quaternion turn = Quaternion.Euler(0f, side * 90f, 0f);
+                    strip.transform.localPosition = turn * new Vector3(0f, 0f, halfWidth - 0.01f) + Vector3.up * band;
+                    strip.transform.localRotation = turn;
+                    strip.transform.localScale = new Vector3(inner * 0.8f, 0.06f, 0.03f);
+                    strip.GetComponent<MeshRenderer>().sharedMaterial = palette.BootsOn;
+                    strip.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
+                }
+            }
         }
 
         /// <summary>A dark ring of <paramref name="radius"/> (its band about 6% as thick).</summary>

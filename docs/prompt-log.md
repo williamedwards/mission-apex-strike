@@ -8041,4 +8041,112 @@ Alright, go ahead and commit, then incorporate these into the main level.
 
 ### Saved assistant responses
 
+```text
+That survey ran on the test bed: the test runner had left it open instead of Chamber_04. Test bed is clean, so I'll switch to Chamber_04 and survey again.
+```
+
+```text
+I've committed the model elevators as `ba4c9e4`, and both are now in **Chamber_04**. I took "the main level" to mean that one. All tests pass: EditMode 47 of 47 and PlayMode 281 of 281.
+
+**Start, in room 01:**
+- **Placement:** the start elevator stands 2.5 m in from the back wall, doorway facing down the room.
+- **Floor:** I split the room's floor slab into four pieces round a 1.8 m opening for its shaft. The collar sits on the floor round it, and the shaft fits within the room's walls below.
+- **Old Start spawn:** removed. The session now starts you on the elevator.
+
+**Exit, in room 12:**
+- **Placement:** the old gold pad is replaced by an exit elevator in the same spot, turned so its doorway and steps face the corridor you arrive from.
+- **Ceiling:** the room's ceiling is only 5 m up, so I split it round a matching 1.8 m opening. The ride carries you up and out through it.
+
+**Checked in game:**
+- **The ride in:** you rise into room 01, stop at 0.5 m, and walk down the steps onto the room's existing route.
+- **The exit:** jumping ahead to the room 12 corridor, I walked into the exit elevator, which ended the run and carried me up through the ceiling.
+
+There were no errors. I deleted my playtest record, and Chamber_04 is saved and clean. I didn't play the rooms in between, but nothing there changed.
+
+**About the edits:** everything was done through the Editor as one undo step. If you open Chamber_04 now, **Edit → Undo** takes out all of it: both elevators, both openings, and the old spawn and pad come back.
+
+**Not committed:** the Chamber_04 change. Its scene file grew by about 6,000 lines, mostly the elevators' wall and shaft pieces. The model itself is stored as a prefab reference.
+```
+
+
+## 2026-10-28T10:39:47.117Z — claude — 3885f0099207
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:4dc608b9-4239-4476-8c89-57268a87d271`
+
+### Prompt
+
+```text
+I'll playtest first
+```
+
+### Saved assistant responses
+
+```text
+Sounds good. Open `Assets/_Project/Levels/Chamber_04.unity` and press Play; you'll begin riding up into room 01.
+
+Things worth watching:
+- **The start:** whether the 6 m ride feels too long or slow before the level begins. It's about 3 s, and the run clock only starts when you arrive. Also whether the 3.8 m collar crowds room 01's opening.
+- **Dying early:** dying before the first checkpoint should put you back on the elevator at the top, with no second ride.
+- **The exit:** walking into room 12 from the corridor, whether the elevator reads clearly as the way out. Also whether the steps feel fine, and how the ride up through the ceiling opening looks from the camera.
+- **Anything you edited before:** I changed only room 01's floor slab, room 12's ceiling, the old Start spawn and the old exit pad. If something else looks different, tell me.
+
+Report back when you're done. Nothing is committed until you say so.
+```
+
+
+## 2026-10-28T10:44:03.096Z — claude — 8eaee907fb68
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:ec46b2ea-ffb4-4d44-a2af-fa80b9274ce3`
+
+### Prompt
+
+```text
+Pretty good, let's just add some sort of elevator shaft on the exit ride.
+```
+
+### Saved assistant responses
+
+```text
+I'll add a shaft to the exit elevator. A dark square duct will rise from the top of the tube, through the ceiling opening, to above the top of the ride, closed off at the top. Blue light bands every 2 m will make the ride read as moving. It goes in the builder, so the test bed and any future exit elevators get it too. In Chamber_04 I'll replace the exit elevator with a rebuilt one at the same spot, again through the Editor as one undo step.
+```
+
+```text
+`view` comes from `Camera.main`, and a test scene may well have a main camera of its own. So I'll only read the real camera's position when the rig actually drives a virtual camera.
+```
+
+```text
+The test passes. Next, the ride in Chamber_04 again with the camera holding.
+```
+
+```text
+All tests pass: EditMode 47 of 47 and PlayMode 282 of 282, including the new camera test. Last, a doc update, since the exit elevator now brings its own shaft.
+```
+
+```text
+The exit ride now has a shaft: a dark square duct about 1.8 m wide rises from the elevator's crown, up through room 12's ceiling opening, to just above the top of the ride. It's closed off at the top, with a glowing blue band round the inside every 2 m.
+
+**The camera needed a change too.** In a duct that narrow, it had no room behind the player and pulled right in; on my first ride you saw only dark walls. So the camera now **holds when a run completes**. It stops where it is, near the room's entrance, and turns to keep the player in view. You watch the platform carry him up the glass tube, through the ceiling, and into the shaft until he disappears. This applies to any exit, including a plain gold pad, where you just see him standing there.
+
+**Where it's in place:**
+- **Builder:** the shaft is part of the elevator builder, so the Level Kit's Exit Elevator piece and the test bed both get it.
+- **Chamber_04:** I replaced the exit elevator with a rebuilt one, same spot and orientation, as one undo step in the Editor, then saved it. I rode it through once with the camera holding; no errors, and I deleted my playtest record.
+- **Test:** a new camera test lifts the target 6 m after holding. It checks that the camera stays put and keeps looking at the player.
+- **Docs:** `LEVEL_EDITING.md` notes that the exit shaft rises about 9 m. Lower ceilings need a 1.8 m opening for it.
+
+All tests pass: EditMode 47 of 47 and PlayMode 282 of 282. The commit would include the earlier Chamber_04 changes too: the start elevator, the floor and ceiling openings, and the removed start spawn and exit pad.
+```
+
+
+## 2026-10-28T10:51:43.438Z — claude — 9577d093212a
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:949a1d94-756b-4c30-b2aa-1e3aa0a1069c`
+
+### Prompt
+
+```text
+Looks great, commit it.
+```
+
+### Saved assistant responses
+
 No response imported yet.

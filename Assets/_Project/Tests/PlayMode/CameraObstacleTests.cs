@@ -141,5 +141,25 @@ namespace GravBoots.Tests
             }
             Assert.That(frames[frames.Count - 1].shoulder, Is.LessThan(0.9f), "shoulder should have tucked in");
         }
-    }
+    
+        [Test]
+        public void HoldingKeepsTheCameraStillAndWatchesTheTargetRiseAway()
+        {
+            target.position = Vector3.zero;
+            rig.SnapBehindTarget();
+            for (int i = 0; i < 10; i++)
+                rig.Tick(1f / 60f);
+            Vector3 before = rig.CameraPosition;
+
+            rig.Hold();
+            target.position = Vector3.up * 6f;
+            for (int i = 0; i < 30; i++)
+                rig.Tick(1f / 60f);
+
+            Assert.That(rig.Holding, Is.True);
+            Assert.That(Vector3.Distance(rig.CameraPosition, before), Is.LessThan(1e-4f), "the camera stays where it stopped");
+            Vector3 toChest = target.position + Vector3.up * 1.2f - rig.CameraPosition;
+            Assert.That(Vector3.Angle(rig.HeldRotation * Vector3.forward, toChest), Is.LessThan(0.5f), "and looks up at the player");
+        }
+}
 }

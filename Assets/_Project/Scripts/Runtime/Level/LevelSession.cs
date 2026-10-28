@@ -245,6 +245,9 @@ namespace GravBoots.Level
             exitReached = exit;
             if (controller != null)
                 controller.enabled = false;
+            // Watch the player leave (an exit elevator carries them up out of the chamber).
+            if (cameraRig != null)
+                cameraRig.Hold();
             player.SetMoveInput(Vector3.zero);
             Completed?.Invoke();
         }

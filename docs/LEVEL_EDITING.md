@@ -92,8 +92,10 @@ through the spawns in order while playing. That's handy for testing the far end 
   - It needs a hole in the floor under its centre: a square 1.8 m opening (it brings its own
     shaft walls and bottom, about 6 m down). The collar sits on the floor round the hole.
 - **Exit Elevator:** its platform carries the exit. Stepping on finishes the chamber, then the
-  platform rises 6 m, up out of the top of the tube, with the player on it. It can replace the
-  gold pad. Leave headroom above it for the ride.
+  platform rises 6 m, up out of the top of the tube into a dark, lit shaft, with the player on
+  it. The camera stays put and watches them go. It can replace the gold pad.
+  - Its shaft rises about 9 m above the floor. A ceiling lower than that needs a square 1.8 m
+    opening above the tube's centre for the shaft to pass through.
 - To change how far either one travels, move its **Bottom** or **Top** point (the mover's
   children); the tube and shaft don't resize themselves, so match them by hand or re-place it.
 - A chamber made before these existed needs **Add Game Loop to This Chamber** (top of the kit)

@@ -44,6 +44,8 @@ namespace GravBoots.Cameras
         bool cursorLocked;
         float shoulderScale = 1f;
         float distance;
+        bool holding;
+        Vector3 heldPosition;
 
         public CameraUpMode Mode { get => mode; set => mode = value; }
         public CameraSettings Settings => settings;
@@ -61,7 +63,27 @@ namespace GravBoots.Cameras
         /// <summary>Where the rig wants the end of the shoulder arm, before Cinemachine damping.</summary>
         public Vector3 HandPosition => pivot.position + HandOffset(shoulderScale);
         /// <summary>Where the rig wants the camera, before Cinemachine damping.</summary>
-        public Vector3 CameraPosition => HandPosition - pivot.rotation * Vector3.forward * distance;
+        public Vector3 CameraPosition => holding ? heldPosition : HandPosition - pivot.rotation * Vector3.forward * distance;
+        /// <summary>The camera has stopped following (see <see cref="Hold"/>).</summary>
+        public bool Holding => holding;
+        /// <summary>While holding: looking from where the camera stopped at the player's chest.</summary>
+        public Quaternion HeldRotation =>
+            Quaternion.LookRotation(target.position + target.up * 1.2f - heldPosition, Up);
+
+        /// <summary>
+        /// Stops following: the camera stays where it is and turns to keep the player in view, so
+        /// an exit elevator carries them up and away from it. For the end of a run.
+        /// </summary>
+        public void Hold()
+        {
+            if (holding || target == null)
+                return;
+            // Where the rendered camera actually is (after Cinemachine's damping), if there is one.
+            heldPosition = virtualCamera != null && view != null ? view.transform.position : CameraPosition;
+            holding = true;
+            if (follow != null)
+                follow.enabled = false;
+        }
 
         /// <summary>Wires the rig up from code (tests, tools); scenes set these in the Inspector.</summary>
         public void Configure(Transform target, Transform pivot, CameraSettings settings, LayerMask obstacleMask)
@@ -111,6 +133,12 @@ namespace GravBoots.Cameras
         {
             if (target == null || settings == null)
                 return;
+            if (holding)
+            {
+                if (virtualCamera != null)
+                    virtualCamera.transform.SetPositionAndRotation(heldPosition, HeldRotation);
+                return;
+            }
 
             UpdateCursor();
             FollowUp(DesiredUp(target.up, deltaTime), deltaTime);
