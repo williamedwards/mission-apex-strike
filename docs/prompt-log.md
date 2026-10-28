@@ -9633,3 +9633,73 @@ I committed the title and end screens as `0109f2c`. The debug overlay is now hid
 They're useful for testing, but in a build they'd let players skip puzzles.
 ```
 
+
+## 2026-10-28T19:54:16.994Z — claude — 2c7a86ee1c52
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:90ae3459-5989-4412-8dcd-a010be8052a2`
+
+### Prompt
+
+```text
+Editor only
+```
+
+### Saved assistant responses
+
+```text
+Inside the Editor, `Application.isEditor` is always true, so Play mode can't show the build behaviour. Compiling and running the tests to confirm nothing changed in the Editor:
+```
+
+```text
+I've committed both changes as `ae23d2a`. In the Editor nothing changes: the debug keys work as before, and F3 still shows the overlay.
+
+The debug keys now switch themselves off outside the Editor. In a built game that disables:
+- **1–6 and G:** setting gravity.
+- **B and C:** switching blending and camera modes.
+- **N:** jumping to the next checkpoint.
+- **F3:** the overlay toggle. Since the overlay now starts hidden, it simply never shows in a build.
+
+R (back to the last checkpoint) and Backspace (restart) are part of the game rather than debug keys, so they still work everywhere.
+
+Both test suites pass: EditMode 62 of 62 and PlayMode 282 of 282. I can't check the build-only behaviour from inside the Editor, so it will first be visible in an actual build.
+```
+
+
+## 2026-10-28T19:57:29.235Z — claude — 818350b71988
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:e794573c-0928-4ee6-9659-ca6a21736910`
+
+### Prompt
+
+```text
+You can go ahead and remove the health bar too, since I think that is not really used.
+```
+
+### Saved assistant responses
+
+```text
+The bar is one block in `SessionHud`. The `health` reference also drives the red flash when you take damage, so I'll keep that and remove only the bar:
+```
+
+```text
+Only the generated prompt log mentions the bar, and that's off-limits by design. Compiling, then a quick visual check and both test suites:
+```
+
+```text
+The 19:56 record is from before this turn, so it's yours. I'm deleting only my 19:58 run, then looking at the capture:
+```
+
+```text
+I've removed the health bar. It's not committed yet.
+
+**What's left on the HUD:**
+- The timer and death count, top right.
+- The boots status and control hints.
+- The checkpoint notice.
+- The red flash when you take damage. Nothing in the chambers deals damage short of killing you, but the old placeholder turret does, so I kept the flash. Health itself still exists, because that's how deaths work.
+
+**Checked:** in Play mode the top centre is empty now. EditMode passes 62 of 62 and PlayMode 282 of 282. My playtest records are deleted (your 19:56 run is kept), and Chamber_04 is clean.
+
+**One oddity:** in one Play run, the player ran through the first room on their own a few seconds after the title. I checked straight afterwards and no movement key was held or stuck. It was most likely real keyboard input reaching the Editor at that moment, not a bug. If you ever see the character move without input, tell me.
+```
+

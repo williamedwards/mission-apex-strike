@@ -5,8 +5,8 @@ using UnityEngine;
 namespace GravBoots.UI
 {
     /// <summary>
-    /// The run's HUD: health, time and deaths, a "checkpoint" notice, the fade on death and
-    /// respawn, and the completion panel. Placeholder IMGUI until the visual pass.
+    /// The run's HUD: time and deaths, a "checkpoint" notice, a red flash on damage, the fade
+    /// on death and respawn, and the completion panel. Placeholder IMGUI until the visual pass.
     /// </summary>
     public class SessionHud : MonoBehaviour
     {
@@ -70,15 +70,6 @@ namespace GravBoots.UI
             big ??= new GUIStyle(GUI.skin.label) { fontSize = 32, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             Color previous = GUI.color;
             float w = Screen.width, h = Screen.height;
-
-            if (health != null)
-            {
-                GUI.color = new Color(0f, 0f, 0f, 0.5f);
-                float x = w * 0.5f - 102f;
-                GUI.DrawTexture(new Rect(x, 20f, 204f, 14f), Texture2D.whiteTexture);
-                GUI.color = Color.Lerp(new Color(1f, 0.3f, 0.25f), accent, health.Current / health.Max);
-                GUI.DrawTexture(new Rect(x + 2f, 22f, 200f * health.Current / health.Max, 10f), Texture2D.whiteTexture);
-            }
 
             GUI.color = Color.white;
             small.alignment = TextAnchor.UpperRight;
