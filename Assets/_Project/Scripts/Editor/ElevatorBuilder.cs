@@ -9,42 +9,70 @@ using UnityEngine.Rendering;
 namespace GravBoots.Editor
 {
     /// <summary>
-    /// Greybox tube elevators (<see cref="Elevator"/>) for the test bed and the Level Kit: a glass
-    /// tube with a doorway (solid walls, so the doorway is the only way in or out), a disc
-    /// platform on an <see cref="MoverMode.OnStep"/> mover, and rings at the base and top.
-    /// A start elevator rises from a dark shaft below the floor; an exit elevator carries the
-    /// <see cref="LevelExit"/> on its platform up through a tall tube.
+    /// Tube elevators (<see cref="Elevator"/>) for the test bed and the Level Kit: the Tripo
+    /// elevator model (scaled ×4.5; a greybox tube if the model is missing), glass and a ring of
+    /// solid walls inside its frame so the doorway is the only way in or out, and a disc platform
+    /// on an <see cref="MoverMode.OnStep"/> mover that fills the gap in the model's floor. A start
+    /// elevator rises from a dark shaft below the floor; an exit elevator carries the
+    /// <see cref="LevelExit"/> on its platform up and out of the top.
     /// </summary>
     public static class ElevatorBuilder
     {
         const string Folder = TestBedBuilder.Root + "/Art/Level";
-        const string TubeMeshPath = Folder + "/ElevatorTube.asset";
+        const string ModelPath = Folder + "/Elevator/Model/futuristic portal 3d model/futuristic_portal_3d_model.fbx";
         const string RingMeshPath = Folder + "/ElevatorRing.asset";
         const string GlassPath = TestBedBuilder.Root + "/Materials/Elevator_Glass.mat";
 
-        public const float TubeRadius = 1.5f;
-        /// <summary>The doorway's width as an angle; at this radius it's about 1.6 m across.</summary>
-        const float DoorwayDegrees = 64f;
         const float WallThickness = 0.1f;
         const int WallSegments = 24;
         const int IgnoreRaycastLayer = 2;
-        /// <summary>Just inside the tube, so stepping off through the doorway crosses no gap.</summary>
-        const float PlatformRadius = 1.42f;
-        /// <summary>The square opening a start elevator's shaft needs in the floor round it.</summary>
-        public const float ShaftOpening = 2f * PlatformRadius + 0.06f;
-        /// <summary>Start: how far below the floor the ride begins. Exit: how far it rises.</summary>
+        /// <summary>Start: how far the ride rises to the elevator's floor. Exit: how far it rises from it.</summary>
         public const float DefaultTravel = 6f;
-        const float StartTubeHeight = 3f;
         const float RideSpeed = 2f;
+
+        /// <summary>The sizes an elevator is built to: the model's (measured at ×4.5), or the greybox's.</summary>
+        struct Dims
+        {
+            public float Scale;
+            /// <summary>Inside face of the glass and walls.</summary>
+            public float WallRadius;
+            public float DoorwayDegrees;
+            public float PlatformRadius;
+            /// <summary>Where the platform stops: the top of the model's floor ring (0 for the greybox).</summary>
+            public float FloorHeight;
+            /// <summary>Top of the glass and walls above the elevator's base.</summary>
+            public float TubeTop;
+        }
+
+        static readonly Dims Model = new Dims
+        {
+            // At ×4.5: the floor ring is flat at 0.48 m from 0.85 m (the gap) out to 1.3 m, the
+            // frame's posts stand 1.2-1.32 m out with the doorway posts at ±30°, and the crown
+            // begins about 3.6 m up. Steps lead down from the doorway to the ground.
+            Scale = 4.5f, WallRadius = 1.15f, DoorwayDegrees = 58f, PlatformRadius = 0.83f, FloorHeight = 0.48f, TubeTop = 3.6f,
+        };
+
+        static readonly Dims Greybox = new Dims
+        {
+            Scale = 1f, WallRadius = 1.5f, DoorwayDegrees = 64f, PlatformRadius = 1.42f, FloorHeight = 0f, TubeTop = 3f,
+        };
+
+        static bool HasModel => AssetDatabase.LoadAssetAtPath<GameObject>(ModelPath) != null;
+        static Dims Current => HasModel ? Model : Greybox;
+
+        /// <summary>The square opening a start elevator's shaft needs in the floor round it.</summary>
+        public static float ShaftOpening => 2f * Current.PlatformRadius + 0.1f;
 
         /// <summary>
         /// An elevator standing on a floor at <paramref name="localPosition"/>, its doorway facing
         /// <paramref name="forward"/>. Start: the platform rises <paramref name="travel"/> from
-        /// below to the floor. Exit: it rises <paramref name="travel"/> from the floor.
+        /// below to the elevator's floor. Exit: it rises <paramref name="travel"/> from there.
         /// </summary>
         internal static Elevator Build(Transform parent, string name, Vector3 localPosition, Vector3 forward, Vector3 up,
             ElevatorRole role, TestBedBuilder.Palette palette, float travel = DefaultTravel, int spawnOrder = 0)
         {
+            bool model = HasModel;
+            Dims dims = Current;
             var root = new GameObject(name).transform;
             root.SetParent(parent, false);
             root.localPosition = localPosition;
@@ -53,23 +81,31 @@ namespace GravBoots.Editor
             elevator.role = role;
 
             bool start = role == ElevatorRole.Start;
-            float bottom = start ? -travel : 0f;
-            float top = start ? 0f : travel;
-            float tubeTop = start ? StartTubeHeight : travel + StartTubeHeight;
+            float floor = dims.FloorHeight;
+            float bottom = start ? floor - travel : floor;
+            float top = start ? floor : floor + travel;
+            // The greybox tube runs down the shaft and, for an exit, up the whole ride; the model's
+            // glass fills its frame, and the shaft below has walls of its own.
+            float glassBottom = model ? floor : bottom;
+            float tubeTop = model || start ? dims.TubeTop : travel + dims.TubeTop;
 
-            // The tube: glass to look at, a ring of thin walls to stand inside, the doorway open.
             Transform tube = Child(root, "Tube", Vector3.zero);
-            var glass = Child(tube, "Glass", new Vector3(0f, bottom, 0f));
-            glass.localScale = new Vector3(1f, tubeTop - bottom, 1f);
-            glass.gameObject.AddComponent<MeshFilter>().sharedMesh = TubeMesh();
+            if (model)
+                Frame(tube, dims);
+            var glass = Child(tube, "Glass", new Vector3(0f, glassBottom, 0f));
+            glass.localScale = new Vector3(dims.WallRadius, tubeTop - glassBottom, dims.WallRadius);
+            glass.gameObject.AddComponent<MeshFilter>().sharedMesh = GlassMesh(dims.DoorwayDegrees);
             var glassRenderer = glass.gameObject.AddComponent<MeshRenderer>();
             glassRenderer.sharedMaterial = Glass();
             glassRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            Walls(tube, bottom, tubeTop);
-            Ring(tube, "Base Ring", 0f, palette.Dark);
-            Ring(tube, "Top Ring", tubeTop, palette.Dark);
+            Walls(tube, dims, glassBottom, model && !start ? floor + travel + 2f : tubeTop);
+            if (!model)
+            {
+                Ring(tube, "Base Ring", 0f, palette.Dark, dims.WallRadius + 0.05f);
+                Ring(tube, "Top Ring", tubeTop, palette.Dark, dims.WallRadius + 0.05f);
+            }
             if (start)
-                Shaft(root, bottom, palette);
+                Shaft(root, bottom, model ? dims.PlatformRadius + 0.05f : dims.WallRadius + 0.125f, palette);
 
             var mover = root.gameObject.AddComponent<KinematicMover>();
             var platform = Child(root, "Platform", Vector3.zero);
@@ -78,11 +114,11 @@ namespace GravBoots.Editor
             Object.DestroyImmediate(disc.GetComponent<Collider>());
             disc.transform.SetParent(platform, false);
             disc.transform.localPosition = new Vector3(0f, -0.1f, 0f);
-            disc.transform.localScale = new Vector3(PlatformRadius * 2f, 0.1f, PlatformRadius * 2f);
+            disc.transform.localScale = new Vector3(dims.PlatformRadius * 2f, 0.1f, dims.PlatformRadius * 2f);
             disc.GetComponent<MeshRenderer>().sharedMaterial = palette.Blue;
-            // The disc itself is the deck: round, right out to the tube.
+            // The disc itself is the deck: round, filling the gap in the floor.
             disc.AddComponent<MeshCollider>().convex = true;
-            Ring(platform, "Platform Rim", -0.05f, palette.Dark, PlatformRadius);
+            Ring(platform, "Platform Rim", -0.05f, palette.Dark, dims.PlatformRadius);
 
             mover.platform = platform;
             mover.points = new[] { Child(root, "Bottom", new Vector3(0f, bottom, 0f)), Child(root, "Top", new Vector3(0f, top, 0f)) };
@@ -105,10 +141,24 @@ namespace GravBoots.Editor
                 var trigger = exit.GetComponent<BoxCollider>();
                 trigger.isTrigger = true;
                 // Well inside the platform, so the player is standing on it when the run ends.
-                trigger.size = new Vector3(1.4f, 2f, 1.4f);
+                float side = dims.PlatformRadius;
+                trigger.size = new Vector3(side, 2f, side);
                 trigger.center = new Vector3(0f, 1f, 0f);
             }
             return elevator;
+        }
+
+        /// <summary>
+        /// The model, solid in its own shape (collar, steps, posts). On Ignore Raycast with the
+        /// walls, so the camera looks through the frame rather than pulling in behind it.
+        /// </summary>
+        static void Frame(Transform tube, Dims dims)
+        {
+            var frame = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(ModelPath), tube);
+            frame.name = "Frame";
+            frame.transform.localScale = Vector3.one * dims.Scale;
+            frame.AddComponent<MeshCollider>();
+            frame.layer = IgnoreRaycastLayer;
         }
 
         static Transform Child(Transform parent, string name, Vector3 localPosition)
@@ -134,19 +184,19 @@ namespace GravBoots.Editor
         /// Raycast layer: the player still collides with them, but the camera rig ignores them, so
         /// it stays outside looking in through the glass instead of pulling in behind the player.
         /// </summary>
-        static void Walls(Transform tube, float bottom, float top)
+        static void Walls(Transform tube, Dims dims, float bottom, float top)
         {
             var walls = Child(tube, "Walls", Vector3.zero);
             walls.gameObject.layer = IgnoreRaycastLayer;
             float step = 360f / WallSegments;
-            float chord = 2f * (TubeRadius + WallThickness) * Mathf.Tan(Mathf.Deg2Rad * step * 0.5f);
+            float chord = 2f * (dims.WallRadius + WallThickness) * Mathf.Tan(Mathf.Deg2Rad * step * 0.5f);
             for (int i = 0; i < WallSegments; i++)
             {
                 float angle = (i + 0.5f) * step;
-                if (Mathf.Abs(Mathf.DeltaAngle(angle, 0f)) < DoorwayDegrees * 0.5f)
+                if (Mathf.Abs(Mathf.DeltaAngle(angle, 0f)) < dims.DoorwayDegrees * 0.5f)
                     continue;
                 Quaternion turn = Quaternion.Euler(0f, angle, 0f);
-                var wall = Child(walls, "Wall", turn * Vector3.forward * (TubeRadius + WallThickness * 0.5f) + Vector3.up * (bottom + top) * 0.5f);
+                var wall = Child(walls, "Wall", turn * Vector3.forward * (dims.WallRadius + WallThickness * 0.5f) + Vector3.up * (bottom + top) * 0.5f);
                 wall.localRotation = turn;
                 wall.gameObject.layer = IgnoreRaycastLayer;
                 var box = wall.gameObject.AddComponent<BoxCollider>();
@@ -155,10 +205,10 @@ namespace GravBoots.Editor
         }
 
         /// <summary>The dark shaft under a start elevator: four walls and a floor.</summary>
-        static void Shaft(Transform root, float bottom, TestBedBuilder.Palette palette)
+        static void Shaft(Transform root, float bottom, float halfWidth, TestBedBuilder.Palette palette)
         {
             var shaft = Child(root, "Shaft", Vector3.zero);
-            float inner = TubeRadius * 2f + 0.25f, t = 0.3f, depth = -bottom + 0.5f;
+            float inner = halfWidth * 2f, t = 0.3f, depth = -bottom + 0.5f;
             float y = bottom + depth * 0.5f - 0.5f;
             TestBedBuilder.Box(shaft, "Shaft +X", new Vector3((inner + t) * 0.5f, y, 0f), new Vector3(t, depth, inner + 2f * t), palette.Dark);
             TestBedBuilder.Box(shaft, "Shaft -X", new Vector3(-(inner + t) * 0.5f, y, 0f), new Vector3(t, depth, inner + 2f * t), palette.Dark);
@@ -168,7 +218,7 @@ namespace GravBoots.Editor
         }
 
         /// <summary>A dark ring of <paramref name="radius"/> (its band about 6% as thick).</summary>
-        static void Ring(Transform parent, string name, float height, Material material, float radius = TubeRadius + 0.05f)
+        static void Ring(Transform parent, string name, float height, Material material, float radius)
         {
             var ring = Child(parent, name, Vector3.up * height);
             ring.localScale = Vector3.one * radius;
@@ -177,14 +227,18 @@ namespace GravBoots.Editor
             renderer.sharedMaterial = material;
         }
 
-        /// <summary>A unit open cylinder (radius 1, height 0–1) with the doorway cut out, for the glass.</summary>
-        static Mesh TubeMesh()
+        /// <summary>
+        /// A unit open cylinder (radius 1, height 0–1, scaled per elevator) with the doorway,
+        /// centred on +Z, cut out. One asset per doorway width.
+        /// </summary>
+        static Mesh GlassMesh(float doorwayDegrees)
         {
-            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(TubeMeshPath);
+            string path = $"{Folder}/ElevatorGlass_{Mathf.RoundToInt(doorwayDegrees)}.asset";
+            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
             if (mesh != null)
                 return mesh;
             const int segments = 48;
-            float start = DoorwayDegrees * 0.5f, sweep = 360f - DoorwayDegrees;
+            float start = doorwayDegrees * 0.5f, sweep = 360f - doorwayDegrees;
             var vertices = new List<Vector3>();
             var normals = new List<Vector3>();
             var uvs = new List<Vector2>();
@@ -196,7 +250,7 @@ namespace GravBoots.Editor
                 var outward = new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a));
                 for (int k = 0; k < 2; k++)
                 {
-                    vertices.Add(outward * TubeRadius + Vector3.up * k);
+                    vertices.Add(outward + Vector3.up * k);
                     normals.Add(outward);
                     uvs.Add(new Vector2((float)i / segments, k));
                 }
@@ -206,14 +260,14 @@ namespace GravBoots.Editor
                 int a = i * 2, b = a + 2;
                 triangles.AddRange(new[] { a, a + 1, b, b, a + 1, b + 1 });
             }
-            mesh = new Mesh { name = "ElevatorTube" };
+            mesh = new Mesh { name = "ElevatorGlass" };
             mesh.SetVertices(vertices);
             mesh.SetNormals(normals);
             mesh.SetUVs(0, uvs);
             mesh.SetTriangles(triangles, 0);
             mesh.RecalculateBounds();
             Directory.CreateDirectory(Folder);
-            AssetDatabase.CreateAsset(mesh, TubeMeshPath);
+            AssetDatabase.CreateAsset(mesh, path);
             return mesh;
         }
 

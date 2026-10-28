@@ -1125,7 +1125,8 @@ namespace GravBoots.Editor
         /// </summary>
         static SpawnPoint BuildElevators(Transform area, Palette p)
         {
-            const float hole = ElevatorBuilder.ShaftOpening, z0 = -8f;
+            float hole = ElevatorBuilder.ShaftOpening;
+            const float z0 = -8f;
             float h = hole * 0.5f;
             Box(area, "Floor South", new Vector3(0f, -0.25f, (-14f + z0 - h) * 0.5f), new Vector3(12f, 0.5f, z0 - h + 14f), p.Floor);
             Box(area, "Floor North", new Vector3(0f, -0.25f, (z0 + h + 14f) * 0.5f), new Vector3(12f, 0.5f, 14f - z0 - h), p.Floor);
