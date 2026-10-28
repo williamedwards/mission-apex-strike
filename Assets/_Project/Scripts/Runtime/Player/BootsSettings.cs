@@ -22,10 +22,10 @@ namespace GravBoots.Player
         public float followMaxAngle = 30f;
 
         [Header("Walking magnetized")]
-        [Tooltip("Top speed while magnetized (m/s): heavier and more deliberate than the free 6 m/s.")]
-        public float magnetizedMoveSpeed = 2.5f;
+        [Tooltip("Top speed while magnetized (m/s): heavy and deliberate next to the free 6 m/s.")]
+        public float magnetizedMoveSpeed = 1.5f;
         [Tooltip("How quickly you reach that speed or stop while magnetized (m/s²); lower feels heavier.")]
-        public float magnetizedAcceleration = 18f;
+        public float magnetizedAcceleration = 10f;
 
         [Header("Losing contact")]
         [Tooltip("How long the boots tolerate no magnetic contact (seams, small bumps) before letting go.")]

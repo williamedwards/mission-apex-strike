@@ -14,11 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: GravBoots.Runtime::GravBoots.Player.BootsSettings
   followDegreesPerSecond: 300
   followMaxAngle: 45
-  concaveDegreesPerSecond: 540
-  convexDegreesPerSecond: 720
-  wrapProbeDepth: 0.3
-  wrapProbeAhead: 0.7
+  magnetizedMoveSpeed: 1.5
+  magnetizedAcceleration: 10
   contactGrace: 0.12
-  allowHop: 1
-  maxHopAirTime: 1.2
+  jumpWhileMagnetized: 0
   pushOffSpeed: 1.5

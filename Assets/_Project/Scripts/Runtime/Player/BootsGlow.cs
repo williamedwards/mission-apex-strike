@@ -32,7 +32,13 @@ namespace GravBoots.Player
 
         public float Intensity => intensity;
 
-        void Awake()
+        void Awake() => Initialize();
+
+        /// <summary>
+        /// Caches colours and ring rest poses. Also run lazily: a script reload while playing keeps
+        /// the component but drops these unserialized fields.
+        /// </summary>
+        void Initialize()
         {
             block = new MaterialPropertyBlock();
             // Each glow keeps its material's colour; only its alpha follows the fade.
@@ -89,6 +95,8 @@ namespace GravBoots.Player
 
         void Apply()
         {
+            if (block == null)
+                Initialize();
             bool visible = intensity > 0.001f;
             float t = Time.time;
             for (int i = 0; i < rings.Length; i++)

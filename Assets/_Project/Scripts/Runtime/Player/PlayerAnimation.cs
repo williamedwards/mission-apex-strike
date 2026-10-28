@@ -22,7 +22,7 @@ namespace GravBoots.Player
         [SerializeField] MagneticBoots boots;
         [Tooltip("Ground speed (m/s) of the run clip; faster than this plays it faster.")]
         [SerializeField] float runClipSpeed = 3.5f;
-        [Tooltip("Ground speed (m/s) of the walk clip. Magnetized, faster than this plays it faster, so planted feet keep pace with the ground.")]
+        [Tooltip("Ground speed (m/s) of the magnetized walk clip; faster than this plays it faster, so planted feet keep pace with the ground.")]
         [SerializeField] float walkClipSpeed = 1.25f;
         [Tooltip("Seconds to ease the blend between idle, walk and run when speed changes.")]
         [SerializeField] float speedDamping = 0.12f;
@@ -35,12 +35,12 @@ namespace GravBoots.Player
         float airTime;
 
         public void Bind(PlayerMotor playerMotor, Animator playerAnimator, MagneticBoots playerBoots,
-            float walkClipGroundSpeed, float runClipGroundSpeed)
+            float magnetizedWalkClipSpeed, float runClipGroundSpeed)
         {
             motor = playerMotor;
             animator = playerAnimator;
             boots = playerBoots;
-            walkClipSpeed = walkClipGroundSpeed;
+            walkClipSpeed = magnetizedWalkClipSpeed;
             runClipSpeed = runClipGroundSpeed;
         }
 

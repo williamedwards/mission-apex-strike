@@ -12,7 +12,7 @@ Rooms are built on a **1 m grid**, and the greybox texture shows 1 m cells with 
 |---|---|---|
 | Capsule height / radius | 1.8 m / 0.35 m | Player prefab |
 | Walk speed | 6 m/s | `MotorSettings.moveSpeed` |
-| Walk speed, magnetized | 2.5 m/s (reached at 18 m/s²) | `BootsSettings.magnetizedMoveSpeed`, `magnetizedAcceleration` |
+| Walk speed, magnetized | 1.5 m/s (reached at 10 m/s²) | `BootsSettings.magnetizedMoveSpeed`, `magnetizedAcceleration` |
 | Jump height | 1.3 m | `MotorSettings.jumpHeight` |
 | Gravity | 25 m/s² | `MotorSettings.gravity` |
 | Max walkable slope | 50° | `MotorSettings.slopeLimit` |
@@ -53,7 +53,7 @@ surfaces is a hard boundary. Build every route between orientations from `Curved
 |---|---|---|
 | Standard quarter-pipe radius (floor ↔ wall) | **2.5 m** | Chosen in playtesting from 1.5, 2, 2.5 and 3 m. Walls need at least 2 × 2.5 m of height to curve on at both ends. |
 | Standard rounded-edge radius (over a top edge) | 1.5 m | Not yet playtested against alternatives. |
-| Minimum radius | 1.5 m | Up turns at speed ÷ radius: about 95°/s at the magnetized 2.5 m/s round 1.5 m. That needs to stay under `BootsSettings.followDegreesPerSecond` (540°/s), with plenty of room. |
+| Minimum radius | 1.5 m | Up turns at speed ÷ radius: about 57°/s at the magnetized 1.5 m/s round 1.5 m. That needs to stay under `BootsSettings.followDegreesPerSecond` (300°/s in the project's settings), with plenty of room. |
 | Facet angle (90° ÷ segments) | ≤ 12° | Must stay well under `followMaxAngle` (30°). The builder uses 8 segments per metre of radius (20 for a 2.5 m quarter-pipe). |
 | Quarter-pipe outcrop width | 3 m | A discrete ramp up a wall, as in the Cube Room. |
 | Pipe sides | ≥ 16 | 22.5° per side, under `followMaxAngle`. |

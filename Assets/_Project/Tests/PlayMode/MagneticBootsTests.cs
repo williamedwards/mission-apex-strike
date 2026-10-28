@@ -188,7 +188,7 @@ namespace GravBoots.Tests
             SpawnPlayer(Vector3.zero);
             Activate();
 
-            Run(1.5f, Vector2.up);
+            Run(Magnetized(1.5f), Vector2.up);
 
             Assert.That(boots.State, Is.EqualTo(BootsState.Magnetized));
             AssertDirection(Vector3.up, motor.Gravity.Up, 1f, "up");
@@ -228,7 +228,7 @@ namespace GravBoots.Tests
             SpawnPlayer(new Vector3(0f, 4.02f, 0f));
             Activate();
 
-            Run(2f, Vector2.up);
+            Run(Magnetized(2f), Vector2.up);
 
             Assert.That(boots.State, Is.EqualTo(BootsState.Off));
             AssertDirection(Vector3.up, motor.Gravity.Up, 0.1f, "never wrapped round the edge");
@@ -250,7 +250,7 @@ namespace GravBoots.Tests
             bool wrapped = false;
             BootsState? sawDrop = null;
             boots.StateChanged += (from, to) => { if (to == BootsState.Dropping) sawDrop = to; };
-            for (int i = 0; i < 120; i++)
+            for (int i = 0, steps = Mathf.RoundToInt(Magnetized(2f) / Dt); i < steps; i++)
             {
                 Run(Dt, Vector2.up);
                 if (boots.IsMagnetized && Vector3.Angle(motor.Gravity.Up, Vector3.up) < 60f)

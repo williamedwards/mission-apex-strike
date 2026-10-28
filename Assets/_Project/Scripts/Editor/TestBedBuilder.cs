@@ -32,6 +32,9 @@ namespace GravBoots.Editor
         const string PlayerModelPath = Root + "/Art/Characters/Player/Model/tripo_convert_b0228436-c2f5-499d-a62d-b1bf14bdc437.fbx";
         const string PlayerAnimatorPath = Root + "/Art/Characters/Player/PlayerAnimator.controller";
         const string EffectsFolder = Root + "/Art/Characters/Player/Effects";
+        const string AnimationsFolder = Root + "/Art/Characters/Player/Animations";
+        /// <summary>A clip anywhere under <see cref="AnimationsFolder"/> with this name drives the magnetized walk.</summary>
+        const string MagnetizedWalkClip = "DeliberateWalk";
         const string GridTexturePath = Root + "/Art/GreyboxGrid.png";
         const string PanelTexturePath = Root + "/Art/MagneticPanel.png";
         const string MaterialFolder = Root + "/Materials";
@@ -262,10 +265,10 @@ namespace GravBoots.Editor
                 var animator = character.GetComponent<Animator>();
                 animator.Rebind();
                 animator.runtimeAnimatorController = BuildPlayerAnimator(PlayerModelPath, animator.humanScale,
-                    out float walkClipSpeed, out float runClipSpeed);
+                    out float magnetizedWalkSpeed, out float runClipSpeed);
                 animator.applyRootMotion = false;
                 animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-                root.AddComponent<PlayerAnimation>().Bind(motor, animator, boots, walkClipSpeed, runClipSpeed);
+                root.AddComponent<PlayerAnimation>().Bind(motor, animator, boots, magnetizedWalkSpeed, runClipSpeed);
                 character.AddComponent<FootPlanting>().Bind(motor, boots, animator);
                 BuildBootsGlow(root, boots, animator);
                 foreach (Transform t in root.GetComponentsInChildren<Transform>())
@@ -499,14 +502,23 @@ namespace GravBoots.Editor
 
         /// <summary>
         /// The player's Animator: a Move blend tree (idle, walk, run by ground speed, run sped up
-        /// past its own pace), a MagnetizedMove one (idle and walk only, the walk sped up to keep
-        /// stride with the ground), and an Air state that holds a jump pose picked by AirPhase.
+        /// past its own pace), a MagnetizedMove one (idle and a walk, the deliberate walk from
+        /// <see cref="AnimationsFolder"/> if there is one, paced to keep stride with the ground), and an Air state that holds a jump pose picked by AirPhase.
         /// IK is on so <see cref="FootPlanting"/> can pin feet while magnetized.
         /// </summary>
         /// <remarks>Humanoid clip speeds are per unit of body size; <paramref name="humanScale"/> turns them into m/s.</remarks>
         static RuntimeAnimatorController BuildPlayerAnimator(string modelPath, float humanScale,
-            out float walkClipSpeed, out float runClipSpeed)
+            out float magnetizedWalkSpeed, out float runClipSpeed)
         {
+            AnimationClip ExtraClip(string clipName)
+            {
+                foreach (string guid in AssetDatabase.FindAssets("t:Model", new[] { AnimationsFolder }))
+                    foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GUIDToAssetPath(guid)))
+                        if (asset is AnimationClip clip && clip.name == clipName)
+                            return clip;
+                return null;
+            }
+
             AnimationClip Clip(string clipName)
             {
                 foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(modelPath))
@@ -529,7 +541,7 @@ namespace GravBoots.Editor
             tree.blendParameter = "Speed";
             tree.useAutomaticThresholds = false;
             AnimationClip idle = Clip("Idle"), walk = Clip("Walk"), run = Clip("Run");
-            walkClipSpeed = walk.averageSpeed.magnitude * humanScale;
+            float walkClipSpeed = walk.averageSpeed.magnitude * humanScale;
             runClipSpeed = run.averageSpeed.magnitude * humanScale;
             tree.AddChild(idle, 0f);
             tree.AddChild(walk, walkClipSpeed);
@@ -540,8 +552,12 @@ namespace GravBoots.Editor
             AnimatorState heavy = controller.CreateBlendTreeInController("MagnetizedMove", out BlendTree heavyTree);
             heavyTree.blendParameter = "Speed";
             heavyTree.useAutomaticThresholds = false;
+            AnimationClip heavyWalk = ExtraClip(MagnetizedWalkClip);
+            if (heavyWalk == null)
+                heavyWalk = walk;
+            magnetizedWalkSpeed = heavyWalk.averageSpeed.magnitude * humanScale;
             heavyTree.AddChild(idle, 0f);
-            heavyTree.AddChild(walk, walkClipSpeed);
+            heavyTree.AddChild(heavyWalk, magnetizedWalkSpeed);
             heavy.speedParameterActive = true;
             heavy.speedParameter = "WalkScale";
             Transition(move, heavy, 0.2f, (AnimatorConditionMode.If, "Magnetized"));

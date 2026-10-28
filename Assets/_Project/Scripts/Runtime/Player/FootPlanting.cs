@@ -17,7 +17,7 @@ namespace GravBoots.Player
         [SerializeField] MagneticBoots boots;
         [SerializeField] Animator animator;
         [Tooltip("An animated foot (ankle) lower than this above the body's base, in metres, counts as down.")]
-        [SerializeField] float plantHeight = 0.17f;
+        [SerializeField] float plantHeight = 0.18f;
         [Tooltip("A pinned foot further than this from its animated position lets go and steps.")]
         [SerializeField] float maxStretch = 0.25f;
         [Tooltip("Seconds to blend a foot onto or off its pin.")]
