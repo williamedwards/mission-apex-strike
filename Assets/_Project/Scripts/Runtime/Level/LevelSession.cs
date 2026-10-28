@@ -69,9 +69,18 @@ namespace GravBoots.Level
         public event Action Respawned;
         public event Action Completed;
 
+        /// <summary>
+        /// Set before the first frame (a title screen) to keep the run from starting by itself;
+        /// whoever set it calls <see cref="Begin"/> when it's time.
+        /// </summary>
+        public bool HoldStart { get; set; }
+
+        /// <summary>The run has started (<see cref="Begin"/> has been called).</summary>
+        public bool HasBegun => begun;
+
         void Start()
         {
-            if (!begun && player != null)
+            if (!begun && player != null && !HoldStart)
                 Begin(player);
         }
 

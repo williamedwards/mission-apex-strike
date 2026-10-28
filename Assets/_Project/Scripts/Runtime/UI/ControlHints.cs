@@ -74,7 +74,7 @@ namespace GravBoots.UI
             bool bootsOff = boots == null || boots.State == BootsState.Off;
             var situation = new HintSituation
             {
-                InControl = session == null || session.State == SessionState.Playing,
+                InControl = session == null || (session.HasBegun && session.State == SessionState.Playing),
                 Grounded = motor.IsGrounded,
                 Steering = input != null && input.Move.sqrMagnitude > 0.04f,
                 Speed = Vector3.ProjectOnPlane(motor.Velocity, up).magnitude,

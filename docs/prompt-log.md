@@ -9475,3 +9475,121 @@ I committed the new rooms as `cb3190b`, then fixed the z-fighting. The fix is sa
 **Check:** I scanned around all 21 checkpoints for overlapping boxes whose faces share a plane. Nothing visible is left. The only matches are in room 09, and they're hidden faces: sides pressed against walls and undersides.
 ```
 
+
+## 2026-10-28T19:10:42.855Z — claude — f29a4addfd94
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:eb0a9ce1-9adb-419a-bc1a-abc589e71d58`
+
+### Prompt
+
+```text
+Commit it
+```
+
+### Saved assistant responses
+
+```text
+I committed the corridor floor fix as `af5c05f`, along with the updated prompt log. As usual, I left out the ProBuilder settings file and the orphan `Model2.meta`.
+```
+
+
+## 2026-10-28T19:22:24.934Z — claude — 17310732dfe3
+
+Source ID: `claude:735c5c49-12cc-4227-b715-25505812b67e:17f36e33-6fe7-40df-9fde-f4fc700988fa`
+
+### Prompt
+
+```text
+I'm going to tentatively name the game "The Apex Inversion".  Could you add start end screens with the title and showing panoramic views of the chambers interiors?
+```
+
+### Saved assistant responses
+
+```text
+Noted, I'll use **"Mission: Apex Strike"** for the title. Every room except the exit has a single ceiling and two side walls to measure, which is what the shots need. First, the session's start gate:
+```
+
+```text
+Next, the shot maths, as a small pure helper with a test, matching how the project handles orientation maths:
+```
+
+```text
+Next, the screens component. It needs a camera matching the gameplay one. Main Camera has no URP extra-data component to copy, so I'll check whether the runtime assembly can reference URP at all:
+```
+
+```text
+Main Camera has no URP extra data, so it runs on defaults, and a plain camera copy will render the same. Writing the screens component:
+```
+
+```text
+The scene showed **unsaved changes** before my recompile, and I haven't edited it since my last save. Before going further, I'll look at what's marked changed, without saving or touching anything:
+```
+
+```text
+No change to the file, as expected. EditMode tests next, then the real check in Play mode:
+```
+
+```text
+The capture shows only sky, and my state query returned nothing. I'll query the state again:
+```
+
+```text
+The active scene is an empty, untitled one, so Play mode didn't start in Chamber_04. The EditMode test run apparently left the Editor on a blank scene this time. Stopping and checking what's open:
+```
+
+```text
+The Editor has a single clean, untitled scene open. Chamber_04 was saved before the tests, so reopening it loses nothing. Reopening it, then entering Play mode again:
+```
+
+```text
+The elevator now waits during the title, then gives the full ride once you press Space. Last, the end screen: I'll put the player on the exit elevator and let the ride finish.
+```
+
+```text
+Space on the end screen reloads straight into a run, with no title. Deleting my two records, then fixing the end-screen line:
+```
+
+```text
+Checking the end screen again with the line moved:
+```
+
+```text
+Fixed: the line now sits cleanly under the title. Cleaning up and running both test suites:
+```
+
+```text
+I've added the title and end screens, both titled "Mission: Apex Strike" ("MISSION:" in blue above a large "APEX STRIKE"). They're tested in Chamber_04 but not committed.
+
+**Title screen:**
+- It shows when the game starts.
+- Behind the title, the camera drifts slowly through one room at a time, fading through black between rooms. Each move starts high by the entrance and looks down the room, so platforms, shuttles and sentries are visible in action.
+- The HUD and debug overlay are hidden, and the music plays.
+- "PRESS SPACE TO BEGIN" pulses at the bottom. Space fades straight into the start elevator ride.
+- It shows once per launch, so restarting or replaying skips it.
+
+**End screen:**
+- It replaces the old plain "CHAMBER COMPLETE" text.
+- Once the exit elevator stops, it fades to the same room shots, with the title at the top and "CHAMBER COMPLETE", your time and your deaths in the middle.
+- "PRESS SPACE TO PLAY AGAIN" reloads straight into a run.
+
+**How it works:**
+- The screens attach at runtime, so no scene was edited.
+- The room shots are worked out from each room's walls and ceiling, so any rooms you add later are included automatically. Chamber_04 has 14, with the exit room skipped.
+- Two small changes to existing code:
+  - `LevelSession` can hold its start until the title is dismissed.
+  - The control hints wait for the run to begin, so the Move hint doesn't appear over the title.
+
+**Fixed during testing:**
+- At first the player wasn't frozen behind the title. They triggered the start elevator, which rode up before you pressed Space. The player is now held still until the run begins, and I checked the full ride plays afterwards.
+- The accent line crossed the smaller end-screen title. I moved it below.
+
+**Tests and cleanup:**
+- EditMode passes 62 of 62, including new tests that the camera moves stay inside the rooms. PlayMode passes 282 of 282.
+- My playtest records are deleted; yours are kept. Chamber_04 is open and clean.
+
+**Three things to know:**
+- **The title shows on every Play in the Editor too,** so you'll press Space once each time you test.
+- **The title is plain text in Unity's default font,** matching the rest of the current HUD.
+- **Unity switched to an empty untitled scene once after an EditMode test run.** My first Play attempt landed there. I reopened Chamber_04, which was saved, so nothing was lost.
+```
+

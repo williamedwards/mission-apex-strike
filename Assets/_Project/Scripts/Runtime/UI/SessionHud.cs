@@ -119,6 +119,6 @@ namespace GravBoots.UI
             GUI.color = previous;
         }
 
-        static string FormatTime(float seconds) => $"{(int)(seconds / 60f)}:{seconds % 60f:00.00}";
+        internal static string FormatTime(float seconds) => $"{(int)(seconds / 60f)}:{seconds % 60f:00.00}";
     }
 }
