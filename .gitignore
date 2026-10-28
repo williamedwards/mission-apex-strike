@@ -110,3 +110,10 @@ InitTestScene*.unity*
 
 # Generated IDE solution files
 *.slnx
+
+# Prompt log importer (scripts/prompt_log.py)
+docs/.prompt-log/lock
+docs/.prompt-log/watcher.lock
+docs/.prompt-log/*.tmp
+docs/prompt-log.md.tmp
+scripts/__pycache__/
